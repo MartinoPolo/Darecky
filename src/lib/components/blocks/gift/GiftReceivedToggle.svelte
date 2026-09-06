@@ -11,7 +11,8 @@
 		received: boolean;
 		role: WishlistRole;
 		isArchived?: boolean;
-		size?: 'md' | 'sm';
+		size?: 'sm' | 'md' | 'lg' | 'xl';
+		compactLabel?: boolean;
 		class?: string;
 		surfaceClass?: string;
 		onreceived?: (giftId: string, received: boolean) => void | Promise<void>;
@@ -23,6 +24,7 @@
 		role,
 		isArchived = false,
 		size = 'md',
+		compactLabel = false,
 		class: className,
 		surfaceClass,
 		onreceived,
@@ -59,10 +61,15 @@
 		{surfaceClass}
 		onclick={handleClick}
 		disabled={pending}
+		aria-label={received ? m.gift_mark_unreceived() : m.gift_mark_received()}
 		data-testid="gift-received-toggle"
 		data-gift-received-action={giftId}
 	>
 		<CheckIcon data-icon="inline-start" />
-		{received ? m.gift_mark_unreceived() : m.gift_mark_received()}
+		{#if compactLabel}
+			{received ? m.gift_unreceived_compact() : m.gift_received_compact()}
+		{:else}
+			{received ? m.gift_mark_unreceived() : m.gift_mark_received()}
+		{/if}
 	</Button>
 {/if}

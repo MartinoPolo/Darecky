@@ -143,6 +143,11 @@ test('gift order persists after card drag and rapid list keyboard moves', async 
 
 	await page.getByRole('radio', { name: 'Seznam', exact: true }).click();
 	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeChecked();
+	// The radio changes before the animated card-to-list replacement finishes.
+	await expect(page.locator('[data-wishlist-gift-collection]')).toHaveAttribute(
+		'data-view-mode',
+		'list',
+	);
 	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
 
 	const mutationResponses: Response[] = [];

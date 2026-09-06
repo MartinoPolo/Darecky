@@ -15,6 +15,10 @@
 - Drizzle ORM (PostgreSQL, strict mode)
 - Vitest + Playwright
 
+## Nested Corner Geometry
+
+For an equal inset inside a bordered rounded parent, use `inner radius = max(0, parent outer radius - border thickness - padding)` so the curves remain parallel; this is the W3C padding/content-edge derivation and is equivalent to Cloud Four’s `outerRadius - gap = innerRadius` rule ([W3C CSS Backgrounds §4.2](https://www.w3.org/TR/css-backgrounds-3/#corner-shaping), [Paul Hebert, Cloud Four](https://cloudfour.com/thinks/the-math-behind-nesting-rounded-corners/)). For unequal horizontal and vertical insets, calculate the two radii independently instead of forcing one radius. Treat shadow clearance separately from the geometric inset because a shadow does not change the element’s box. Keep the actionable hit target distinct from the visible nested surface so accessible target size does not distort the corner geometry.
+
 ## Cloned OSS Repositories
 
 When debugging or analyzing issues related to third-party libraries, delegate exploration to a sub-agent pointing at the cloned source in `C:\_MP_github_cloned\`

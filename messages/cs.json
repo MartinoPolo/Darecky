@@ -448,6 +448,8 @@
 	"gift_priority_select": "Zvolte prioritu",
 	"gift_mark_received": "Označit jako přijatý",
 	"gift_mark_unreceived": "Označit jako nepřijatý",
+	"gift_received_compact": "Přijato",
+	"gift_unreceived_compact": "Vrátit zpět",
 	"gift_received_announcement": "Dárek „{name}“ byl označen jako přijatý.",
 	"gift_unreceived_announcement": "Dárek „{name}“ byl označen jako nepřijatý.",
 	"gift_delete": "Smazat dárek",

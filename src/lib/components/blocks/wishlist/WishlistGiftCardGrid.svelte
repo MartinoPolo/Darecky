@@ -109,7 +109,7 @@
 <div
 	bind:this={gridEl}
 	data-testid="wishlist-gift-card-grid"
-	class="gift-card-grid isolate grid grid-cols-2 gap-2 sm:gap-5 sm:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
+	class="gift-card-grid isolate grid auto-rows-fr grid-cols-2 gap-2 sm:auto-rows-auto sm:gap-5 sm:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
 >
 	{#each indexedSections as { section, items } (sectionRenderKey(section, items))}
 		{#if giftSectionHasHeader(section)}

@@ -9,10 +9,14 @@
 		children?: Snippet;
 	};
 
-	let { class: className, children, ...restProps }: Props = $props();
+	let { class: className, surfaceClass, children, ...restProps }: Props = $props();
 	const styles = segmentedToggleVariants();
 </script>
 
-<ToggleGroup.Item {...restProps} class={cn(styles.item(), className)}>
+<ToggleGroup.Item
+	{...restProps}
+	class={cn(styles.item(), className)}
+	surfaceClass={cn(styles.surface(), surfaceClass)}
+>
 	{@render children?.()}
 </ToggleGroup.Item>

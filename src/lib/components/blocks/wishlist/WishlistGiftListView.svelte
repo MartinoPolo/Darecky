@@ -105,7 +105,7 @@
 <div
 	bind:this={listEl}
 	data-testid="wishlist-gift-list"
-	class="isolate flex flex-col gap-2.5 sm:gap-0"
+	class="isolate flex flex-col gap-2.5 sm:gap-4"
 >
 	{#each indexedSections as { section, items } (sectionRenderKey(section, items))}
 		{#if giftSectionHasHeader(section)}

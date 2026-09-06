@@ -292,44 +292,111 @@ describe('WishlistGiftDraggableWrapper — context actions and selection', () =>
 		await unmount();
 	});
 
-	it('anchors the list reorder grip inside the mobile image reserved corner', async () => {
-		await page.viewport(390, 720);
-		const { container, unmount } = await render(WishlistGiftDraggableWrapperTestHost, {
-			...baseProps,
-			reorderEnabled: true,
-			selectionLayout: 'list',
-			overlayModel: { kind: 'received', supportKind: 'unavailable' },
-		});
-		const image = container.querySelector('[data-testid="image-placeholder"]') as HTMLElement;
-		const grip = container.querySelector(
-			`[aria-label="${m.gift_reorder_grip_label()}"]`,
-		) as HTMLElement;
-		const imageRect = image.getBoundingClientRect();
-		const gripRect = grip.getBoundingClientRect();
-		const imageHorizontalMidpoint = imageRect.left + imageRect.width / 2;
-		const imageVerticalMidpoint = imageRect.top + imageRect.height / 2;
+	it.each([
+		{
+			name: 'mobile Grid',
+			width: 390,
+			layout: 'overlay' as const,
+			target: 60,
+			visual: 40,
+			targetInset: 0,
+			visualInset: 4,
+			visualRadius: '12px',
+		},
+		{
+			name: 'mobile List',
+			width: 390,
+			layout: 'list' as const,
+			target: 60,
+			visual: 40,
+			targetInset: 0,
+			visualInset: 4,
+			visualRadius: '12px',
+		},
+		{
+			name: 'desktop Grid',
+			width: 768,
+			layout: 'overlay' as const,
+			target: 32,
+			visual: 24,
+			targetInset: 4,
+			visualInset: 8,
+			visualRadius: '8px',
+		},
+		{
+			name: 'desktop List',
+			width: 768,
+			layout: 'list' as const,
+			target: 32,
+			visual: 24,
+			targetInset: 4,
+			visualInset: 8,
+			visualRadius: '8px',
+		},
+	])(
+		'enlarges the $name target from the 40px/20px baseline and keeps it at top-left',
+		async ({ width, layout, target, visual, targetInset, visualInset, visualRadius }) => {
+			await page.viewport(width, 720);
+			const onreorderpointerdown = vi.fn();
+			const { container, unmount } = await render(WishlistGiftDraggableWrapperTestHost, {
+				...baseProps,
+				reorderEnabled: true,
+				selectionLayout: layout,
+				overlayModel: { kind: 'received', supportKind: 'unavailable' },
+				onreorderpointerdown,
+			});
+			const wrapper = container.querySelector('[data-gift-item]') as HTMLElement;
+			const grip = container.querySelector(
+				`[aria-label="${m.gift_reorder_grip_label()}"]`,
+			) as HTMLElement;
+			const surface = grip.querySelector(
+				':scope > [data-slot="elevation-surface"]',
+			) as HTMLElement;
+			const wrapperRect = wrapper.getBoundingClientRect();
+			const gripRect = grip.getBoundingClientRect();
+			const surfaceRect = surface.getBoundingClientRect();
 
-		expect(imageRect.width).toBeCloseTo(128, 0);
-		expect(gripRect.width).toBeCloseTo(40, 0);
-		expect(gripRect.height).toBeCloseTo(40, 0);
-		expect(gripRect.top).toBeGreaterThanOrEqual(imageRect.top);
-		expect(gripRect.right).toBeLessThanOrEqual(imageRect.right - 4 + 0.5);
-		expect(gripRect.bottom).toBeLessThanOrEqual(imageRect.bottom);
-		expect(gripRect.left).toBeGreaterThanOrEqual(imageHorizontalMidpoint);
-		expect(gripRect.top).toBeLessThan(imageVerticalMidpoint);
-		for (const pill of container.querySelectorAll<HTMLElement>(
-			'[data-testid="gift-state-overlay"] > span',
-		)) {
-			const pillRect = pill.getBoundingClientRect();
-			expect(
-				gripRect.left < pillRect.right &&
-					gripRect.right > pillRect.left &&
-					gripRect.top < pillRect.bottom &&
-					gripRect.bottom > pillRect.top,
-			).toBe(false);
-		}
-		await unmount();
-	});
+			expect(gripRect.width).toBeCloseTo(target, 0);
+			expect(gripRect.height).toBeCloseTo(target, 0);
+			expect(surfaceRect.width).toBeCloseTo(visual, 0);
+			expect(surfaceRect.height).toBeCloseTo(visual, 0);
+			expect(gripRect.left - wrapperRect.left).toBeCloseTo(targetInset, 0);
+			expect(gripRect.top - wrapperRect.top).toBeCloseTo(targetInset, 0);
+			expect(surfaceRect.left - wrapperRect.left).toBeCloseTo(visualInset, 0);
+			expect(surfaceRect.top - wrapperRect.top).toBeCloseTo(visualInset, 0);
+			expect(getComputedStyle(surface).borderRadius).toBe(visualRadius);
+			expect(getComputedStyle(grip).touchAction).toBe('none');
+
+			grip.dispatchEvent(
+				new PointerEvent('pointerdown', {
+					bubbles: true,
+					cancelable: true,
+					pointerId: 1,
+					pointerType: 'touch',
+				}),
+			);
+			expect(onreorderpointerdown).toHaveBeenCalledWith(expect.any(PointerEvent), 0);
+
+			for (const pill of container.querySelectorAll<HTMLElement>(
+				'[data-testid="gift-state-overlay"] > span',
+			)) {
+				const pillRect = pill.getBoundingClientRect();
+				const overlapsVisibleGrip =
+					surfaceRect.left < pillRect.right &&
+					surfaceRect.right > pillRect.left &&
+					surfaceRect.top < pillRect.bottom &&
+					surfaceRect.bottom > pillRect.top;
+				expect(
+					overlapsVisibleGrip,
+					`grip ${JSON.stringify(surfaceRect.toJSON())}, badge ${JSON.stringify(pillRect.toJSON())}`,
+				).toBe(false);
+			}
+
+			grip.focus();
+			expect(getComputedStyle(grip).outlineStyle).toBe('solid');
+			await unmount();
+		},
+	);
 
 	it('leaves native interactive descendant context menus untouched outside selection mode', async () => {
 		const openContext = vi.fn(() => false);

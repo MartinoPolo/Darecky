@@ -10,7 +10,7 @@
 
 	interface PurchasedToggleProps {
 		gift: GiftForVisitor;
-		size?: 'md' | 'sm';
+		size?: 'sm' | 'md' | 'lg' | 'xl';
 		/** Extra classes on the underlying Button (issue #165: the gift detail
 		 *  modal's photo overlay gives the pill a sticker shadow + rotation). */
 		class?: string;

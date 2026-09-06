@@ -448,6 +448,8 @@
 	"gift_priority_select": "Select priority",
 	"gift_mark_received": "Mark as received",
 	"gift_mark_unreceived": "Mark as not received",
+	"gift_received_compact": "Received",
+	"gift_unreceived_compact": "Undo",
 	"gift_received_announcement": "Gift “{name}” was marked as received.",
 	"gift_unreceived_announcement": "Gift “{name}” was marked as not received.",
 	"gift_delete": "Delete gift",

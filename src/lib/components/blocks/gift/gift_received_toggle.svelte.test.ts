@@ -2,6 +2,7 @@ import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import * as m from '$lib/paraglide/messages.js';
+import { overwriteGetLocale } from '$lib/paraglide/runtime.js';
 import { WISHLIST_ROLES } from '$lib/modules/wishlists/types.js';
 
 const { default: GiftReceivedToggle } = await import('./GiftReceivedToggle.svelte');
@@ -20,6 +21,34 @@ describe('GiftReceivedToggle', () => {
 			await expect
 				.element(screen.getByRole('button', { name: m.gift_mark_received() }))
 				.toBeVisible();
+		},
+	);
+
+	it.each([
+		{ locale: 'cs' as const, received: false, visible: 'Přijato' },
+		{ locale: 'cs' as const, received: true, visible: 'Vrátit zpět' },
+		{ locale: 'en' as const, received: false, visible: 'Received' },
+		{ locale: 'en' as const, received: true, visible: 'Undo' },
+	])(
+		'uses the compact $locale $visible label with the full accessible name',
+		async ({ locale, received, visible }) => {
+			overwriteGetLocale(() => locale);
+			try {
+				const screen = await render(GiftReceivedToggle, {
+					giftId: 'gift-compact',
+					received,
+					role: WISHLIST_ROLES.recipient,
+					compactLabel: true,
+					onreceived: vi.fn(),
+				});
+				const accessible = received ? m.gift_mark_unreceived() : m.gift_mark_received();
+				await expect
+					.element(screen.getByRole('button', { name: accessible }))
+					.toBeVisible();
+				await expect.element(screen.getByText(visible, { exact: true })).toBeVisible();
+			} finally {
+				overwriteGetLocale(() => 'cs');
+			}
 		},
 	);
 

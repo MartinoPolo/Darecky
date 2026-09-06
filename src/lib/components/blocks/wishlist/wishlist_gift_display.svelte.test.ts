@@ -209,7 +209,7 @@ describe('WishlistGiftDisplay mobile collection geometry (issue #336)', () => {
 		}
 	});
 
-	it('uses standalone equal-height list cards with a 10px vertical gap', async () => {
+	it('uses standalone equal-height list cards with full-height square images and a 10px gap', async () => {
 		await page.viewport(390, 720);
 		const second = { ...visitorGift(), id: 'gift-2', name: 'Kávovar' };
 		const screen = await render(WishlistGiftDisplay, {
@@ -218,11 +218,18 @@ describe('WishlistGiftDisplay mobile collection geometry (issue #336)', () => {
 			viewMode: 'list',
 		});
 		const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-gift-item]'));
-		const first = cards[0]!.getBoundingClientRect();
-		const secondRect = cards[1]!.getBoundingClientRect();
-		expect(first.height).toBeCloseTo(128, 0);
-		expect(secondRect.height).toBeCloseTo(first.height, 0);
-		expect(secondRect.top - first.bottom).toBeCloseTo(10, 0);
+		const cardRects = cards.map((card) => card.getBoundingClientRect());
+		const imageRects = cards.map((card) =>
+			(
+				card.querySelector('[data-testid="gift-list-image"]') as HTMLElement
+			).getBoundingClientRect(),
+		);
+		expect(cardRects[1]!.height).toBeCloseTo(cardRects[0]!.height, 0);
+		for (const [index, imageRect] of imageRects.entries()) {
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(imageRect.height).toBeCloseTo(cardRects[index]!.height - 4, 0);
+		}
+		expect(cardRects[1]!.top - cardRects[0]!.bottom).toBeCloseTo(10, 0);
 		await screen.unmount();
 	});
 });
@@ -369,8 +376,8 @@ describe('WishlistGiftDisplay contextual gift presentation', () => {
 			) as HTMLButtonElement;
 
 			expect(grip).toBeTruthy();
-			expect(grip.getBoundingClientRect().width).toBeCloseTo(40, 0);
-			expect(grip.getBoundingClientRect().height).toBeCloseTo(40, 0);
+			expect(grip.getBoundingClientRect().width).toBeCloseTo(60, 0);
+			expect(grip.getBoundingClientRect().height).toBeCloseTo(60, 0);
 			expect(moveUp).toBeTruthy();
 			expect(moveDown).toBeTruthy();
 			const directionalActions = moveUp.parentElement as HTMLElement;
@@ -378,13 +385,20 @@ describe('WishlistGiftDisplay contextual gift presentation', () => {
 				!directionalControlsVisible,
 			);
 			if (directionalControlsVisible) {
+				expect(moveUp.getBoundingClientRect().width).toBeCloseTo(40, 0);
+				expect(moveUp.getBoundingClientRect().height).toBeCloseTo(40, 0);
+				expect(moveDown.getBoundingClientRect().width).toBeCloseTo(40, 0);
+				expect(moveDown.getBoundingClientRect().height).toBeCloseTo(40, 0);
 				expect(moveUp.disabled).toBe(true);
 				expect(moveDown.disabled).toBe(true);
 			}
 			expectNoContextualCardActions(gift);
+			const gripSurface = grip.firstElementChild as HTMLElement;
+			expect(gripSurface.getBoundingClientRect().width).toBeCloseTo(40, 0);
+			expect(gripSurface.getBoundingClientRect().height).toBeCloseTo(40, 0);
 			expectContextualOverlayClearOf(
 				gift,
-				directionalControlsVisible ? [grip, moveUp, moveDown] : [grip],
+				directionalControlsVisible ? [gripSurface, moveUp, moveDown] : [gripSurface],
 			);
 			const visibleInteractiveElements = Array.from(
 				gift.querySelectorAll<HTMLElement>('button, a, input, textarea, select'),

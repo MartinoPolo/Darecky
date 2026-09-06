@@ -8,6 +8,7 @@ import type { GiftForVisitor } from '$lib/modules/gifts/types.js';
 import { WISHLIST_ROLES } from '$lib/modules/wishlists/types.js';
 import { IMAGE_FIT_MODES, type ImageMetadata } from '$lib/modules/images/index.js';
 import * as m from '$lib/paraglide/messages.js';
+import { overwriteGetLocale } from '$lib/paraglide/runtime.js';
 
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
 
@@ -92,6 +93,36 @@ function textOutsideOverlay(host: HTMLElement): string {
 	const clone = host.cloneNode(true) as HTMLElement;
 	clone.querySelector('[data-testid="gift-state-overlay"]')?.remove();
 	return clone.textContent ?? '';
+}
+
+function firstNonBlankTextNode(element: HTMLElement): Text {
+	const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+	let node = walker.nextNode();
+	while (node !== null) {
+		if ((node.textContent?.trim().length ?? 0) > 0) {
+			return node as Text;
+		}
+		node = walker.nextNode();
+	}
+	throw new Error(`Expected visible text inside ${element.outerHTML}`);
+}
+
+function expectRaisedActionShadowInside(action: HTMLElement, boundary: HTMLElement): void {
+	const surface = action.querySelector(':scope > .elevation-surface') as HTMLElement;
+	const surfaceStyle = getComputedStyle(surface);
+	const boundaryStyle = getComputedStyle(boundary);
+	const shadowOffset = Number.parseFloat(
+		surfaceStyle.getPropertyValue('--elevation-ordinary-offset'),
+	);
+	const surfaceRect = surface.getBoundingClientRect();
+	const boundaryRect = boundary.getBoundingClientRect();
+	const innerRight = boundaryRect.right - Number.parseFloat(boundaryStyle.borderRightWidth);
+	const innerBottom = boundaryRect.bottom - Number.parseFloat(boundaryStyle.borderBottomWidth);
+
+	expect(surfaceStyle.boxShadow).not.toBe('none');
+	expect(shadowOffset).toBeGreaterThan(0);
+	expect(surfaceRect.right + shadowOffset).toBeLessThanOrEqual(innerRight + 0.5);
+	expect(surfaceRect.bottom + shadowOffset).toBeLessThanOrEqual(innerBottom + 0.5);
 }
 
 describe('GiftListItem centralized state overlay parity (issue #224 REQ-7)', () => {
@@ -420,7 +451,7 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 			requiredLabels: [m.gift_received_badge(), m.gift_reserved_by_other_overlay()],
 		},
 	])(
-		'keeps $label overlay clear of Like on a 128px thumbnail',
+		'keeps $label overlay clear of Like on the responsive square thumbnail',
 		async ({ gift, requiredLabels }) => {
 			await page.viewport(390, 720);
 			const host = await renderItem(makeVisitorGift(gift), WISHLIST_ROLES.visitor);
@@ -429,7 +460,9 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 			const likeButton = host.querySelector('[data-like-heart]')
 				?.parentElement as HTMLElement;
 
-			expect(image.getBoundingClientRect().width).toBeCloseTo(128, 0);
+			const imageRect = image.getBoundingClientRect();
+			expect(imageRect.width).toBeGreaterThanOrEqual(144);
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 			for (const requiredLabel of requiredLabels) {
 				expect(overlay.textContent).toContain(requiredLabel);
 			}
@@ -445,7 +478,7 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 		},
 	);
 
-	it('keeps a long unavailable overlay clear of the visible Like control on a 128px mobile thumbnail', async () => {
+	it('keeps a long unavailable overlay clear of the visible Like control on a mobile square thumbnail', async () => {
 		await page.viewport(390, 720);
 		const host = await renderItem(
 			makeVisitorGift({
@@ -468,7 +501,9 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 		await expect
 			.element(page.getByRole('button', { name: /Přidat do oblíbených/ }))
 			.toBeVisible();
-		expect(image.getBoundingClientRect().width).toBeCloseTo(128, 0);
+		const imageRect = image.getBoundingClientRect();
+		expect(imageRect.width).toBeGreaterThanOrEqual(144);
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(likeButton.getBoundingClientRect().width).toBeCloseTo(40, 0);
 		expect(
 			rectanglesIntersect(badge.getBoundingClientRect(), likeButton.getBoundingClientRect()),
@@ -562,7 +597,7 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 	});
 
-	it('renders one opaque 128px standalone card with a consolidated state overlay', async () => {
+	it('renders one auto-height row with a full responsive square image and consolidated state overlay', async () => {
 		await page.viewport(390, 720);
 		const host = await renderItem(
 			makeVisitorGift({ isFullyReserved: true, myReservationId: null }),
@@ -571,39 +606,77 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
 		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
 
-		expect(item.getBoundingClientRect().height).toBeCloseTo(128, 0);
-		expect(image.getBoundingClientRect().width).toBeCloseTo(128, 0);
+		const itemRect = item.getBoundingClientRect();
+		const imageRect = image.getBoundingClientRect();
+		expect(imageRect.width).toBeGreaterThanOrEqual(144);
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+		expect(itemRect.height).toBeGreaterThanOrEqual(imageRect.height);
 		expect(host.querySelectorAll('[data-testid="gift-state-overlay"]')).toHaveLength(1);
 		expect(host.querySelector('[data-testid="gift-reserved-sticker"]')).toBeNull();
 	});
 
-	it('shows only Received directly for a mobile moderator while preserving Reserve on desktop', async () => {
+	it('puts manager Reserve above Received and More on mobile, outside the image', async () => {
 		await page.viewport(390, 720);
+		const onreserve = vi.fn();
+		const onreceived = vi.fn();
 		const host = document.createElement('div');
 		document.body.appendChild(host);
 		await render(
 			GiftListItemTestHost,
 			{
-				gift: makeVisitorGift({ myReservationId: null }),
+				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
 				role: WISHLIST_ROLES.moderator,
 				isArchived: false,
-				onreceived: () => {},
+				onreserve,
+				onreceived,
 				onmore: () => {},
 			},
 			{ baseElement: host },
 		);
 
+		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+		const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
 		const received = host.querySelector('[data-testid="gift-received-toggle"]') as HTMLElement;
 		const more = host.querySelector(`[aria-label="${m.gift_more_actions()}"]`) as HTMLElement;
-		const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
-		expect(received).toBeTruthy();
-		expect(more).toBeTruthy();
-		expect(getComputedStyle(received).display).not.toBe('none');
-		expect(getComputedStyle(more).display).not.toBe('none');
-		expect(getComputedStyle(reserve).display).toBe('none');
+		const reserveButtons = host.querySelectorAll<HTMLElement>('[data-testid="reserve-button"]');
+		const reserve = reserveButtons[0]!;
+		expect(reserveButtons).toHaveLength(1);
+		expect(image.querySelector('[data-testid="reserve-button"]')).toBeNull();
+		expect(content.contains(reserve)).toBe(true);
+		expect(getComputedStyle(item).flexDirection).toBe('column');
+		expect(reserve.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			received.getBoundingClientRect().top,
+		);
+		for (const action of [reserve, received, more]) {
+			expect(action.getBoundingClientRect().height).toBeCloseTo(48, 0);
+		}
+		reserve.click();
+		received.click();
+		expect(onreserve).toHaveBeenCalledOnce();
+		expect(onreceived).toHaveBeenCalledWith('gift-1', true);
 
-		await page.viewport(800, 720);
-		expect(getComputedStyle(reserve).display).not.toBe('none');
+		const withoutReceivedHost = document.createElement('div');
+		document.body.appendChild(withoutReceivedHost);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift: makeVisitorGift({ id: 'gift-without-received', myReservationId: null }),
+				role: WISHLIST_ROLES.moderator,
+				onreserve: () => {},
+			},
+			{ baseElement: withoutReceivedHost },
+		);
+		expect(withoutReceivedHost.querySelectorAll('[data-testid="reserve-button"]')).toHaveLength(
+			1,
+		);
+		expect(
+			withoutReceivedHost
+				.querySelector('[data-testid="gift-list-image"]')
+				?.querySelector('[data-testid="reserve-button"]'),
+		).toBeNull();
+		host.remove();
+		withoutReceivedHost.remove();
 	});
 
 	it('does not render Like for an archived visitor gift while preserving own cancellation', async () => {
@@ -644,7 +717,7 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 });
 
 describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
-	it('contains a long centered state label beside the 40px Like on the 128px image', async () => {
+	it('contains a long centered state label beside the 40px Like on the responsive image', async () => {
 		await page.viewport(390, 720);
 		const host = document.createElement('div');
 		host.style.width = '366px';
@@ -678,7 +751,8 @@ describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
 		labelRange.selectNodeContents(label);
 		const labelRect = labelRange.getBoundingClientRect();
 
-		expect(imageRect.width).toBeCloseTo(128, 0);
+		expect(imageRect.width).toBeGreaterThanOrEqual(144);
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(likeRect.width).toBeCloseTo(40, 0);
 		expect(overlayRect.left).toBeCloseTo(imageRect.left, 0);
 		expect(overlayRect.right).toBeCloseTo(imageRect.right - 2, 0);
@@ -766,6 +840,332 @@ describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
 		}
 		host.remove();
 	});
+});
+
+describe('GiftListItem approved action geometry (issue #350)', () => {
+	it.each([
+		{ viewport: 320, role: WISHLIST_ROLES.visitor, reservationId: null },
+		{ viewport: 390, role: WISHLIST_ROLES.visitor, reservationId: 'mine' },
+		{ viewport: 768, role: WISHLIST_ROLES.recipient, reservationId: null },
+		{ viewport: 1440, role: WISHLIST_ROLES.moderator, reservationId: null },
+	])(
+		'contains equal-height primary and More actions at $viewport px for $role',
+		async ({ viewport, role, reservationId }) => {
+			await page.viewport(viewport, 900);
+			const host = document.createElement('div');
+			host.style.width = `${Math.min(viewport - 24, 720)}px`;
+			document.body.appendChild(host);
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						myReservationId: reservationId,
+						reservedCount: reservationId === null ? 0 : 1,
+						isFullyReserved: reservationId !== null,
+					}),
+					role,
+					onreceived: () => {},
+					onreserve: () => {},
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			const row = host.querySelector('[data-testid="gift-action-row"]') as HTMLElement;
+			const more = row.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			const primary = row.querySelector(
+				'[data-testid="gift-received-toggle"], [data-testid="reserve-button"]',
+			) as HTMLElement;
+			const expectedControlSize = viewport < 640 ? 48 : 32;
+			const actions = Array.from(row.querySelectorAll<HTMLElement>('button'));
+			expect(primary).toBeTruthy();
+			expect(more).toBeTruthy();
+			for (const action of actions) {
+				expect(action.getBoundingClientRect().height).toBeCloseTo(expectedControlSize, 0);
+			}
+			expect(primary.getBoundingClientRect().right).toBeLessThanOrEqual(
+				more.getBoundingClientRect().left,
+			);
+			const surface = primary.querySelector(':scope > .elevation-surface') as HTMLElement;
+			const textRange = document.createRange();
+			textRange.selectNodeContents(firstNonBlankTextNode(surface));
+			const textRect = textRange.getBoundingClientRect();
+			const surfaceRect = surface.getBoundingClientRect();
+			expect(textRect.left).toBeGreaterThanOrEqual(surfaceRect.left + 2.5);
+			expect(textRect.right).toBeLessThanOrEqual(surfaceRect.right - 2.5);
+			expectRaisedActionShadowInside(primary, item);
+			expectRaisedActionShadowInside(more, item);
+			if (viewport < 640) {
+				const itemRect = item.getBoundingClientRect();
+				const imageRect = image.getBoundingClientRect();
+				expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+				expect(content.getBoundingClientRect().left - imageRect.left).toBeCloseTo(
+					imageRect.width,
+					0,
+				);
+				expect(imageRect.top).toBeCloseTo(itemRect.top + 2, 0);
+				expect(imageRect.bottom).toBeCloseTo(itemRect.bottom - 2, 0);
+				const imageFrame = image.querySelector(
+					'[data-testid="image-frame"]',
+				) as HTMLElement;
+				expect(getComputedStyle(item).borderTopLeftRadius).toBe('16px');
+				expect(getComputedStyle(imageFrame).borderTopLeftRadius).toBe('14px');
+			}
+			if (role === WISHLIST_ROLES.moderator) {
+				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+				expect(actions).toHaveLength(3);
+				expect(image.contains(reserve)).toBe(false);
+				const widths = actions.map((action) => action.getBoundingClientRect().width);
+				expect(widths[1]).toBeCloseTo(widths[0]!, 0);
+				expect(widths[2]).toBeCloseTo(32, 0);
+			}
+			if (role === WISHLIST_ROLES.recipient) {
+				expect(host.querySelector('[data-like-heart]')).toBeNull();
+				expect(host.querySelector('[data-testid="reserve-button"]')).toBeNull();
+				expect(host.textContent).not.toMatch(/rezerv/i);
+			}
+			host.remove();
+		},
+	);
+
+	it.each([
+		{ locale: 'cs' as const, received: false },
+		{ locale: 'cs' as const, received: true },
+		{ locale: 'en' as const, received: false },
+		{ locale: 'en' as const, received: true },
+	])(
+		'contains localized manager actions after stacking a 320px desktop container for $locale (received: $received)',
+		async ({ locale, received }) => {
+			overwriteGetLocale(() => locale);
+			await page.viewport(768, 900);
+			const host = document.createElement('div');
+			host.style.width = '320px';
+			document.body.appendChild(host);
+			try {
+				await render(
+					GiftListItemTestHost,
+					{
+						gift: makeVisitorGift({
+							description: 'Dlouhý popis, který se v úzkém řádku zkrátí jako první.',
+							links: [{ url: 'https://example.com/product' }],
+							price: 2499,
+							currency: 'CZK',
+							quantity: 3,
+							reserverNames: ['Alexandra Nováková'],
+							received,
+						}),
+						role: WISHLIST_ROLES.moderator,
+						onreceived: () => {},
+						onunreserve: () => {},
+						onmore: () => {},
+					},
+					{ baseElement: host },
+				);
+
+				const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+				const content = host.querySelector(
+					'[data-testid="gift-list-content"]',
+				) as HTMLElement;
+				const primary = host.querySelector(
+					'[data-testid="gift-received-toggle"]',
+				) as HTMLElement;
+				const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+				expect(getComputedStyle(item).display).toBe('flex');
+				expect(getComputedStyle(item).flexDirection).toBe('column');
+				expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+				expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+				expect(content.scrollWidth).toBeLessThanOrEqual(content.clientWidth);
+				expect(reserve.getAttribute('aria-label')).toBe(
+					m.reserve_button_cancel_aria({ name: REALISTIC_LONG_NAME }),
+				);
+				expect(primary.getAttribute('aria-label')).toBe(
+					received ? m.gift_mark_unreceived() : m.gift_mark_received(),
+				);
+				expect(more.getAttribute('aria-label')).toBe(m.gift_more_actions());
+				const actions = [reserve, primary, more];
+				const actionRects = actions.map((action) => action.getBoundingClientRect());
+				for (const [index, action] of actions.entries()) {
+					expect(actionRects[index]!.height).toBeCloseTo(actionRects[0]!.height, 0);
+					expect(actionRects[index]!.height).toBeGreaterThanOrEqual(32);
+					expect(actionRects[index]!.height).toBeLessThan(48);
+					expect(actionRects[index]!.width).toBeCloseTo(
+						index === 2 ? 32 : actionRects[0]!.width,
+						0,
+					);
+					expectRaisedActionShadowInside(action, item);
+				}
+				expect(
+					host.querySelector('[data-testid="gift-list-image"]')?.contains(reserve),
+				).toBe(false);
+			} finally {
+				overwriteGetLocale(() => 'cs');
+				host.remove();
+			}
+		},
+	);
+
+	it('reflows for enlarged root text at a fixed 390px viewport without clipping actions', async () => {
+		await page.viewport(390, 900);
+		const previousFontSize = document.documentElement.style.fontSize;
+		document.documentElement.style.fontSize = '32px';
+		const host = document.createElement('div');
+		host.style.width = '366px';
+		document.body.appendChild(host);
+
+		try {
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						myReservationId: 'mine',
+						isFullyReserved: true,
+					}),
+					role: WISHLIST_ROLES.visitor,
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			const primary = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+			const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			const imageRect = image.getBoundingClientRect();
+			expect(getComputedStyle(item).flexDirection).toBe('column');
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(content.getBoundingClientRect().top).toBeGreaterThanOrEqual(imageRect.bottom);
+			expect(primary.getBoundingClientRect().height).toBeCloseTo(
+				more.getBoundingClientRect().height,
+				0,
+			);
+			expectRaisedActionShadowInside(primary, item);
+			expectRaisedActionShadowInside(more, item);
+			expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+		} finally {
+			document.documentElement.style.fontSize = previousFontSize;
+			host.remove();
+		}
+	});
+
+	it('stacks the complete square image above content when actual narrow space is insufficient', async () => {
+		await page.viewport(280, 900);
+		const host = document.createElement('div');
+		host.style.width = '256px';
+		document.body.appendChild(host);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift: makeVisitorGift({
+					myReservationId: null,
+					reservedCount: 0,
+					isFullyReserved: false,
+				}),
+				role: WISHLIST_ROLES.visitor,
+				onreserve: () => {},
+				onmore: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+		const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+		const imageRect = image.getBoundingClientRect();
+		expect(getComputedStyle(item).flexDirection).toBe('column');
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+		expect(content.getBoundingClientRect().top).toBeGreaterThanOrEqual(imageRect.bottom);
+		expect(host.querySelector('[data-testid="reserve-button"]')).toBeTruthy();
+		expect(host.querySelector('[data-testid="gift-more-actions"]')).toBeTruthy();
+		host.remove();
+	});
+});
+
+describe('GiftListItem desktop bordered card geometry (issue #360)', () => {
+	it.each([640, 768, 1440])(
+		'keeps the complete bordered card enclosed at %d px',
+		async (viewport) => {
+			await page.viewport(viewport, 900);
+			const host = document.createElement('div');
+			host.style.width = `${Math.min(viewport - 24, 900)}px`;
+			document.body.appendChild(host);
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						description:
+							'Lehká myš pro dlouhé hraní, ideálně v černé barvě a s tichými spínači.',
+						links: [
+							{ url: 'https://www.alza.cz/gaming/dlouhy-nazev-produktu' },
+							{ url: 'https://www.mall.cz/alternativni-produkt' },
+						],
+						price: 2499,
+						currency: 'CZK',
+						quantity: 3,
+						reservedCount: 1,
+						reserverNames: ['Babička'],
+					}),
+					role: WISHLIST_ROLES.moderator,
+					onreceived: () => {},
+					onreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			const itemStyle = getComputedStyle(item);
+			const itemRect = item.getBoundingClientRect();
+			const imageRect = image.getBoundingClientRect();
+			const contentRect = content.getBoundingClientRect();
+
+			expect(itemStyle.borderTopWidth).toBe('2px');
+			expect(itemStyle.borderRightWidth).toBe('2px');
+			expect(itemStyle.borderBottomWidth).toBe('2px');
+			expect(itemStyle.borderLeftWidth).toBe('2px');
+			expect(itemStyle.borderTopLeftRadius).toBe('16px');
+			expect(itemStyle.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+			expect(itemStyle.boxShadow).not.toBe('none');
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(imageRect.top).toBeCloseTo(itemRect.top + 2, 0);
+			if (viewport === 640) {
+				expect(itemStyle.flexDirection).toBe('column');
+				expect(contentRect.top).toBeGreaterThanOrEqual(imageRect.bottom);
+			} else {
+				expect(itemStyle.display).toBe('grid');
+				expect(imageRect.bottom).toBeCloseTo(itemRect.bottom - 2, 0);
+				expect(contentRect.left).toBeCloseTo(imageRect.right, 0);
+			}
+			expect(Number.parseFloat(getComputedStyle(content).paddingRight)).toBeGreaterThan(0);
+			expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+			expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+			expect(host.textContent).toContain(REALISTIC_LONG_NAME);
+			expect(host.textContent).toContain('alza.cz');
+			expect(host.textContent).toContain('Babička');
+			expect(host.querySelector('[data-testid="gift-state-overlay"]')).toBeTruthy();
+			expect(host.querySelector('[data-testid="gift-received-toggle"]')).toBeTruthy();
+			expect(host.querySelector('[data-testid="reserve-button"]')).toBeTruthy();
+			expect(host.querySelector('[data-testid="gift-more-actions"]')).toBeTruthy();
+
+			for (const action of host.querySelectorAll<HTMLElement>(
+				'[data-testid="gift-list-actions"] button',
+			)) {
+				const actionRect = action.getBoundingClientRect();
+				expect(actionRect.left).toBeGreaterThanOrEqual(contentRect.left);
+				expect(actionRect.right).toBeLessThanOrEqual(itemRect.right - 2);
+				expect(actionRect.bottom + 3).toBeLessThanOrEqual(itemRect.bottom - 2);
+			}
+			host.remove();
+		},
+	);
 });
 
 describe('GiftListItem reservation-action layout (issue #211)', () => {

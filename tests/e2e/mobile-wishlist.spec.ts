@@ -308,7 +308,7 @@ test.describe('mobile wishlist acceptance', () => {
 		await page.context().close();
 	});
 
-	test('list presentation is distinct, equal-height, persistent and uses 128px edge imagery', async ({
+	test('manager list presentation persists and stacks square imagery above contained mobile actions', async ({
 		browser,
 		request,
 		baseURL,
@@ -340,11 +340,27 @@ test.describe('mobile wishlist acceptance', () => {
 					itemBoxes[index]!.y - (itemBoxes[index - 1]!.y + itemBoxes[index - 1]!.height),
 				).toBeCloseTo(10, 0);
 			}
-			for (const image of await page.getByTestId('gift-list-image').all()) {
-				const imageBox = await box(image);
-				expect(imageBox.width).toBeGreaterThanOrEqual(112);
-				expect(imageBox.width).toBeLessThanOrEqual(128);
+			for (const item of items) {
+				const imageBox = await box(item.getByTestId('gift-list-image'));
+				const itemBox = await box(item);
+				const border = await item.evaluate((element) =>
+					Number.parseFloat(getComputedStyle(element).borderTopWidth),
+				);
 				expect(imageBox.width).toBeCloseTo(imageBox.height, 0);
+				expect(imageBox.width).toBeCloseTo(itemBox.width - 2 * border, 0);
+				const contentBox = await box(item.getByTestId('gift-list-content'));
+				expect(contentBox.y).toBeGreaterThanOrEqual(imageBox.y + imageBox.height);
+				const reserve = item.getByTestId('reserve-button');
+				await expect(
+					item.getByTestId('gift-list-image').getByTestId('reserve-button'),
+				).toHaveCount(0);
+				await expect(
+					item.getByTestId('gift-action-row').getByTestId('reserve-button'),
+				).toBeVisible();
+				const reserveBox = await box(reserve);
+				expect(reserveBox.y + reserveBox.height).toBeLessThanOrEqual(
+					itemBox.y + itemBox.height - border,
+				);
 			}
 			const titleSizes = await list
 				.locator('h3')

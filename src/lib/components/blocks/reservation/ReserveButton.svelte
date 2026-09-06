@@ -9,7 +9,7 @@
 	interface ReserveButtonProps {
 		gift: GiftForVisitor;
 		isArchived?: boolean;
-		size?: 'md' | 'sm';
+		size?: 'sm' | 'md' | 'lg' | 'xl';
 		/** Extra classes on the underlying Button (issue #211: stacking this button
 		 *  with PurchasedToggle at equal width needs a `w-full` from the caller). */
 		class?: string;

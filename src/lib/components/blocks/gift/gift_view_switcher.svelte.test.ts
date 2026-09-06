@@ -173,6 +173,11 @@ describe('GiftViewSwitcher toggle selection (fixes: re-click deselects both item
 			expect(cardStyle.boxShadow).toBe(listStyle.boxShadow);
 			expect(parseFloat(cardStyle.borderWidth)).toBe(0);
 			expect(parseFloat(listStyle.borderWidth)).toBe(0);
+			const selectedSurface = card.querySelector('.elevation-surface') as HTMLElement;
+			const selectedSurfaceStyle = getComputedStyle(selectedSurface);
+			expect(parseFloat(selectedSurfaceStyle.borderWidth)).toBe(0);
+			expect(selectedSurfaceStyle.outlineStyle).toBe('none');
+			expect(selectedSurfaceStyle.backgroundColor).toBe('rgba(0, 0, 0, 0)');
 			expect(cardStyle.outlineStyle).toBe('solid');
 			expect(listStyle.outlineStyle).not.toBe('solid');
 			expect(card.querySelector('svg')!.getBoundingClientRect().y).toBeCloseTo(
