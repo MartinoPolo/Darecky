@@ -198,6 +198,14 @@ Rejected: Require account for all actions (too much friction), fully anonymous w
 
 ## UI & Theming
 
+### Dropdown viewport containment uses flip before unrestricted shift
+
+Decided: 2026-09-05
+What: Shared dropdown content and submenu wrappers use `sticky="always"`, an 8px collision boundary, and a viewport-only `max-height: calc(100dvh - 1rem)` with internal vertical scrolling. For explicitly always-sticky floating layers, the patched Bits UI middleware tries the preferred/opposite side before shifting on both axes; the package's default partial-sticky middleware order and limiter remain unchanged. Feature wrappers do not impose a shorter content cap based on space next to the trigger.
+Why: A dropdown that fits in the usable viewport should remain full-height and may move away from ideal trigger alignment. Shifting before flipping with cross-axis movement disabled could leave a full-height menu clipped when neither anchored side fit, while available-height-driven sizing would introduce unnecessary scrolling and geometry feedback.
+Removal criteria: Remove the dependency patch when Bits UI provides equivalent flip-before-unrestricted-shift behavior for always-sticky floating layers, with the shared viewport, submenu, and Select regression tests passing unchanged.
+Rejected: Custom virtual-anchor geometry; available-height-dependent shrinking; changing partial-sticky behavior; applying the dropdown exception to Popover without a demonstrated need.
+
 ### ~~Per-wishlist themes with 5 presets + custom~~ (superseded)
 
 Decided: 2026-05-29 — **Superseded 2026-07-10** by "Single theming system: 10 app palettes" below.
