@@ -198,6 +198,14 @@ Rejected: Require account for all actions (too much friction), fully anonymous w
 
 ## UI & Theming
 
+### Dropdown viewport containment uses flip before unrestricted shift
+
+Decided: 2026-09-05
+What: Shared dropdown content and submenu wrappers use `sticky="always"`, an 8px collision boundary, and a viewport-only `max-height: calc(100dvh - 1rem)` with internal vertical scrolling. For explicitly always-sticky floating layers, the patched Bits UI middleware tries the preferred/opposite side before shifting on both axes; the package's default partial-sticky middleware order and limiter remain unchanged. Feature wrappers do not impose a shorter content cap based on space next to the trigger.
+Why: A dropdown that fits in the usable viewport should remain full-height and may move away from ideal trigger alignment. Shifting before flipping with cross-axis movement disabled could leave a full-height menu clipped when neither anchored side fit, while available-height-driven sizing would introduce unnecessary scrolling and geometry feedback.
+Removal criteria: Remove the dependency patch when Bits UI provides equivalent flip-before-unrestricted-shift behavior for always-sticky floating layers, with the shared viewport, submenu, and Select regression tests passing unchanged.
+Rejected: Custom virtual-anchor geometry; available-height-dependent shrinking; changing partial-sticky behavior; applying the dropdown exception to Popover without a demonstrated need.
+
 ### ~~Per-wishlist themes with 5 presets + custom~~ (superseded)
 
 Decided: 2026-05-29 — **Superseded 2026-07-10** by "Single theming system: 10 app palettes" below.
@@ -214,9 +222,16 @@ Rejected: Per-wishlist mode (visitors should control their own viewing comfort).
 ### Wishlist settings use one staged draft and global save
 
 Decided: 2026-09-01
-What: The Details, Categories, Appearance, and Image/Crops tabs share one staged settings draft. A global Save button is visible from every tab, persists all dirty settings together, and closes only after complete success. Palette changes preview locally but persist only on Save. Tab switches preserve drafts; closing, leaving, launching Import, or starting a Danger action with unsaved changes offers Save and continue, Discard, or Continue editing. Import/Export and Danger remain immediate workflows rather than staged settings. Tab navigation is pinned in a shrink-proof, constant-height area above body-only scrolling; its labels are centered at equal-width desktop sizes, while narrower viewports keep one horizontally scrollable row. Tabs are ordered Details → Categories → Appearance → Image/Crops → Import/Export → Danger Zone.
+What: The Details, Categories, Appearance, and Image/Crops tabs share one staged settings draft. A global Save button is visible from every tab, persists all dirty settings together, and closes only after complete success. Palette changes preview locally but persist only on Save. Tab switches preserve drafts; closing, leaving, launching Import, or starting a Danger action with unsaved changes offers Save and continue, Discard, or Continue editing. Import/Export and Danger remain immediate workflows rather than staged settings. Category editing refreshes usage on entry and stays disabled until a fresh snapshot is available; tab switches preserve the draft without refetching. Usage counts remain live query metadata rather than editable draft fields. Tab navigation is pinned in a shrink-proof, constant-height area above body-only scrolling; its labels are centered at equal-width desktop sizes, while narrower viewports keep one horizontally scrollable row. Tabs are ordered Details → Categories → Appearance → Image/Crops → Import/Export → Danger Zone.
 Why: Per-tab persistence mixed immediate and staged behavior, making it unclear what was saved and allowing changes to be lost. One draft and one exit guard give every editable setting the same predictable lifecycle without incorrectly treating imports or destructive actions as form fields.
 Rejected: Per-tab save buttons; immediate palette persistence; prompts while switching tabs; staging import and destructive actions; a stretched vertical tablet tablist.
+
+### Color picker uses explicit local acceptance
+
+Decided: 2026-09-05
+What: The reusable color picker captures the accepted color whenever it opens. Presets, valid or invalid hex text, and native color-dialog results change only a picker-local draft. A valid changed draft reaches the owning form only through the picker's explicit Save; Cancel, Escape, outside dismissal, or becoming disabled discards it. Case-only differences are unchanged. In wishlist settings, accepting the picker still changes only the shared settings draft; the global settings Save remains the persistence boundary.
+Why: Dismissal was an ambiguous confirmation gesture, and immediate swatch changes obscured the distinction between choosing a color and saving settings.
+Rejected: Immediate commits from picker inputs; implicit acceptance on dismissal; making the reusable picker responsible for parent persistence.
 
 ### Three nav pages, no Dashboard
 

@@ -59,6 +59,54 @@ describe('FilterMenu facets', () => {
 		expect(getComputedStyle(uncheckedIndicator!).borderStyle).toBe('solid');
 	});
 
+	it('inherits viewport-only containment from shared dropdown content', async () => {
+		const definitions: FilterDefinition[] = [
+			{ id: 'available', menuLabel: 'Dostupné', checked: false, onchange: () => {} },
+		];
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		const screen = await render(
+			FilterMenu,
+			{ ...baseProps(), definitions },
+			{ baseElement: host },
+		);
+
+		await screen.getByRole('button', { name: 'Filtr' }).click();
+		const content = document.querySelector<HTMLElement>('[data-slot="dropdown-menu-content"]');
+		expect(content).not.toBeNull();
+		expect(getComputedStyle(content!).maxHeight).toBe(`${window.innerHeight - 16}px`);
+		expect(getComputedStyle(content!).overflowY).toBe('auto');
+	});
+
+	it('keeps a full-height constrained menu inside the viewport', async () => {
+		const definitions: FilterDefinition[] = Array.from({ length: 12 }, (_, index) => ({
+			id: `option-${index}`,
+			menuLabel: `Možnost ${index}`,
+			checked: false,
+			onchange: () => {},
+		}));
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		const screen = await render(
+			FilterMenu,
+			{ ...baseProps(), definitions },
+			{ baseElement: host },
+		);
+		const trigger = screen.getByRole('button', { name: 'Filtr' }).element();
+		trigger.style.position = 'fixed';
+		trigger.style.top = '50vh';
+		trigger.style.left = '50vw';
+		trigger.style.width = 'max-content';
+
+		await screen.getByRole('button', { name: 'Filtr' }).click();
+		const content = document.querySelector<HTMLElement>('[data-slot="dropdown-menu-content"]');
+		expect(content).not.toBeNull();
+		const rect = content!.getBoundingClientRect();
+		expect(rect.top).toBeGreaterThanOrEqual(7);
+		expect(rect.bottom).toBeLessThanOrEqual(window.innerHeight - 7);
+		expect(content!.clientHeight).toBe(content!.scrollHeight);
+	});
+
 	it('counts each selected facet value as one active filter and renders a pill', async () => {
 		const definitions: FilterDefinition[] = [
 			{ id: 'available', menuLabel: 'Dostupné', checked: true, onchange: () => {} },

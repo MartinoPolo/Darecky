@@ -106,7 +106,7 @@
 		<DropdownMenu.Content
 			{align}
 			preventScroll={false}
-			class="max-h-[min(32rem,calc(100dvh-2rem))] w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto"
+			class="w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)]"
 		>
 			<DropdownMenu.Group>
 				<DropdownMenu.GroupHeading class={groupHeadingClass} data-filter-group-heading>

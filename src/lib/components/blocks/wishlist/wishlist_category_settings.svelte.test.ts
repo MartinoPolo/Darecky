@@ -15,7 +15,9 @@ const remoteMocks = vi.hoisted(() => ({
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
 vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
 	getGiftCategorySettingsRows: vi.fn(() => ({
-		current: remoteMocks.categories,
+		get current() {
+			return remoteMocks.categories;
+		},
 		refresh: remoteMocks.refresh,
 	})),
 	saveGiftCategorySettingsCommand: remoteMocks.save,
@@ -68,6 +70,46 @@ beforeEach(() => {
 });
 
 describe('WishlistCategorySettings', () => {
+	it('refreshes stale usage before enabling removal and uses the fresh count', async () => {
+		remoteMocks.categories = [category({ customLabel: 'Sport', usedCount: 0 })];
+		let finishRefresh!: () => void;
+		remoteMocks.refresh.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					finishRefresh = () => {
+						remoteMocks.categories = [category({ customLabel: 'Sport', usedCount: 1 })];
+						resolve();
+					};
+				}),
+		);
+		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
+		const removeButton = screen.getByRole('button', { name: m.delete() });
+
+		await expect.element(removeButton).toBeDisabled();
+		finishRefresh();
+		await expect.element(removeButton).toBeEnabled();
+		await removeButton.click();
+
+		await expect.element(page.getByRole('dialog')).toBeVisible();
+		expect(page.getByRole('dialog').element().textContent).toContain('1');
+	});
+
+	it('keeps category controls disabled after a refresh failure and retries safely', async () => {
+		remoteMocks.categories = [category({ customLabel: 'Sport', usedCount: 0 })];
+		remoteMocks.refresh
+			.mockRejectedValueOnce(new Error('refresh failed'))
+			.mockResolvedValueOnce(undefined);
+		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
+
+		await expect.element(page.getByRole('alert')).toBeVisible();
+		await expect.element(screen.getByRole('button', { name: m.delete() })).toBeDisabled();
+		await page.getByRole('button', { name: m.import_wizard_retry() }).click();
+
+		await vi.waitFor(() => expect(remoteMocks.refresh).toHaveBeenCalledTimes(2));
+		await expect.element(screen.getByRole('button', { name: m.delete() })).toBeEnabled();
+		expect(page.getByRole('alert').elements()).toHaveLength(0);
+	});
+
 	it('shows a right-aligned compact usage count, including zero, beside every active category', async () => {
 		remoteMocks.categories = [
 			category({ id: 'custom', customLabel: 'Sport', usedCount: 0 }),
@@ -178,6 +220,8 @@ describe('WishlistCategorySettings', () => {
 			new Error(SERVER_ERROR.GIFT_CATEGORY_REMOVAL_CONFIRMATION_MISMATCH),
 		);
 		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
+		await vi.waitFor(() => expect(remoteMocks.refresh).toHaveBeenCalledOnce());
+		remoteMocks.refresh.mockClear();
 
 		await screen.getByRole('button', { name: m.delete() }).click();
 		await page.getByTestId('gift-category-remove-confirm').click();
@@ -285,18 +329,21 @@ describe('WishlistCategorySettings', () => {
 		await expect.element(checkbox).toBeChecked();
 	});
 
-	it('updates the custom card accent when the visible color picker changes', async () => {
+	it('updates the custom card accent only after explicit picker acceptance', async () => {
 		remoteMocks.categories = [
 			category({ id: 'custom', customLabel: 'Sport', color: '#0369A1' }),
 		];
 		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
 
 		await screen.getByRole('button', { name: 'Sport' }).click();
-		await page
-			.getByRole('dialog', { name: 'Sport' })
-			.getByRole('textbox', { name: m.color_picker_hex_label() })
-			.fill('#b91c1c');
+		const dialog = page.getByRole('dialog', { name: 'Sport' });
+		await dialog.getByRole('textbox', { name: m.color_picker_hex_label() }).fill('#b91c1c');
 
+		expect(getComputedStyle(settingsCard('Sport')!).borderLeftColor).toBe(
+			normalizeColor('#0369A1'),
+		);
+		expect(remoteMocks.save).not.toHaveBeenCalled();
+		await dialog.getByRole('button', { name: m.save() }).click();
 		await vi.waitFor(() =>
 			expect(getComputedStyle(settingsCard('Sport')!).borderLeftColor).toBe(
 				normalizeColor('#b91c1c'),
@@ -304,23 +351,26 @@ describe('WishlistCategorySettings', () => {
 		);
 	});
 
-	it('updates and persists the preset card accent through the visible color picker', async () => {
+	it('accepts the preset card accent explicitly before the parent form persists it', async () => {
 		remoteMocks.categories = [
 			category({
 				id: 'preset-enabled',
 				presetKey: preset.key,
 				customLabel: null,
-				color: preset.color,
+				color: '#0369A1',
 			}),
 		];
 		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
 
 		await screen.getByRole('button', { name: preset.labels.cs }).click();
-		await page
-			.getByRole('dialog', { name: preset.labels.cs })
-			.getByRole('textbox', { name: m.color_picker_hex_label() })
-			.fill('#7c3aed');
+		const dialog = page.getByRole('dialog', { name: preset.labels.cs });
+		await dialog.getByRole('textbox', { name: m.color_picker_hex_label() }).fill('#7c3aed');
 
+		expect(getComputedStyle(settingsCard(preset.labels.cs)!).borderLeftColor).toBe(
+			normalizeColor('#0369A1'),
+		);
+		expect(remoteMocks.save).not.toHaveBeenCalled();
+		await dialog.getByRole('button', { name: m.save() }).click();
 		await vi.waitFor(() =>
 			expect(getComputedStyle(settingsCard(preset.labels.cs)!).borderLeftColor).toBe(
 				normalizeColor('#7c3aed'),
@@ -373,7 +423,7 @@ describe('WishlistCategorySettings', () => {
 		);
 	});
 
-	it('persists a disabled preset recolor made in the same save', async () => {
+	it('persists a disabled preset recolor only after explicit picker acceptance', async () => {
 		remoteMocks.categories = [
 			category({
 				id: 'preset-disabled',
@@ -388,10 +438,13 @@ describe('WishlistCategorySettings', () => {
 
 		await screen.getByRole('checkbox', { name: preset.labels.cs }).click();
 		await screen.getByRole('button', { name: preset.labels.cs }).click();
-		await page
-			.getByRole('dialog', { name: preset.labels.cs })
-			.getByRole('textbox', { name: m.color_picker_hex_label() })
-			.fill('#2563eb');
+		const dialog = page.getByRole('dialog', { name: preset.labels.cs });
+		await dialog.getByRole('textbox', { name: m.color_picker_hex_label() }).fill('#2563eb');
+		expect(getComputedStyle(settingsCard(preset.labels.cs)!).borderLeftColor).toBe(
+			normalizeColor('#b91c1c'),
+		);
+		expect(remoteMocks.save).not.toHaveBeenCalled();
+		await dialog.getByRole('button', { name: m.save() }).click();
 		document.querySelector<HTMLFormElement>('#wishlist-categories-form')!.requestSubmit();
 
 		await vi.waitFor(() =>
@@ -458,7 +511,7 @@ describe('WishlistCategorySettings', () => {
 		);
 	});
 
-	it('lets managers change draft color and sends every active category color', async () => {
+	it('lets managers explicitly accept draft color before sending every active category color', async () => {
 		remoteMocks.categories = [
 			category({ id: 'custom', customLabel: 'Sport', color: '#0369A1' }),
 			category({
@@ -473,10 +526,13 @@ describe('WishlistCategorySettings', () => {
 		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
 
 		await screen.getByRole('button', { name: 'Sport' }).click();
-		await page
-			.getByRole('dialog', { name: 'Sport' })
-			.getByRole('textbox', { name: m.color_picker_hex_label() })
-			.fill('#b91c1c');
+		const dialog = page.getByRole('dialog', { name: 'Sport' });
+		await dialog.getByRole('textbox', { name: m.color_picker_hex_label() }).fill('#b91c1c');
+		expect(getComputedStyle(settingsCard('Sport')!).borderLeftColor).toBe(
+			normalizeColor('#0369A1'),
+		);
+		expect(remoteMocks.save).not.toHaveBeenCalled();
+		await dialog.getByRole('button', { name: m.save() }).click();
 		document.querySelector<HTMLFormElement>('#wishlist-categories-form')!.requestSubmit();
 
 		await vi.waitFor(() =>
