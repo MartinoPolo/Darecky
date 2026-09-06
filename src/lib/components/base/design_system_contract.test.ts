@@ -40,9 +40,37 @@ describe('design-system control contracts', () => {
 
 		expect(selectTrigger).toContain("size = 'md'");
 		expect(selectTrigger).toContain("size?: 'sm' | 'md' | 'lg'");
-		expect(selectTrigger).toContain('data-[size=sm]:h-(--size-control-sm)');
-		expect(selectTrigger).toContain('data-[size=md]:h-(--size-control-md)');
-		expect(selectTrigger).toContain('data-[size=lg]:h-(--size-control-lg)');
+		expect(selectTrigger).toContain('h-(--size-control-sm)');
+		expect(selectTrigger).toContain('h-(--size-control-md)');
+		expect(selectTrigger).toContain('h-(--size-control-lg)');
+		expect(selectTrigger).toContain('*:data-[slot=select-value]:flex');
+		expect(selectTrigger).toContain('*:data-[slot=select-value]:items-center');
+		expect(selectTrigger).toContain('*:data-[slot=select-value]:gap-1.5');
+		expect(selectTrigger).toContain('*:data-[slot=select-value]:line-clamp-1');
+		expect(selectTrigger).toContain('*:data-[slot=select-value]:min-w-0');
+		expect(selectTrigger).toContain("[&_svg:not([class*='size-'])]:size-4");
+		expect(selectTrigger).toContain('[&_svg]:pointer-events-none');
+		expect(selectTrigger).toContain('[&_svg]:shrink-0');
+		expect(selectTrigger).toContain('font-semibold');
+		expect(selectTrigger).toContain('data-placeholder:text-muted-foreground');
+	});
+
+	it('keeps Select triggers shrinkable inside constrained flex layouts', () => {
+		const selectTrigger = readSource('src/lib/components/base/select/select-trigger.svelte');
+
+		expect(selectTrigger).toMatch(/ownerBaseClasses = `[^`]*\bw-fit min-w-0 max-w-full\b/);
+	});
+
+	it('uses only phrasing markup inside the share method Button surface', () => {
+		const shareMethodButton = readSource(
+			'src/lib/components/blocks/sharing/ShareMethodButton.svelte',
+		);
+		const buttonContents = shareMethodButton.match(
+			/<Button\b[\s\S]*?>([\s\S]*?)<\/Button>/,
+		)?.[1];
+
+		expect(buttonContents).toBeDefined();
+		expect(buttonContents).not.toMatch(/<div\b/);
 	});
 
 	it('does not restore raw legacy control heights in migrated feature surfaces', () => {
@@ -54,6 +82,7 @@ describe('design-system control contracts', () => {
 			'src/lib/components/blocks/landing/LandingCallToAction.svelte',
 		);
 		const giftListItem = readSource('src/lib/components/blocks/gift/GiftListItem.svelte');
+		const appCss = readSource('src/app.css');
 
 		expect(selectTrigger).not.toMatch(/data-\[size=(?:default|sm)\]:h-(?:8|9)/);
 		expect(inputGroup).not.toMatch(/(?:^|\s)h-(?:8|9)(?:\s|$)/);
@@ -62,6 +91,26 @@ describe('design-system control contracts', () => {
 		expect(giftListItem).not.toMatch(
 			/<LikeButton[\s\S]*?class="[^"]*\bsize-9\b[^"]*"[\s\S]*?\/>/,
 		);
+		expect(appCss).toContain(
+			".elevation-owner-raised:is(:disabled, [aria-disabled='true'], [data-disabled]) {",
+		);
+		expect(appCss).toContain('pointer-events: none;');
+	});
+
+	it('keeps gift-link hover grouping scoped to the link owners', () => {
+		const giftLinkListVariants = readSource(
+			'src/lib/components/blocks/gift/gift_link_list_variants.ts',
+		);
+
+		expect(giftLinkListVariants).toContain(
+			"link: 'group inline-flex max-w-full rounded-full no-underline'",
+		);
+		expect(giftLinkListVariants).toContain("root: 'flex flex-wrap items-center gap-1.5'");
+		expect(giftLinkListVariants).toContain("root: 'flex flex-col gap-2'");
+		expect(giftLinkListVariants).not.toContain(
+			"root: 'group flex flex-wrap items-center gap-1.5'",
+		);
+		expect(giftLinkListVariants).not.toContain("root: 'group flex flex-col gap-2'");
 	});
 
 	it('uses muted-foreground as the only secondary-text role across source', () => {

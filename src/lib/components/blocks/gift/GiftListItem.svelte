@@ -132,10 +132,14 @@
 				size="md"
 				showCount={showLikeCount}
 				class={cn(
-					'absolute right-1 top-1 z-20 h-10 min-h-10 min-w-10 justify-center rounded-full border-2 border-ink bg-card p-0 shadow-sticker sm:right-2 sm:top-2',
+					'absolute right-1 top-1 z-20 h-10 min-h-10 min-w-10 rounded-full sm:right-2 sm:top-2',
+					showLikeCount ? 'w-10 max-sm:[&_[data-like-count]]:hidden sm:w-auto' : 'w-10',
+				)}
+				surfaceClass={cn(
+					'justify-center border-2 border-ink bg-card p-0 shadow-sticker',
 					showLikeCount
-						? 'w-10 gap-0 p-0 max-sm:[&_[data-like-count]]:hidden sm:w-auto sm:gap-1 sm:px-1.5'
-						: 'w-10 p-0',
+						? 'gap-0 max-sm:[&_[data-like-count]]:hidden sm:gap-1 sm:px-1.5'
+						: 'gap-0',
 				)}
 			/>
 		{/if}
@@ -226,7 +230,8 @@
 				{#if onmore}
 					<Button
 						intent="outline"
-						class="size-10 min-h-10 shrink-0 p-0 sm:hidden"
+						class="size-10 min-h-10 shrink-0 sm:hidden"
+						surfaceClass="p-0"
 						aria-label={m.gift_more_actions()}
 						data-testid="gift-more-actions"
 						onclick={(event) => {
@@ -242,7 +247,8 @@
 						{role}
 						{isArchived}
 						{onreceived}
-						class="min-h-10 min-w-0 flex-1 whitespace-normal px-1 text-xs leading-tight max-sm:min-h-11 [&_svg]:hidden sm:w-full sm:flex-none sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
+						class="min-h-10 min-w-0 flex-1 max-sm:min-h-11 sm:w-full sm:flex-none"
+						surfaceClass="whitespace-normal px-1 text-xs leading-tight [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
 					/>
 				{/if}
 				{#if isVisitorOrModerator && visitorGift}
@@ -254,6 +260,7 @@
 						{onreserve}
 						{onunreserve}
 						class={cn('min-h-10 w-full', canManage && 'max-sm:hidden')}
+						surfaceClass="gap-0 whitespace-normal px-1 text-xs leading-tight [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
 					/>
 				{/if}
 			</div>

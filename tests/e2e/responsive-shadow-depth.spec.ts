@@ -60,11 +60,20 @@ test('semantic depth stays responsive and color-only across representative wishl
 	await addGift(page, 'Representative raised gift');
 
 	const button = page.getByRole('button', { name: /Přidat dárek/ }).first();
-	const card = page.locator('[data-gift-item] .elevation-ordinary').first();
+	const card = page
+		.locator('[data-gift-item] .elevation-owner-raised > .elevation-surface')
+		.first();
 	const toolbar = page.locator('.wishlist-toolbar');
 	const tray = page.getByTestId('gift-view-switcher');
 	const account = page.getByRole('button', { name: new RegExp(user.name) });
-	const surfaces = [button, card, toolbar, tray, account];
+	// Semantic owners are intentionally shadowless and stationary; depth is paint on the surface.
+	const surfaces = [
+		button.locator(':scope > .elevation-surface'),
+		card,
+		toolbar,
+		tray,
+		account.locator(':scope > .elevation-surface'),
+	];
 
 	for (const { width, offset } of [
 		{ width: 390, offset: 3 },
@@ -139,23 +148,29 @@ test('semantic depth stays responsive and color-only across representative wishl
 	await page.mouse.move(0, 0);
 	await button.hover();
 	await page.mouse.down();
-	await expectOffset(button, 2);
+	await expectOffset(button.locator(':scope > .elevation-surface'), 2);
 	await page.mouse.move(0, 0);
 	await page.mouse.up();
 	await button.evaluate((element) => element.setAttribute('disabled', ''));
-	await expect.poll(() => shadowState(button).then(({ shadow }) => shadow)).toBe('none');
+	await expect
+		.poll(() =>
+			shadowState(button.locator(':scope > .elevation-surface')).then(({ shadow }) => shadow),
+		)
+		.toBe('none');
 	await button.evaluate((element) => element.removeAttribute('disabled'));
 
 	const restingBox = await account.boundingBox();
 	await account.click();
 	await expect(account).toHaveAttribute('aria-expanded', 'true');
-	await expectOffset(account, 4);
+	await expectOffset(account.locator(':scope > .elevation-surface'), 4);
 	const openBox = await account.boundingBox();
 	expect(Math.abs(openBox!.y - restingBox!.y)).toBeLessThan(0.25);
 	const accountLayers = await account.evaluate((element) => {
-		const avatar = element.querySelector('[data-slot="avatar"]') ?? element.firstElementChild;
+		const surface = element.querySelector(':scope > .elevation-surface');
+		const avatar = element.querySelector('[data-slot="avatar"]');
 		return {
-			button: shadowStateValue(getComputedStyle(element)),
+			owner: shadowStateValue(getComputedStyle(element)),
+			surface: surface === null ? null : shadowStateValue(getComputedStyle(surface)),
 			avatar: avatar === null ? null : shadowStateValue(getComputedStyle(avatar)),
 		};
 
@@ -166,8 +181,9 @@ test('semantic depth stays responsive and color-only across representative wishl
 			};
 		}
 	});
-	expect(accountLayers.button.shadow).not.toBe('none');
-	expect(accountLayers.button.borderWidth).toBeGreaterThan(0);
+	expect(accountLayers.owner).toEqual({ shadow: 'none', borderWidth: 0 });
+	expect(accountLayers.surface?.shadow).not.toBe('none');
+	expect(accountLayers.surface!.borderWidth).toBeGreaterThan(0);
 	expect(accountLayers.avatar).toEqual({ shadow: 'none', borderWidth: 0 });
 
 	await page.keyboard.press('Escape');

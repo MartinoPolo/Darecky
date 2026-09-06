@@ -72,7 +72,8 @@
 		<Button
 			intent="ghost"
 			size="icon-sm"
-			class="size-6 text-muted-foreground"
+			class="size-6"
+			surfaceClass="text-muted-foreground"
 			onclick={onDismiss}
 			aria-label="Dismiss"
 		>

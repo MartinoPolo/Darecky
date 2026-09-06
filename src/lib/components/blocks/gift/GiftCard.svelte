@@ -31,6 +31,7 @@
 	import { giftCardVariants } from './gift_card_variants.js';
 	import GiftDescription from './GiftDescription.svelte';
 	import GiftCategoryBadge from './GiftCategoryBadge.svelte';
+	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 
 	interface GiftCardProps {
 		gift: GiftByRole;
@@ -109,6 +110,7 @@
 </script>
 
 <div class={styles.card()}>
+	<ElevationSurface plate class={styles.plate()} />
 	<!-- Image area: dotted mat behind the photo; letterboxed photos keep the mat visible -->
 	<div
 		class={cn(styles.imageArea(), explicitImageFrameFill !== null && 'bg-[var(--frame-fill)]')}
@@ -164,7 +166,8 @@
 				likeCount={visitorGift.likeCount}
 				size="md"
 				countOverlay
-				class="absolute top-1 right-1 z-20 size-10 rounded-full border-2 border-ink bg-card p-0 shadow-sticker"
+				class="absolute top-1 right-1 z-20 size-10 rounded-full"
+				surfaceClass="border-2 border-ink bg-card p-0 shadow-sticker"
 			/>
 		{/if}
 	</div>
@@ -254,7 +257,8 @@
 						{role}
 						{isArchived}
 						{onreceived}
-						class="min-h-10 min-w-0 w-full shrink gap-0 whitespace-normal px-1 text-xs leading-tight max-sm:min-h-11 [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
+						class="min-h-10 min-w-0 w-full shrink max-sm:min-h-11"
+						surfaceClass="gap-0 whitespace-normal px-1 text-xs leading-tight [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
 					/>
 				{/if}
 				{#if isVisitorOrModerator && visitorGift}
@@ -266,12 +270,14 @@
 						{onreserve}
 						{onunreserve}
 						class={cn('min-h-10 w-full', canManage && 'max-sm:hidden')}
+						surfaceClass="gap-0 whitespace-normal px-1 text-xs leading-tight [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
 					/>
 				{/if}
 				{#if onmore}
 					<Button
 						intent="outline"
-						class="h-auto min-h-10 w-10 shrink-0 self-stretch p-0 sm:hidden"
+						class="h-auto min-h-10 w-10 shrink-0 self-stretch sm:hidden"
+						surfaceClass="p-0"
 						aria-label={m.gift_more_actions()}
 						data-testid="gift-more-actions"
 						onclick={(event) => {

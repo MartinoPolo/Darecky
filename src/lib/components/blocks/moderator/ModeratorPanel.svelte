@@ -360,7 +360,8 @@
 									<Button
 										size="sm"
 										intent="ghost"
-										class="text-destructive hover:text-destructive"
+										class=""
+										surfaceClass="text-destructive group-hover:text-destructive"
 										disabled={isRevokingClaimId === invite.id}
 										aria-label={m.claim_revoke_invite()}
 										onclick={() => handleRevokeClaim(invite.id)}
@@ -481,7 +482,8 @@
 								<Button
 									size="sm"
 									intent="ghost"
-									class="text-destructive hover:text-destructive"
+									class=""
+									surfaceClass="text-destructive group-hover:text-destructive"
 									disabled={isRevokingId === invite.id}
 									aria-label={m.moderator_revoke_invite()}
 									onclick={() => handleRevokeInvite(invite.id)}

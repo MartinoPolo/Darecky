@@ -1,13 +1,28 @@
 import { tv } from 'tailwind-variants';
 
 export const inputGroupButtonVariants = tv({
-	base: 'gap-2 text-sm flex items-center shadow-none',
+	slots: {
+		owner: 'inline-flex items-center text-sm',
+		surface: 'flex items-center shadow-none',
+	},
 	variants: {
 		size: {
-			xs: "h-6 gap-1 rounded-[calc(var(--radius)-5px)] px-1.5 [&>svg:not([class*='size-'])]:size-3.5",
-			sm: 'h-(--size-control-sm) gap-1.5 px-2 text-(length:--text-sm)',
-			'icon-xs': 'size-6 rounded-[calc(var(--radius)-5px)] p-0 has-[>svg]:p-0',
-			'icon-sm': 'size-8 p-0 has-[>svg]:p-0',
+			xs: {
+				owner: 'h-6 rounded-[calc(var(--radius)-5px)]',
+				surface: "gap-1 px-1.5 [&>svg:not([class*='size-'])]:size-3.5",
+			},
+			sm: {
+				owner: 'h-(--size-control-sm)',
+				surface: 'gap-1.5 px-2 text-(length:--text-sm)',
+			},
+			'icon-xs': {
+				owner: 'size-6 rounded-[calc(var(--radius)-5px)]',
+				surface: 'p-0 has-[>svg]:p-0',
+			},
+			'icon-sm': {
+				owner: 'size-8',
+				surface: 'p-0 has-[>svg]:p-0',
+			},
 		},
 	},
 	defaultVariants: {

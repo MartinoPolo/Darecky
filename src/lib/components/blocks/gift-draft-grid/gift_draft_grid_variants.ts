@@ -41,4 +41,4 @@ export const DRAFT_COL_LABEL_CLASS =
 
 /** Hover treatment for destructive icon buttons (remove row / remove link). */
 export const DRAFT_DESTRUCTIVE_HOVER_CLASS =
-	'hover:bg-[color-mix(in_oklch,var(--destructive)_12%,transparent)] hover:text-destructive';
+	'group-hover:bg-[color-mix(in_oklch,var(--destructive)_12%,transparent)] group-hover:text-destructive';

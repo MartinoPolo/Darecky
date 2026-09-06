@@ -60,7 +60,8 @@
 			onclick={cycleMode}
 			intent="outline"
 			size="md"
-			class="w-full justify-start"
+			class="w-full"
+			surfaceClass="justify-start"
 			aria-label={currentModeLabel}
 		>
 			{@render modeIcon()}

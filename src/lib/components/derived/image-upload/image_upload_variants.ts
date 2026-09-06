@@ -8,8 +8,9 @@ export const imageUploadVariants = tv({
 		progressBar: 'h-2 rounded-full bg-primary transition-all',
 		progressTrack: 'h-2 w-full rounded-full bg-muted',
 		errorText: 'text-sm text-destructive',
-		removeButton:
-			'absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm',
+		removeButtonOwner:
+			'absolute top-2 right-2 flex size-6 items-center justify-center rounded-full',
+		removeButtonSurface: 'bg-destructive text-destructive-foreground shadow-sm',
 	},
 	variants: {
 		state: {

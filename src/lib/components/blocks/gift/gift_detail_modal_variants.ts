@@ -76,13 +76,10 @@ export const giftDetailModalVariants = tv({
 		// `submitWrapper` already renders Save inline with the manager actions.
 		mobileSubmitFooter:
 			'shrink-0 border-t-2 border-dashed border-ink-faint bg-card px-5 py-4 sm:hidden',
-		// Stacked full-width buttons cancel the shared sticker hover-lift (#142):
-		// with only `gap-2` (8px) between them, the translate-based lift plus its
-		// spring overshoot can exceed the hit-area buffer at the shared edge,
-		// flickering lift/drop. Shadow-only hover keeps the sticker feel without
-		// the geometric cause; other Button usages are unaffected.
-		submitButton: 'w-full hover:translate-y-0',
-		releaseButton: 'order-1 sm:order-2 w-full hover:translate-y-0',
+		// Stacked full-width buttons keep the shared sticker hover state shadow-only;
+		// the button owner never moves.
+		submitButton: 'w-full',
+		releaseButton: 'order-1 sm:order-2 w-full',
 		// order-*: DOM order is [release, delete, submit] (mobile edit modal
 		// scroll fix, see `submitWrapper`); sm:order-* restores Save-first
 		// visually on desktop where all three sit in one pinned block.

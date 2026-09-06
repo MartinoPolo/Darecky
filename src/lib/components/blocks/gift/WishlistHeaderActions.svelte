@@ -72,7 +72,8 @@
 				{#if canShare}
 					<Button
 						intent="ghost"
-						class="min-h-11 w-full justify-start"
+						class="min-h-11 w-full"
+						surfaceClass="justify-start"
 						onclick={() => run(onshare)}
 					>
 						<ShareIcon data-icon="inline-start" />{m.wishlist_share_button()}
@@ -80,14 +81,16 @@
 				{/if}
 				<Button
 					intent="ghost"
-					class="min-h-11 w-full justify-start"
+					class="min-h-11 w-full"
+					surfaceClass="justify-start"
 					onclick={() => run(onmoderators)}
 				>
 					<UsersIcon data-icon="inline-start" />{m.wishlist_moderators_label()}
 				</Button>
 				<Button
 					intent="ghost"
-					class="min-h-11 w-full justify-start"
+					class="min-h-11 w-full"
+					surfaceClass="justify-start"
 					onclick={() => run(onsettings)}
 				>
 					<SettingsIcon data-icon="inline-start" />{m.wishlist_settings_title()}
@@ -95,7 +98,8 @@
 				{#if canEditImage}
 					<Button
 						intent="ghost"
-						class="min-h-11 w-full justify-start"
+						class="min-h-11 w-full"
+						surfaceClass="justify-start"
 						onclick={() => run(oneditimage)}
 					>
 						<ImageIcon data-icon="inline-start" />{m.wishlist_edit_image_label()}
@@ -104,7 +108,8 @@
 				{#if canEditRecipient}
 					<Button
 						intent="ghost"
-						class="min-h-11 w-full justify-start"
+						class="min-h-11 w-full"
+						surfaceClass="justify-start"
 						onclick={() => run(oneditrecipient)}
 					>
 						<UserRoundPenIcon
@@ -120,7 +125,8 @@
 				>
 					<Button
 						intent="ghost"
-						class="min-h-11 w-full justify-start text-destructive"
+						class="min-h-11 w-full"
+						surfaceClass="justify-start text-destructive"
 						onclick={() => run(onarchive)}
 					>
 						<ArchiveIcon data-icon="inline-start" />{m.wishlist_archive_button()}

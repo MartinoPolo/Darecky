@@ -8,8 +8,9 @@ import { tv } from 'tailwind-variants';
  */
 export const wishlistCardVariants = tv({
 	slots: {
-		root: 'elevation-ordinary group/card relative flex h-full cursor-pointer flex-col overflow-hidden rounded-panel border-[2.5px] border-ink bg-card transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) delay-0 motion-reduce:transition-none',
-		banner: 'relative flex h-32 shrink-0 flex-col items-start justify-end overflow-hidden border-b-[2.5px] border-ink p-3.5',
+		root: 'group/card relative isolate flex h-full cursor-pointer flex-col rounded-panel bg-card',
+		plate: 'elevation-ordinary pointer-events-none absolute inset-0 z-[1] rounded-panel border-[2.5px] border-ink bg-transparent transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard)',
+		banner: 'relative flex h-32 shrink-0 flex-col items-start justify-end overflow-hidden rounded-t-[calc(var(--radius-panel)-2.5px)] border-b-[2.5px] border-ink p-3.5',
 		/** Notebook dot pattern over the tint fallback (hidden when a real photo fills the banner). */
 		bannerPattern:
 			'pointer-events-none absolute inset-0 bg-[radial-gradient(var(--pattern-dot)_1.4px,transparent_1.5px)] bg-size-[18px_18px]',
@@ -42,11 +43,9 @@ export const wishlistCardVariants = tv({
 	variants: {
 		archived: {
 			true: {
-				root: 'opacity-70 grayscale-[0.7]',
+				root: 'opacity-70 grayscale-[0.7] bg-[color-mix(in_oklab,var(--card)_82%,var(--surface))]',
 			},
-			false: {
-				root: 'elevation-interactive',
-			},
+			false: { root: 'elevation-owner elevation-owner-raised' },
 		},
 	},
 	defaultVariants: {

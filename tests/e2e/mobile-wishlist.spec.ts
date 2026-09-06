@@ -105,16 +105,20 @@ async function expectContainedReceivedActions(page: Page) {
 			box(item),
 			box(receivedAction),
 			receivedAction.evaluate((action) => {
-				const labelNode = Array.from(action.childNodes).find(
-					(node) =>
-						node.nodeType === Node.TEXT_NODE &&
-						(node.textContent?.trim().length ?? 0) > 0,
-				);
-				if (labelNode === undefined) {
+				const surface = action.querySelector(':scope > .elevation-surface');
+				if (!(surface instanceof HTMLElement)) {
+					throw new Error('Received action has no direct elevation surface');
+				}
+				const walker = document.createTreeWalker(surface, NodeFilter.SHOW_TEXT);
+				let node = walker.nextNode();
+				while (node !== null && (node.textContent?.trim().length ?? 0) === 0) {
+					node = walker.nextNode();
+				}
+				if (node === null) {
 					throw new Error('Received action has no text label');
 				}
 				const range = document.createRange();
-				range.selectNodeContents(labelNode);
+				range.selectNodeContents(node);
 				const rect = range.getBoundingClientRect();
 				return { x: rect.x, width: rect.width };
 			}),
@@ -233,8 +237,22 @@ test.describe('mobile wishlist acceptance', () => {
 						'[data-testid="gift-card-image-pattern"]',
 					);
 					const title = frame.parentElement?.querySelector('h3');
+					const frameRect = frame.getBoundingClientRect();
+					const frameStyle = getComputedStyle(frame);
+					const borderTop = Number.parseFloat(frameStyle.borderTopWidth) || 0;
+					const borderRight = Number.parseFloat(frameStyle.borderRightWidth) || 0;
+					const borderBottom = Number.parseFloat(frameStyle.borderBottomWidth) || 0;
+					const borderLeft = Number.parseFloat(frameStyle.borderLeftWidth) || 0;
+					const contentBox = {
+						x: frameRect.x + borderLeft,
+						y: frameRect.y + borderTop,
+						width: frameRect.width - borderLeft - borderRight,
+						height: frameRect.height - borderTop - borderBottom,
+					};
 					return {
-						frame: { width: frame.clientWidth, height: frame.clientHeight },
+						contentBox,
+						frameRect: frameRect.toJSON(),
+						borders: { borderTop, borderRight, borderBottom, borderLeft },
 						imageFrame: imageFrame?.getBoundingClientRect().toJSON() ?? null,
 						fallback: fallback?.getBoundingClientRect().toJSON() ?? null,
 						patternDisplay: pattern === null ? null : getComputedStyle(pattern).display,
@@ -244,13 +262,26 @@ test.describe('mobile wishlist acceptance', () => {
 								: Number.parseFloat(getComputedStyle(title).fontSize),
 					};
 				});
-			expect(mobileImageState.imageFrame?.width).toBeCloseTo(mobileImageState.frame.width, 0);
-			expect(mobileImageState.imageFrame?.height).toBeCloseTo(
-				mobileImageState.frame.height,
-				0,
+			expect(mobileImageState.imageFrame?.width).toBeCloseTo(
+				mobileImageState.contentBox.width,
+				2,
 			);
-			expect(mobileImageState.fallback?.width).toBeCloseTo(mobileImageState.frame.width, 0);
-			expect(mobileImageState.fallback?.height).toBeCloseTo(mobileImageState.frame.height, 0);
+			expect(mobileImageState.imageFrame?.height).toBeCloseTo(
+				mobileImageState.contentBox.height,
+				2,
+			);
+			expect(mobileImageState.imageFrame?.x).toBeCloseTo(mobileImageState.contentBox.x, 2);
+			expect(mobileImageState.imageFrame?.y).toBeCloseTo(mobileImageState.contentBox.y, 2);
+			expect(mobileImageState.fallback?.width).toBeCloseTo(
+				mobileImageState.contentBox.width,
+				2,
+			);
+			expect(mobileImageState.fallback?.height).toBeCloseTo(
+				mobileImageState.contentBox.height,
+				2,
+			);
+			expect(mobileImageState.fallback?.x).toBeCloseTo(mobileImageState.contentBox.x, 2);
+			expect(mobileImageState.fallback?.y).toBeCloseTo(mobileImageState.contentBox.y, 2);
 			expect(mobileImageState.patternDisplay).toBe('none');
 			expect(mobileImageState.titleSize).toBeGreaterThanOrEqual(13);
 			expect(mobileImageState.titleSize).toBeLessThanOrEqual(15);

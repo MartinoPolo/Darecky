@@ -89,6 +89,7 @@
 				aria-label={labels[depth]()}
 				style={`--hard-shadow: var(--${depth}-shadow); --hard-shadow-strong: var(--${depth}-shadow-strong)`}
 				class={styles.choice()}
+				surfaceClass={styles.choiceSurface()}
 			>
 				{labels[depth]()}
 				<span

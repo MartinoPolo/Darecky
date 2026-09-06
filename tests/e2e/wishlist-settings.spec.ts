@@ -31,10 +31,12 @@ test.describe('Wishlist settings – non-image editing', () => {
 		await page.getByRole('button', { name: 'Nastavení seznamu' }).click();
 		const settings = page.getByRole('dialog', { name: 'Nastavení seznamu' });
 		await settings.getByRole('tab', { name: 'Kategorie' }).click();
-		await settings.getByRole('button', { name: 'Knihy' }).click();
+		await settings.getByRole('button', { name: 'Knihy' }).press('Enter');
 
 		const picker = page.getByRole('dialog', { name: 'Knihy' });
 		const group = picker.getByRole('group');
+		// Opening autofocus runs after mount and must finish before moving focus elsewhere.
+		await expect(group.getByRole('button').first()).toBeFocused();
 		const columns = await group.evaluate((element) =>
 			getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean),
 		);

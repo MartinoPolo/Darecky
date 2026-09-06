@@ -54,7 +54,10 @@
 		type WishlistRole,
 	} from '$lib/modules/wishlists/types.js';
 	import type { Palette } from '$lib/theme/palettes.js';
-	import { overlayCloseButtonClass } from '$lib/components/base/dialog/dialog_close_button.js';
+	import {
+		overlayCloseButtonClass,
+		overlayCloseButtonSurfaceClass,
+	} from '$lib/components/base/dialog/dialog_close_button.js';
 
 	interface WishlistSettingsModalProps {
 		open: boolean;
@@ -923,6 +926,7 @@
 			intent="ghost"
 			size="icon-sm"
 			class={overlayCloseButtonClass}
+			surfaceClass={overlayCloseButtonSurfaceClass}
 			onclick={() => handleOpenChange(false)}
 		>
 			<XIcon data-icon="inline-start" />

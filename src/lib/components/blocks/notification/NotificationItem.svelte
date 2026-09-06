@@ -68,8 +68,9 @@
 
 <Button
 	intent="ghost"
-	class={cn(
-		'flex h-auto w-full items-start gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors hover:bg-accent',
+	class="flex h-auto w-full rounded-[10px]"
+	surfaceClass={cn(
+		'items-start gap-3 px-3 py-2.5 text-left transition-colors group-hover:bg-accent',
 		!notification.read && 'bg-tint',
 	)}
 	onclick={handleClick}

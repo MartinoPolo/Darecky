@@ -88,6 +88,20 @@ function textOutsideOverlay(host: HTMLElement): string {
 	return clone.textContent ?? '';
 }
 
+function firstNonBlankTextNode(surface: HTMLElement): Text {
+	const walker = document.createTreeWalker(surface, NodeFilter.SHOW_TEXT);
+	let current = walker.nextNode();
+	while (current !== null) {
+		if ((current.textContent?.trim().length ?? 0) > 0) {
+			return current as Text;
+		}
+		current = walker.nextNode();
+	}
+	throw new Error(
+		`Expected a nonblank text node inside the direct elevation surface: ${surface.outerHTML}`,
+	);
+}
+
 function makeVisitorGift(overrides: Partial<GiftForVisitor> = {}): GiftForVisitor {
 	return {
 		id: 'gift-1',
@@ -1091,10 +1105,9 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 			directAction.getBoundingClientRect().height,
 			0,
 		);
-		const labelNode = Array.from(directAction.childNodes).find(
-			(node) =>
-				node.nodeType === Node.TEXT_NODE && (node.textContent?.trim().length ?? 0) > 0,
-		)!;
+		const labelNode = firstNonBlankTextNode(
+			directAction.querySelector(':scope > .elevation-surface') as HTMLElement,
+		);
 		const labelRange = document.createRange();
 		labelRange.selectNodeContents(labelNode);
 		const labelRect = labelRange.getBoundingClientRect();
@@ -1148,22 +1161,27 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		const visibleButtons = Array.from(
 			firstAction.parentElement!.querySelectorAll<HTMLButtonElement>('button'),
 		).filter((button) => getComputedStyle(button).display !== 'none');
-		const paintedLabels = visibleButtons.flatMap((button) =>
-			Array.from(button.childNodes)
-				.filter(
-					(node) =>
-						node.nodeType === Node.TEXT_NODE &&
-						(node.textContent?.trim().length ?? 0) > 0,
-				)
-				.map((node) => {
-					const range = document.createRange();
-					range.selectNodeContents(node);
-					return {
-						button: button.getBoundingClientRect(),
-						label: range.getBoundingClientRect(),
-					};
-				}),
-		);
+		const paintedLabels = visibleButtons.flatMap((button) => {
+			const surface = button.querySelector(':scope > .elevation-surface') as HTMLElement;
+			const node = (() => {
+				try {
+					return firstNonBlankTextNode(surface);
+				} catch {
+					return null;
+				}
+			})();
+			if (node === null) {
+				return [];
+			}
+			const range = document.createRange();
+			range.selectNodeContents(node);
+			return [
+				{
+					button: button.getBoundingClientRect(),
+					label: range.getBoundingClientRect(),
+				},
+			];
+		});
 
 		expect(visibleButtons).toHaveLength(2);
 		for (const { button, label } of paintedLabels) {
@@ -1198,10 +1216,9 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		const more = host.querySelector(
 			`[aria-label="${m.gift_more_actions()}"]`,
 		) as HTMLButtonElement;
-		const labelNode = Array.from(directAction.childNodes).find(
-			(node) =>
-				node.nodeType === Node.TEXT_NODE && (node.textContent?.trim().length ?? 0) > 0,
-		)!;
+		const labelNode = firstNonBlankTextNode(
+			directAction.querySelector(':scope > .elevation-surface') as HTMLElement,
+		);
 		const labelRange = document.createRange();
 		labelRange.selectNodeContents(labelNode);
 		const labelRect = labelRange.getBoundingClientRect();
