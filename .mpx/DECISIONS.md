@@ -226,6 +226,13 @@ What: The Details, Categories, Appearance, and Image/Crops tabs share one staged
 Why: Per-tab persistence mixed immediate and staged behavior, making it unclear what was saved and allowing changes to be lost. One draft and one exit guard give every editable setting the same predictable lifecycle without incorrectly treating imports or destructive actions as form fields.
 Rejected: Per-tab save buttons; immediate palette persistence; prompts while switching tabs; staging import and destructive actions; a stretched vertical tablet tablist.
 
+### Color picker uses explicit local acceptance
+
+Decided: 2026-09-05
+What: The reusable color picker captures the accepted color whenever it opens. Presets, valid or invalid hex text, and native color-dialog results change only a picker-local draft. A valid changed draft reaches the owning form only through the picker's explicit Save; Cancel, Escape, outside dismissal, or becoming disabled discards it. Case-only differences are unchanged. In wishlist settings, accepting the picker still changes only the shared settings draft; the global settings Save remains the persistence boundary.
+Why: Dismissal was an ambiguous confirmation gesture, and immediate swatch changes obscured the distinction between choosing a color and saving settings.
+Rejected: Immediate commits from picker inputs; implicit acceptance on dismissal; making the reusable picker responsible for parent persistence.
+
 ### Three nav pages, no Dashboard
 
 Decided: 2026-05-30 (revised from 2026-05-29) — **Revised 2026-08-07** by "Logged-in home: Přehled overview at /home" below (Moje seznamy is no longer the default/home page; the three nav pages themselves remain).

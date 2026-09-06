@@ -53,41 +53,53 @@ describe('ColorPicker', () => {
 		await expect.element(page.getByRole('dialog', { name: label })).not.toBeInTheDocument();
 	});
 
-	it('renders 20 keyboard-operable presets and exposes selection', async () => {
-		const screen = render(ColorPicker, { value: '#000000', label });
-		await screen.getByRole('button', { name: label }).click();
-		const group = page.getByRole('group', { name: m.color_picker_presets() });
+	it('stages presets locally and commits once only after Save', async () => {
+		const onValueChange = vi.fn();
+		const screen = render(ColorPicker, { value: '#000000', label, onValueChange });
+		const trigger = screen.getByRole('button', { name: label });
+		await trigger.click();
+		const dialog = page.getByRole('dialog', { name: label });
+		const group = dialog.getByRole('group', { name: m.color_picker_presets() });
 		const swatches = Array.from(group.element().querySelectorAll('button'));
 		const black = group.getByRole('button', { name: '#000000' });
 		const white = group.getByRole('button', { name: '#FFFFFF' });
+		const save = dialog.getByRole('button', { name: m.save() });
 
 		expect(swatches).toHaveLength(20);
 		expect(swatches.every((swatch) => swatch.tabIndex === 0 && !swatch.disabled)).toBe(true);
 		await expect.element(black).toHaveAttribute('aria-pressed', 'true');
-		expect(black.element().nextElementSibling).toBe(white.element());
+		await expect.element(save).toBeDisabled();
 
 		white.element().focus();
 		expect(document.activeElement).toBe(white.element());
-		await userEvent.keyboard('{Enter}');
+		await white.click();
 		await expect.element(white).toHaveAttribute('aria-pressed', 'true');
 		await expect.element(black).toHaveAttribute('aria-pressed', 'false');
+		await expect.element(save).toBeEnabled();
+		expect(onValueChange).not.toHaveBeenCalled();
+		expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(0, 0, 0)');
+
+		await save.click();
+		expect(onValueChange).toHaveBeenCalledOnce();
+		expect(onValueChange).toHaveBeenCalledWith('#FFFFFF');
+		await expect.element(dialog).not.toBeInTheDocument();
+		expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(255, 255, 255)');
+		expect(document.activeElement).toBe(trigger.element());
 	});
 
-	it('commits a preset six-digit color and updates the trigger', async () => {
+	it('treats restoring the opening color with different casing as unchanged', async () => {
 		const onValueChange = vi.fn();
-		const screen = render(ColorPicker, { value: '#0369A1', label, onValueChange });
-		const trigger = screen.getByRole('button', { name: label });
-		await trigger.click();
+		const screen = render(ColorPicker, { value: '#aabbcc', label, onValueChange });
+		await screen.getByRole('button', { name: label }).click();
 		const dialog = page.getByRole('dialog', { name: label });
-		const initialSwatch = dialog.getByRole('button', { name: '#0369A1' });
-		const chosenSwatch = dialog.getByRole('button', { name: '#B91C1C' });
+		const hex = dialog.getByRole('textbox', { name: m.color_picker_hex_label() });
+		const save = dialog.getByRole('button', { name: m.save() });
 
-		await expect.element(initialSwatch).toHaveAttribute('aria-pressed', 'true');
-		await chosenSwatch.click();
-		expect(onValueChange).toHaveBeenCalledWith('#B91C1C');
-		await expect.element(initialSwatch).toHaveAttribute('aria-pressed', 'false');
-		await expect.element(chosenSwatch).toHaveAttribute('aria-pressed', 'true');
-		expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(185, 28, 28)');
+		await hex.fill('#FFFFFF');
+		await expect.element(save).toBeEnabled();
+		await hex.fill('#AABBCC');
+		await expect.element(save).toBeDisabled();
+		expect(onValueChange).not.toHaveBeenCalled();
 	});
 
 	it('closes without changing value when disabled while open', async () => {
@@ -104,21 +116,59 @@ describe('ColorPicker', () => {
 		expect(onValueChange).not.toHaveBeenCalled();
 	});
 
-	it('commits valid custom hex but keeps the committed color for invalid text', async () => {
+	it('shows localized validation and only enables Save for a valid changed hex draft', async () => {
 		const onValueChange = vi.fn();
 		const screen = render(ColorPicker, { value: '#0369A1', label, onValueChange });
 		const trigger = screen.getByRole('button', { name: label });
 		await trigger.click();
 		const dialog = page.getByRole('dialog', { name: label });
 		const hex = dialog.getByRole('textbox', { name: m.color_picker_hex_label() });
+		const save = dialog.getByRole('button', { name: m.save() });
 
 		await hex.fill('#12');
+		await expect.element(hex).toHaveAttribute('aria-invalid', 'true');
+		await expect.element(dialog.getByText(m.color_picker_hex_invalid())).toBeVisible();
+		await expect.element(save).toBeDisabled();
 		expect(onValueChange).not.toHaveBeenCalled();
 		expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(3, 105, 161)');
+
 		await hex.fill('#AABBCC');
-		expect(onValueChange).toHaveBeenLastCalledWith('#AABBCC');
-		expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(170, 187, 204)');
+		await expect.element(hex).not.toHaveAttribute('aria-invalid', 'true');
+		await expect.element(save).toBeEnabled();
+		await save.click();
+		expect(onValueChange).toHaveBeenCalledOnce();
+		expect(onValueChange).toHaveBeenCalledWith('#AABBCC');
 	});
+
+	it.each(['Cancel', 'Escape', 'outside dismissal'])(
+		'discards the draft on %s',
+		async (dismissal) => {
+			const onValueChange = vi.fn();
+			const screen = render(ColorPicker, { value: '#0369A1', label, onValueChange });
+			const trigger = screen.getByRole('button', { name: label });
+			await trigger.click();
+			const dialog = page.getByRole('dialog', { name: label });
+			await dialog.getByRole('button', { name: '#B91C1C' }).click();
+
+			if (dismissal === 'Cancel') {
+				await dialog.getByRole('button', { name: m.cancel() }).click();
+			} else if (dismissal === 'Escape') {
+				await userEvent.keyboard('{Escape}');
+			} else {
+				await userEvent.click(document.body);
+			}
+
+			await expect.element(dialog).not.toBeInTheDocument();
+			expect(onValueChange).not.toHaveBeenCalled();
+			expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(3, 105, 161)');
+			expect(document.activeElement).toBe(trigger.element());
+
+			await trigger.click();
+			await expect
+				.element(page.getByRole('textbox', { name: m.color_picker_hex_label() }))
+				.toHaveValue('#0369A1');
+		},
+	);
 
 	it('opens the native fallback from the visible translated action', async () => {
 		const screen = render(ColorPicker, { value: '#0369A1', label });
@@ -131,13 +181,32 @@ describe('ColorPicker', () => {
 		expect(fallbackClick).toHaveBeenCalledOnce();
 	});
 
-	it('commits valid arbitrary colors emitted by the visually hidden native boundary', async () => {
+	it('stages native input while open and ignores stale events while closed or disabled', async () => {
 		const onValueChange = vi.fn();
-		render(ColorPicker, { value: '#0369A1', label, onValueChange });
+		const screen = render(ColorPicker, { value: '#0369A1', label, onValueChange });
+		const trigger = screen.getByRole('button', { name: label });
 		const fallback = nativeFallback();
 
 		fallback.value = '#7c3aed';
 		fallback.dispatchEvent(new Event('input', { bubbles: true }));
+		expect(onValueChange).not.toHaveBeenCalled();
+
+		await trigger.click();
+		fallback.value = '#7c3aed';
+		fallback.dispatchEvent(new Event('input', { bubbles: true }));
+		const dialog = page.getByRole('dialog', { name: label });
+		await expect
+			.element(dialog.getByRole('textbox', { name: m.color_picker_hex_label() }))
+			.toHaveValue('#7c3aed');
+		expect(onValueChange).not.toHaveBeenCalled();
+		await dialog.getByRole('button', { name: m.save() }).click();
+		expect(onValueChange).toHaveBeenCalledOnce();
 		expect(onValueChange).toHaveBeenCalledWith('#7c3aed');
+
+		await trigger.click();
+		await screen.rerender({ value: '#7c3aed', label, disabled: true, onValueChange });
+		fallback.value = '#ffffff';
+		fallback.dispatchEvent(new Event('input', { bubbles: true }));
+		expect(onValueChange).toHaveBeenCalledOnce();
 	});
 });

@@ -311,6 +311,7 @@
 
 <form id="wishlist-categories-form" class="flex flex-col gap-5" onsubmit={save}>
 	<p class="text-sm text-muted-foreground">{m.gift_categories_settings_hint()}</p>
+	<HelpText>{m.gift_category_color_save_hint()}</HelpText>
 
 	<div class="flex flex-col gap-2">
 		<h3 class="text-base font-semibold">{m.gift_category_create()}</h3>
