@@ -289,7 +289,8 @@ async function expectSafeClick(page: Page, control: Locator) {
 }
 
 test.describe('Issue #346 stable hover hit regions', () => {
-	test.describe.configure({ timeout: 180_000 });
+	// Headed Chromium contexts share the display pointer; concurrent windows can steal hover.
+	test.describe.configure({ mode: 'default', timeout: 180_000 });
 
 	test('focused gift consumers retain nested hit targets at 1/soft', async ({
 		request,

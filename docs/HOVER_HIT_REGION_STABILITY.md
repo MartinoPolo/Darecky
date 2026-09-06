@@ -21,7 +21,7 @@ Inverse transforms, counter-motion custom properties, JavaScript style synchroni
 
 The contract is applied to shared Button and raised Select triggers, Sort and Grouping, depth choices, Like sticker buttons, full-row gift links, dashboard wishlist cards/list rows, gift cards, dialog close, account menu trigger, and reorder grips. Flat form selects and ghost/link/chip presentations retain their existing flat treatment.
 
-The focused Playwright suite verifies stationary lower-edge reachability, event counts, frame samples, contiguous sweeps, nested controls, held press, activation, anchored-open behavior, and real browser zoom/depth matrices. Motion tests read the visual surface while separately asserting the owner bounding box stays fixed.
+The focused Playwright suite verifies stationary lower-edge reachability, event counts, frame samples, contiguous sweeps, nested controls, held press, activation, anchored-open behavior, and real browser zoom/depth matrices. Its headed-browser tests run sequentially because concurrent Chromium windows share the display pointer and can interfere with hover samples. Motion tests read the visual surface while separately asserting the owner bounding box stays fixed.
 
 ## Evidence
 
