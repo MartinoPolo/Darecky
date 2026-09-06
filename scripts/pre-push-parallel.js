@@ -3,13 +3,12 @@ import { runParallelChecks } from './lib/run-parallel-checks.mjs';
 
 const totalStart = performance.now();
 
-execSync('pnpm exec svelte-kit sync', { stdio: 'ignore' });
+console.log('Pre-push: typecheck and Fallow; full lint and test suites run in CI.');
+execSync('pnpm exec svelte-kit sync', { stdio: 'inherit' });
 
 const commands = [
 	{ name: 'fallow', command: 'pnpm check:fallow' },
 	{ name: 'typecheck', command: 'pnpm exec svelte-check --tsconfig ./tsconfig.json' },
-	{ name: 'eslint', command: 'pnpm exec eslint --cache .' },
-	{ name: 'vitest', command: 'pnpm test run --project client --project server' },
 ];
 
 const results = await runParallelChecks(commands);

@@ -398,16 +398,16 @@ Rejected: Two tiers only (blocks get mixed with primitives), four tiers (over-en
 ### Fallow for dead-code detection (replaces knip)
 
 Decided: 2026-05-30
-What: Use fallow with regression baseline gating. Run in check:all and pre-push (parallel). Suppressions via `// fallow-ignore-next-line <rule>` and `/** @public */`. Stale suppressions are errors.
+What: Use fallow with regression baseline gating. Run in check:all, CI, and pre-push. Suppressions via `// fallow-ignore-next-line <rule>` and `/** @public */`. Stale suppressions are errors.
 Why: Fallow provides richer analysis than knip (unused exports, circular deps, complexity, boundary violations). Grovekeeper uses it successfully.
 Rejected: knip (less capable, being replaced across projects).
 
-### Pre-push parallel checks
+### Fast local pre-push; comprehensive CI checks
 
-Decided: 2026-05-30
-What: Pre-push hook runs fallow, svelte-check, eslint, and vitest in parallel via a Node script. Pre-commit stays lightweight (lint-staged: oxlint + prettier only).
-Why: Fast feedback before pushing without blocking commits during active development.
-Rejected: All checks in pre-commit (too slow, blocks flow), no pre-push checks (regressions reach CI).
+Decided: 2026-05-30 — Revised to target under a minute for local pre-push.
+What: Pre-push prepares SvelteKit types, then runs typechecking and Fallow in parallel. Run the same gate manually with `pnpm run check:prepush`. A fresh checkout needs `pnpm run paraglide:compile` before these checks; regenerate translations after catalog changes. Pre-commit remains lint-staged (Oxlint + Prettier). Full ESLint and test suites no longer run on push. Comprehensive static analysis, migration checks, and unit/browser/E2E suites remain CI gates; `pnpm run check:all` and the test scripts remain available for explicit local verification.
+Why: Measurements identified uncached ESLint and the test suite as the expensive parts. Typechecking and Fallow together met the local latency target while preserving useful type and dead-code feedback. The target is not a hard timeout or a guarantee on every machine.
+Rejected: Keeping full lint/tests in pre-push (slow even in parallel), removing typechecking and Fallow (unnecessary loss of useful feedback), skipping failed checks to meet a timeout (false green).
 
 ### Symlink four rules from mpx-claude-code
 

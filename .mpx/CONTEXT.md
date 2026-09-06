@@ -110,7 +110,7 @@ _Avoid_: "list" for Wishlist (ambiguous), "present" for Gift (confusing with tim
 - Deployed on Cloudflare Workers (free) + Neon Postgres (free) + Cloudflare R2 (free, presigned URLs for uploads) + Resend (free).
 - Uses SvelteKit remote functions (query/form/command) for all client-server communication.
 - BetterAuth with `better-auth/minimal` (edge-compatible); guarded remote function wrappers for auth-protected endpoints.
-- Fallow for dead-code detection (replaces knip); regression-gated in CI and pre-push.
+- Fallow for dead-code detection (replaces knip); regression-gated in CI and pre-push; pre-push keeps typechecking and Fallow, leaving full lint and test suites to CI.
 - Component tiers: `base/` (shadcn), `derived/` (reusable wrappers), `blocks/` (feature-level). All new components use `tailwind-variants` pattern.
 - Domain modules at `src/lib/modules/` — each owns types, remote functions, context (`createContext` API), and public API.
 - English URL slugs. Supported currencies: CZK (default), EUR, USD.

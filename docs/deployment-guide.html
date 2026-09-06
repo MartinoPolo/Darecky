@@ -842,13 +842,15 @@
 					</p>
 
 					<div class="callout warn">
-						<span class="label">check:all is a long chain</span> It runs as one
-						<code>&amp;&amp;</code> chain, so it stops at the <i>first</i> failing tool
-						and hides the rest.
-						<b>The local pre-push hook runs a lighter subset</b> (fallow, typecheck,
-						eslint, vitest) – so a push can pass locally yet fail CI on
-						prettier/stylelint/coverage. When CI is red, read the failing step in the
-						Actions log; fix it before expecting a production merge to go through.
+						<span class="label">Fast local checks, full CI gates</span>
+						<b>The local pre-push hook runs typechecking and Fallow in parallel</b>
+						after SvelteKit preparation, targeting under a minute. Run it manually with
+						<code>pnpm run check:prepush</code>. On a fresh checkout or after catalog
+						changes, first run <code>pnpm run paraglide:compile</code>. Full lint and
+						test suites remain in CI; run <code>pnpm run check:all</code>
+						and the test scripts explicitly when needed. A successful push is not a full
+						verification result. When CI is red, read the failing step in the Actions
+						log; fix it before expecting a production merge to go through.
 						<i
 							>History: the <code>[dev, main]</code> trigger was dead (no
 							<code>main</code> branch) and was corrected; a stale

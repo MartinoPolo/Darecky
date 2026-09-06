@@ -12,6 +12,7 @@
 		"paraglide:compile": "node ./scripts/paraglide-compile.mjs",
 		"check": "pnpm paraglide:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"typecheck": "pnpm check",
+		"check:prepush": "node scripts/pre-push-parallel.js",
 		"check:fast": "prettier --write --log-level warn . && oxlint",
 		"check:all": "pnpm paraglide:compile && svelte-kit sync && prettier --write . && node scripts/check-all-parallel.mjs",
 		"check:fallow": "node scripts/fallow-check.js",
