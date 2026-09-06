@@ -954,6 +954,81 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 	});
 });
 
+describe('GiftListItem desktop bordered card geometry (issue #360)', () => {
+	it.each([640, 768, 1440])(
+		'keeps the complete horizontal card enclosed at %d px',
+		async (viewport) => {
+			await page.viewport(viewport, 900);
+			const host = document.createElement('div');
+			host.style.width = `${Math.min(viewport - 24, 900)}px`;
+			document.body.appendChild(host);
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						description:
+							'Lehká myš pro dlouhé hraní, ideálně v černé barvě a s tichými spínači.',
+						links: [
+							{ url: 'https://www.alza.cz/gaming/dlouhy-nazev-produktu' },
+							{ url: 'https://www.mall.cz/alternativni-produkt' },
+						],
+						price: 2499,
+						currency: 'CZK',
+						quantity: 3,
+						reservedCount: 1,
+						reserverNames: ['Babička'],
+					}),
+					role: WISHLIST_ROLES.moderator,
+					onreceived: () => {},
+					onreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			const itemStyle = getComputedStyle(item);
+			const itemRect = item.getBoundingClientRect();
+			const imageRect = image.getBoundingClientRect();
+			const contentRect = content.getBoundingClientRect();
+
+			expect(itemStyle.borderTopWidth).toBe('2px');
+			expect(itemStyle.borderRightWidth).toBe('2px');
+			expect(itemStyle.borderBottomWidth).toBe('2px');
+			expect(itemStyle.borderLeftWidth).toBe('2px');
+			expect(itemStyle.borderTopLeftRadius).toBe('16px');
+			expect(itemStyle.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+			expect(itemStyle.boxShadow).not.toBe('none');
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(imageRect.top).toBeCloseTo(itemRect.top + 2, 0);
+			expect(imageRect.bottom).toBeCloseTo(itemRect.bottom - 2, 0);
+			expect(contentRect.left).toBeCloseTo(imageRect.right, 0);
+			expect(Number.parseFloat(getComputedStyle(content).paddingRight)).toBeGreaterThan(0);
+			expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+			expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+			expect(host.textContent).toContain(REALISTIC_LONG_NAME);
+			expect(host.textContent).toContain('alza.cz');
+			expect(host.textContent).toContain('Babička');
+			expect(host.querySelector('[data-testid="gift-state-overlay"]')).toBeTruthy();
+			expect(host.querySelector('[data-testid="gift-received-toggle"]')).toBeTruthy();
+			expect(host.querySelector('[data-testid="reserve-button"]')).toBeTruthy();
+			expect(host.querySelector('[data-testid="gift-more-actions"]')).toBeTruthy();
+
+			for (const action of host.querySelectorAll<HTMLElement>(
+				'[data-testid="gift-list-actions"] button',
+			)) {
+				const actionRect = action.getBoundingClientRect();
+				expect(actionRect.left).toBeGreaterThanOrEqual(contentRect.left);
+				expect(actionRect.right).toBeLessThanOrEqual(itemRect.right - 2);
+				expect(actionRect.bottom + 3).toBeLessThanOrEqual(itemRect.bottom - 2);
+			}
+			host.remove();
+		},
+	);
+});
+
 describe('GiftListItem reservation-action layout (issue #211)', () => {
 	it('stacks the mark-as-bought and cancel-reservation actions vertically at equal width', async () => {
 		await page.viewport(800, 720);

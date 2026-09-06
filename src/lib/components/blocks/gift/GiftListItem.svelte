@@ -88,16 +88,15 @@
 <div class="gift-list-query-container w-full">
 	<div
 		data-testid="gift-list-item"
-		class="gift-list-item group grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors sm:h-auto sm:items-center sm:gap-4 sm:rounded-none sm:border-x-0 sm:border-t-0 sm:border-b sm:border-border sm:bg-transparent sm:py-3 sm:shadow-none sm:hover:bg-muted/50"
+		class="gift-list-item group grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors hover:bg-muted/50"
 	>
-		<!-- 1:1 crop (#189, reverts the interim 4:3 list thumb from #183): large thumb
-	     at every width (clamp maxes at 9.5rem for all viewports ≥ sm). -->
+		<!-- The 1:1 thumb fills the card's inner height in the normal horizontal layout. -->
 		<div
 			data-testid="gift-list-image"
-			class="gift-list-image relative aspect-square self-start border-r-2 border-ink sm:border-0 sm:self-center"
+			class="gift-list-image relative aspect-square self-start border-r-2 border-ink"
 		>
 			<GiftImage
-				class="gift-list-image-frame size-full rounded-l-[calc(var(--radius-panel)-2px)] rounded-r-none max-sm:[&_img]:p-0 sm:rounded-lg"
+				class="gift-list-image-frame size-full rounded-l-[calc(var(--radius-panel)-2px)] rounded-r-none max-sm:[&_img]:p-0"
 				imageUrl={imageSrc}
 				imageMeta={gift.imageMeta}
 				target="thumb"
@@ -107,7 +106,7 @@
 			{#if isDimmed}
 				<div
 					data-testid="gift-reserved-veil"
-					class="absolute inset-0 rounded-l-[calc(var(--radius-panel)-2px)] rounded-r-none bg-reserved-veil sm:rounded-lg"
+					class="absolute inset-0 rounded-l-[calc(var(--radius-panel)-2px)] rounded-r-none bg-reserved-veil"
 					aria-hidden="true"
 				></div>
 			{/if}
@@ -166,7 +165,7 @@
 		<div
 			data-testid="gift-list-content"
 			class={cn(
-				'flex min-w-0 flex-col gap-0.5 self-stretch p-[6.5px] sm:gap-1 sm:p-0',
+				'flex min-w-0 flex-col gap-0.5 self-stretch p-[6.5px] sm:gap-1',
 				isDimmed && 'opacity-55 grayscale-50',
 			)}
 		>
@@ -299,10 +298,7 @@
 
 	@media (min-width: 640px) {
 		.gift-list-item {
-			--gift-list-image-size: clamp(128px, 24cqi, 152px);
-			box-sizing: border-box;
-			grid-template-columns: var(--gift-list-image-size) minmax(0, 1fr);
-			height: auto;
+			--gift-list-image-size: clamp(198px, 30cqi, 208px);
 		}
 	}
 
