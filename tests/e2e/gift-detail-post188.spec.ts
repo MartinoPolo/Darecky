@@ -283,9 +283,9 @@ test.describe('Issue #328 gift-state matrix and post-#188/#189 detail gaps', () 
 		await recipientPage.reload();
 		const recipientGift = gift(recipientPage, giftName);
 		await recipientGift.getByRole('button', { name: 'Označit jako přijatý' }).click();
-		await expect(recipientGift.getByText('Přijato', { exact: true })).toBeVisible({
-			timeout: 10_000,
-		});
+		await expect(
+			recipientGift.locator('[data-state-primary][data-state-kind="received"]'),
+		).toHaveText('Přijato', { timeout: 10_000 });
 		await expect(recipientPage.getByRole('dialog')).toHaveCount(0);
 		await expect(recipientGift.getByTestId('release-reservation-button')).toHaveCount(0);
 
@@ -295,14 +295,16 @@ test.describe('Issue #328 gift-state matrix and post-#188/#189 detail gaps', () 
 		).toBeVisible({
 			timeout: 10_000,
 		});
-		await expect(recipientGift.getByText('Přijato', { exact: true })).toHaveCount(0);
+		await expect(
+			recipientGift.locator('[data-state-primary][data-state-kind="received"]'),
+		).toHaveCount(0);
 		await expect(
 			recipientPage.getByRole('heading', { name: 'Obdržené', exact: true }),
 		).toHaveCount(0);
 		await recipientGift.getByRole('button', { name: 'Označit jako přijatý' }).click();
-		await expect(recipientGift.getByText('Přijato', { exact: true })).toBeVisible({
-			timeout: 10_000,
-		});
+		await expect(
+			recipientGift.locator('[data-state-primary][data-state-kind="received"]'),
+		).toHaveText('Přijato', { timeout: 10_000 });
 
 		await assertReceivedSectionOrder(recipientPage, giftName, activeGiftNames);
 		await assertOverlayInCardAndList(recipientPage, giftName, {

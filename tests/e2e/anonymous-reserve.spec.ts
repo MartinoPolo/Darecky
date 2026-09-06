@@ -130,7 +130,7 @@ test.describe('Anonymous visitor reservation', () => {
 		expect(reserveBounds).not.toBeNull();
 		expect(likeBounds).not.toBeNull();
 		expect(moreActionsBounds).not.toBeNull();
-		await expect(mobileListItem.getByRole('link', { name: /example\.com/ })).toHaveCount(0);
+		await expect(mobileListItem.getByRole('link', { name: /example\.com/ })).toBeVisible();
 		expect(imageBounds!.width).toBeGreaterThanOrEqual(128);
 		expect(imageBounds!.width).toBeLessThanOrEqual(152);
 		// 1:1 list/reservation crop (issue #189, reverting the interim 4:3 list thumb

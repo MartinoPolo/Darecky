@@ -231,7 +231,10 @@ test.describe('issue #269 integrated motion strategy', () => {
 		expect(sourceRectangle).not.toBeNull();
 		await clearRecordedAnimations(page);
 		await moving.getByRole('button', { name: 'Označit jako přijatý' }).click();
-		await expect(moving.getByText('Přijato', { exact: true })).toBeVisible({ timeout: 10_000 });
+		await expect(moving.locator('[data-state-primary][data-state-kind="received"]')).toHaveText(
+			'Přijato',
+			{ timeout: 10_000 },
+		);
 		const destinationRectangle = await moving.boundingBox();
 		expect(destinationRectangle).not.toBeNull();
 
@@ -278,7 +281,9 @@ test.describe('issue #269 integrated motion strategy', () => {
 		expect(receivedAnimations.some((animation) => animation.duration === 520)).toBe(true);
 		await expectCleanSettlement(page);
 		await expect(
-			giftItems(page).filter({ has: page.getByText('Přijato', { exact: true }) }),
+			giftItems(page).filter({
+				has: page.locator('[data-state-primary][data-state-kind="received"]'),
+			}),
 		).toHaveCount(1);
 
 		// Reverse is the idempotent cleanup and must restore focus without changing scroll.
