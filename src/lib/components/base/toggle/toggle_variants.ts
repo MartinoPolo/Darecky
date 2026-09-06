@@ -8,9 +8,9 @@ export const togglePressedVariants = tv({
 	variants: {
 		intent: {
 			default:
-				'data-[state=on]:bg-accent data-[state=on]:text-foreground data-[state=on]:border-ink',
+				'group-data-[state=on]:bg-accent group-data-[state=on]:text-foreground group-data-[state=on]:border-ink',
 			outline:
-				'data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-ink',
+				'group-data-[state=on]:bg-primary group-data-[state=on]:text-primary-foreground group-data-[state=on]:border-ink',
 		},
 	},
 	defaultVariants: {
@@ -32,5 +32,6 @@ export const TOGGLE_SIZES = [...BUTTON_SIZES] as ToggleSize[];
 export type ToggleProps = WithoutChildrenOrChild<TogglePrimitive.RootProps> & {
 	intent?: ToggleIntent;
 	size?: ToggleSize;
+	surfaceClass?: string;
 	children?: Snippet;
 };

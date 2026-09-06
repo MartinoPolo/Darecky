@@ -5,6 +5,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { useLikes } from '$lib/modules/likes/likes.context.svelte.js';
 	import { toggleLike } from '$lib/modules/likes/likes.remote.js';
+	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 	import {
 		likeButtonVariants,
 		type LikeButtonSize,
@@ -21,6 +22,7 @@
 		showCount?: boolean;
 		countOverlay?: boolean;
 		class?: string;
+		surfaceClass?: string;
 	}
 
 	let {
@@ -32,6 +34,7 @@
 		showCount = true,
 		countOverlay = false,
 		class: className,
+		surfaceClass,
 	}: LikeButtonProps = $props();
 
 	const likesContext = useLikes();
@@ -142,26 +145,25 @@
 
 <button
 	type="button"
-	class={cn(
-		styles.root(),
-		size === 'md' && 'min-w-10',
-		countOverlay && 'relative justify-center gap-0',
-		className,
-	)}
+	class={cn(styles.root(), size === 'md' && 'min-w-10', countOverlay && 'relative', className)}
 	aria-label={liked
 		? m.gift_like_remove_aria({ name: giftName })
 		: m.gift_like_add_aria({ name: giftName })}
 	aria-pressed={liked}
 	onclick={handleClick}
 >
-	<span bind:this={heartElement} data-like-heart class="inline-flex">
-		<HeartIcon class={styles.icon()} />
-	</span>
-	{#if showCount && displayCount > 0}
-		<span
-			data-like-count
-			class={cn(styles.count(), countOverlay && 'absolute right-0.5 top-0 text-[10px]')}
-			>{displayCount}</span
-		>
-	{/if}
+	<ElevationSurface
+		class={cn(styles.surface(), countOverlay && 'justify-center gap-0', surfaceClass)}
+	>
+		<span bind:this={heartElement} data-like-heart class="inline-flex">
+			<HeartIcon class={styles.icon()} />
+		</span>
+		{#if showCount && displayCount > 0}
+			<span
+				data-like-count
+				class={cn(styles.count(), countOverlay && 'absolute right-0.5 top-0 text-[10px]')}
+				>{displayCount}</span
+			>
+		{/if}
+	</ElevationSurface>
 </button>

@@ -60,7 +60,8 @@
 		<Button
 			size="sm"
 			intent="ghost"
-			class="text-destructive hover:text-destructive"
+			class=""
+			surfaceClass="text-destructive group-hover:text-destructive"
 			disabled={isRemoving}
 			aria-label={m.moderator_remove_label({ name: moderator.userName })}
 			onclick={() => onremove?.(moderator.id)}

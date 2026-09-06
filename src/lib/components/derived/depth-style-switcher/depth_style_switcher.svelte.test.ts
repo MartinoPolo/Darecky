@@ -207,14 +207,12 @@ describe('DepthStyleSwitcher', () => {
 		};
 		const baseline = choices.map((choice) => boundary(choice.element()));
 		for (const choice of choices) {
-			await expect.element(choice).toHaveClass(/data-\[state=on\]:border-border-strong/);
-			await expect.element(choice).not.toHaveClass(/data-\[state=on\]:border-ink/);
-			await expect
-				.element(choice)
-				.toHaveClass(/data-\[state=on\]:bg-\[var\(--selection-tint\)\]/);
-			await expect.element(choice).toHaveClass(/elevation-interactive/);
+			const surface = choice.element().querySelector(':scope > .elevation-surface')!;
+			await expect.element(choice).toHaveClass(/elevation-owner-raised/);
+			expect(surface.className).toContain('group-data-[state=on]:border-border-strong');
+			expect(surface.className).toContain('group-data-[state=on]:bg-[var(--selection-tint)]');
+			expect(surface.className).toContain('rounded-btn');
 			await expect.element(choice).not.toHaveClass(/data-\[state=on\]:shadow/);
-			await expect.element(choice).toHaveClass(/rounded-btn/);
 		}
 
 		for (const choice of choices) {
@@ -248,7 +246,10 @@ describe('DepthStyleSwitcher', () => {
 						choiceElement.getAttribute('aria-checked'),
 						`${context} selected state`,
 					).toBe('true');
-					const choiceStyle = getComputedStyle(choiceElement);
+					const visualSurface = choiceElement.querySelector<HTMLElement>(
+						':scope > .elevation-surface',
+					)!;
+					const choiceStyle = getComputedStyle(visualSurface);
 					const indicator =
 						choiceElement.querySelector<HTMLElement>('[data-selected=true]');
 					expect(indicator, `${context} selected indicator`).not.toBeNull();

@@ -25,17 +25,18 @@
 <Button
 	intent="secondary"
 	size="xl"
-	class="w-full justify-start gap-3 no-underline"
+	class="w-full"
+	surfaceClass="justify-start gap-3 no-underline"
 	{href}
 	rel="external noopener noreferrer"
 	aria-label={platform.label}
 	onclick={handleClick}
 >
-	<div
+	<span
 		class="{platform.colorClass} flex size-8 -rotate-3 items-center justify-center rounded-[9px] border-2 border-ink text-white"
 	>
 		{@render icon()}
-	</div>
+	</span>
 	<span class="flex-1 whitespace-nowrap text-left font-semibold text-foreground">
 		{platform.label}
 	</span>

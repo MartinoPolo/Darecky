@@ -7,15 +7,19 @@ import {
 } from './fixtures/auth-helpers.js';
 import { createWishlistAndNavigate } from './fixtures/wishlist-helpers.js';
 
+function visualSurface(owner: Locator) {
+	return owner.locator(':scope > .elevation-surface');
+}
+
 async function translateY(button: Locator) {
-	return button.evaluate((element) => {
+	return visualSurface(button).evaluate((element) => {
 		const [, y = '0'] = getComputedStyle(element).translate.split(' ');
 		return Number.parseFloat(y);
 	});
 }
 
 async function shadow(button: Locator) {
-	return button.evaluate((element) => getComputedStyle(element).boxShadow);
+	return visualSurface(button).evaluate((element) => getComputedStyle(element).boxShadow);
 }
 
 test.use({ viewport: { width: 1280, height: 900 } });
@@ -79,14 +83,22 @@ test.describe('Sticker button hover geometry', () => {
 		await page.emulateMedia({ reducedMotion: 'no-preference' });
 		await page.mouse.move(0, 500);
 		const restingShadow = await shadow(close);
-		const surfaceTransform = await close.evaluate((el) => getComputedStyle(el).transform);
-		const surfaceRotate = await close.evaluate((el) => getComputedStyle(el).rotate);
+		const surfaceTransform = await visualSurface(close).evaluate(
+			(el) => getComputedStyle(el).transform,
+		);
+		const surfaceRotate = await visualSurface(close).evaluate(
+			(el) => getComputedStyle(el).rotate,
+		);
 		expect(surfaceRotate).toBe('none');
 		await close.hover();
 		await expect.poll(() => translateY(close)).toBeLessThan(-0.5);
 		await expect.poll(() => shadow(close)).not.toBe(restingShadow);
-		expect(await close.evaluate((el) => getComputedStyle(el).transform)).toBe(surfaceTransform);
-		expect(await close.evaluate((el) => getComputedStyle(el).rotate)).toBe(surfaceRotate);
+		expect(await visualSurface(close).evaluate((el) => getComputedStyle(el).transform)).toBe(
+			surfaceTransform,
+		);
+		expect(await visualSurface(close).evaluate((el) => getComputedStyle(el).rotate)).toBe(
+			surfaceRotate,
+		);
 		await expect
 			.poll(() => icon.evaluate((el) => getComputedStyle(el).rotate))
 			.not.toBe('none');
@@ -95,7 +107,7 @@ test.describe('Sticker button hover geometry', () => {
 		await page.mouse.move(0, 500);
 		await close.hover();
 		await expect.poll(() => translateY(close)).toBe(0);
-		await expect.poll(() => icon.evaluate((el) => getComputedStyle(el).rotate)).toBe('0deg');
+		await expect.poll(() => icon.evaluate((el) => getComputedStyle(el).rotate)).toBe('none');
 		await page.context().close();
 	});
 
@@ -113,12 +125,6 @@ test.describe('Sticker button hover geometry', () => {
 
 		const button = page.getByRole('button', { name: 'Vytvořit', exact: true });
 		await expect(button).toBeVisible();
-		const bottomHitAreaHeight = await button.evaluate(
-			(element) => getComputedStyle(element, '::after').height,
-		);
-		expect(bottomHitAreaHeight, 'fresh worktree serves the eight-pixel hover buffer').toBe(
-			'8px',
-		);
 		const box = await button.boundingBox();
 		expect(box, 'navbar create button has a bounding box').not.toBeNull();
 
@@ -134,6 +140,48 @@ test.describe('Sticker button hover geometry', () => {
 			await page.waitForTimeout(50);
 			expect(await translateY(button)).toBeLessThan(-0.5);
 		}
+
+		await page.mouse.move(1, 1);
+		await page.waitForTimeout(250);
+		const restingBox = await button.boundingBox();
+		expect(restingBox).not.toBeNull();
+		const ordinaryOffset = await button.evaluate((element) =>
+			Number.parseFloat(
+				getComputedStyle(element).getPropertyValue('--elevation-ordinary-offset'),
+			),
+		);
+		const pressPoint = {
+			x: restingBox!.x + restingBox!.width / 2,
+			y: restingBox!.y + restingBox!.height + ordinaryOffset - 0.25,
+		};
+		await page.mouse.move(pressPoint.x, pressPoint.y);
+		await page.waitForTimeout(250);
+		await page.mouse.down();
+		try {
+			const held = await button.evaluate(async (element, point) => {
+				const samples: boolean[] = [];
+				const start = performance.now();
+				do {
+					const target = document.elementFromPoint(point.x, point.y);
+					samples.push(
+						element.matches(':active') &&
+							target !== null &&
+							(target === element || element.contains(target)),
+					);
+					await new Promise<void>((resolveFrame) =>
+						requestAnimationFrame(() => resolveFrame()),
+					);
+				} while (performance.now() - start < 350);
+				return samples;
+			}, pressPoint);
+			expect(
+				held.every(Boolean),
+				'lower-edge press keeps its active target throughout motion',
+			).toBe(true);
+		} finally {
+			await page.mouse.up();
+		}
+		await expect(page.getByRole('dialog', { name: 'Nový seznam přání' })).toBeVisible();
 
 		await page.context().close();
 	});

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
 	import * as Select from '$lib/components/base/select/index.js';
-	import { OUTLINE_CONTROL_SURFACE_CLASSES } from '$lib/components/base/button/button_variants.js';
 	import ArrowUpDownIcon from '@lucide/svelte/icons/arrow-up-down';
 	import { GIFT_SORT_OPTIONS, type GiftSortOption } from '$lib/modules/gifts/types.js';
 	import { GIFT_SORT_KEYS, GIFT_SORT_LABELS } from './gift_sort_options.js';
@@ -47,7 +46,9 @@
 >
 	<Select.Trigger
 		size="md"
-		class={cn('min-w-0 max-w-full px-3', OUTLINE_CONTROL_SURFACE_CLASSES, className)}
+		appearance="raised"
+		class={cn('min-w-0 max-w-full', className)}
+		surfaceClass="px-3 group-hover:bg-accent group-hover:text-accent-foreground"
 		aria-label={combinedLabel}
 		title={combinedLabel}
 	>

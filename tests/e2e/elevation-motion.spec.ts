@@ -34,7 +34,11 @@ async function installTransitionRecorder(element: Locator) {
 		const recordedNode = node as RecordedNode;
 		recordedNode.__elevationTransitions = [];
 		node.addEventListener('transitionrun', (event) => {
-			const property = (event as TransitionEvent).propertyName;
+			const transitionEvent = event as TransitionEvent;
+			if (transitionEvent.pseudoElement !== '') {
+				return;
+			}
+			const property = transitionEvent.propertyName;
 			const animation = node
 				.getAnimations()
 				.find((candidate) => (candidate as CSSTransition).transitionProperty === property);
@@ -100,12 +104,17 @@ async function animationCount(element: Locator) {
 	return element.evaluate((node) => node.getAnimations().length);
 }
 
-async function hoverWithEvidence(page: Page, surface: Locator) {
+function visualSurface(owner: Locator) {
+	return owner.locator(':scope > .elevation-surface');
+}
+
+async function hoverWithEvidence(page: Page, owner: Locator) {
+	const surface = visualSurface(owner);
 	await page.mouse.move(0, 500);
 	const start = await surfaceState(surface);
 	await expectTransitionContract(surface);
 	await installTransitionRecorder(surface);
-	await surface.hover();
+	await owner.hover();
 	await expectConcurrentTransitions(surface, ['translate', 'box-shadow']);
 	await expect.poll(() => animationCount(surface)).toBe(0);
 	const end = await surfaceState(surface);
@@ -114,9 +123,10 @@ async function hoverWithEvidence(page: Page, surface: Locator) {
 	return { start, end };
 }
 
-async function pressWithEvidence(page: Page, surface: Locator) {
+async function pressWithEvidence(page: Page, owner: Locator) {
+	const surface = visualSurface(owner);
 	await page.mouse.move(0, 500);
-	await surface.hover();
+	await owner.hover();
 	await expect.poll(() => animationCount(surface)).toBe(0);
 	const start = await surfaceState(surface);
 	await expectTransitionContract(surface);
@@ -175,7 +185,10 @@ test.describe('Coherent elevated-surface motion', () => {
 			await expect(account).toHaveAttribute('aria-expanded', 'true', { timeout: 1_000 });
 		}).toPass({ timeout: 15_000 });
 		await expect.poll(() => animationCount(account)).toBe(0);
-		const open = await surfaceState(account);
+		await expect
+			.poll(async () => Math.abs((await surfaceState(visualSurface(account))).translateY))
+			.toBeLessThan(0.05);
+		const open = await surfaceState(visualSurface(account));
 		const openBox = await account.boundingBox();
 		expect(Math.abs(open.translateY)).toBeLessThan(0.05);
 		expect(Math.abs(openBox!.y - restingBox!.y)).toBeLessThan(0.25);
@@ -215,22 +228,26 @@ test.describe('Coherent elevated-surface motion', () => {
 		}
 
 		await page.mouse.move(0, 500);
-		const surfaceStart = await surfaceState(close);
+		const closeSurface = visualSurface(close);
+		const surfaceStart = await surfaceState(closeSurface);
 		const iconStart = await icon.evaluate((element) => getComputedStyle(element).rotate);
-		await expectTransitionContract(close);
-		await installTransitionRecorder(close);
+		await expectTransitionContract(closeSurface);
+		await installTransitionRecorder(closeSurface);
 		await installTransitionRecorder(icon);
 		await close.hover();
-		const surfaceTiming = await expectConcurrentTransitions(close, ['translate', 'box-shadow']);
+		const surfaceTiming = await expectConcurrentTransitions(closeSurface, [
+			'translate',
+			'box-shadow',
+		]);
 		const iconTiming = await expectConcurrentTransitions(icon, ['rotate']);
 		expect(iconTiming[0]).toMatchObject({
 			duration: surfaceTiming[0].duration,
 			easing: surfaceTiming[0].easing,
 			delay: surfaceTiming[0].delay,
 		});
-		await expect.poll(() => animationCount(close)).toBe(0);
+		await expect.poll(() => animationCount(closeSurface)).toBe(0);
 		await expect.poll(() => animationCount(icon)).toBe(0);
-		const surfaceEnd = await surfaceState(close);
+		const surfaceEnd = await surfaceState(closeSurface);
 		const iconEnd = await icon.evaluate((element) => getComputedStyle(element).rotate);
 		expect(surfaceEnd.translateY).toBeLessThan(surfaceStart.translateY);
 		expect(surfaceEnd.shadow).not.toBe(surfaceStart.shadow);
@@ -254,10 +271,11 @@ test.describe('Coherent elevated-surface motion', () => {
 		await page.emulateMedia({ reducedMotion: 'reduce' });
 		const toolbarButton = page.getByRole('button', { name: 'Vytvořit', exact: true });
 		const account = page.getByRole('button', { name: new RegExp(user.name) });
-		for (const surface of [toolbarButton, account, card]) {
+		for (const owner of [toolbarButton, account, card]) {
+			const surface = visualSurface(owner);
 			await page.mouse.move(0, 500);
 			const before = await surfaceState(surface);
-			await surface.hover({ force: true });
+			await owner.hover({ force: true });
 			const after = await surfaceState(surface);
 			expect(
 				await surface.evaluate((element) => getComputedStyle(element).transitionProperty),
@@ -276,12 +294,16 @@ test.describe('Coherent elevated-surface motion', () => {
 		const close = dialog.getByRole('button', { name: 'Zavřít' });
 		await close.hover();
 		expect(
-			await close.evaluate((element) => getComputedStyle(element).transitionProperty),
+			await visualSurface(close).evaluate(
+				(element) => getComputedStyle(element).transitionProperty,
+			),
 		).toBe('none');
-		expect(await close.evaluate((element) => getComputedStyle(element).translate)).toBe('0px');
+		expect(
+			await visualSurface(close).evaluate((element) => getComputedStyle(element).translate),
+		).toBe('0px');
 		expect(
 			await close.locator('svg').evaluate((element) => getComputedStyle(element).rotate),
-		).toBe('0deg');
+		).toBe('none');
 		await page.context().close();
 	});
 });

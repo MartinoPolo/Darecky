@@ -1204,3 +1204,10 @@ Decided: 2026-08-07
 What: The list view shows the same full-text „Rezervováno" sticker as the card view, centered on the 1:1 thumb, with the reserver-names line for správci. The row-wide dim is restructured to match card semantics: veil over the image + dimmed content columns, sticker crisp on top. Verified by implemented screenshots at desktop and mobile widths — the full sticker fits the 8–9.5rem thumb.
 Why: The overlay is the fastest reserved signal and the two views should speak one language; the compact icon-only variant was screenshotted too but reads ambiguous (a bare check reads as "done/selected", not "reserved").
 Rejected: Icon-only compact sticker on the thumb (ambiguous); keeping the text-line-only signal in list view (weakest signal, inconsistent).
+
+### Hover elevation uses a stationary semantic owner and moving visual surface
+
+Decided: 2026-09-23 (issue #346; narrow managed-base exception explicitly approved)
+What: Raised interactions keep the native button/anchor/Bits trigger stationary as `.elevation-owner`; a direct `.elevation-surface` paints and moves. A static owner pseudo strip covers the resting lower shadow. Complex cards move an empty visual plate so nested controls are never transformed with an interactive ancestor. The shared managed Button, Select trigger, and ToggleGroup forwarding are edited only to expose this owner/surface contract.
+Why: Real browser-zoom evidence showed repeated hover toggles and traversal gaps when the semantic target itself moved. An attempted inverse pseudo layer remained coupled to animated geometry and failed the zoom/depth matrix. Separating hit ownership from paint makes stability structural and preserves delegated refs, state, and native behavior.
+Rejected: Further inverse/counter transforms, debouncing, JavaScript computed-style synchronization, CSS zoom substitutes, and removing elevation.

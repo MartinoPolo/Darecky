@@ -10,6 +10,7 @@
 	let {
 		ref = $bindable(null),
 		class: className,
+		surfaceClass,
 		children,
 		type = 'button',
 		intent = 'primary',
@@ -25,7 +26,8 @@
 	{type}
 	data-size={size}
 	{intent}
-	class={cn(inputGroupButtonVariants({ size }), className)}
+	class={cn(inputGroupButtonVariants({ size }).owner(), className)}
+	surfaceClass={cn(inputGroupButtonVariants({ size }).surface(), surfaceClass)}
 	{...restProps}
 >
 	{@render children?.()}

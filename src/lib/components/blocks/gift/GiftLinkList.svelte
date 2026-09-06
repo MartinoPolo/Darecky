@@ -3,6 +3,7 @@
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import { normalizeGiftUrl, extractGiftUrlDomain } from '$lib/modules/gifts/gift_url.js';
 	import { SimpleTooltip } from '$lib/components/base/tooltip/index.js';
+	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 	import { giftLinkListVariants, type GiftLinkListDisplay } from './gift_link_list_variants.js';
 	import type { GiftLink } from '$lib/modules/gifts/types.js';
 
@@ -41,18 +42,20 @@
 						class={styles.link()}
 						onclick={(e: MouseEvent) => e.stopPropagation()}
 					>
-						{#if display === 'row'}
-							<span class={styles.domain()}>
+						<ElevationSurface class={styles.surface()}>
+							{#if display === 'row'}
+								<span class={styles.domain()}>
+									<ExternalLinkIcon class={styles.icon()} />
+									{domain ?? link.url}
+								</span>
+								<span class={styles.title()}>{link.label ?? link.url}</span>
+							{:else}
 								<ExternalLinkIcon class={styles.icon()} />
-								{domain ?? link.url}
-							</span>
-							<span class={styles.title()}>{link.label ?? link.url}</span>
-						{:else}
-							<ExternalLinkIcon class={styles.icon()} />
-							<span class={styles.chipLabel()}
-								>{link.label ?? domain ?? link.url}</span
-							>
-						{/if}
+								<span class={styles.chipLabel()}
+									>{link.label ?? domain ?? link.url}</span
+								>
+							{/if}
+						</ElevationSurface>
 					</a>
 				{/snippet}
 			</SimpleTooltip>

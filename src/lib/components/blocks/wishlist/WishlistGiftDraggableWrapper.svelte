@@ -9,6 +9,7 @@
 	import type { Snippet } from 'svelte';
 	import { createGiftLongPressRecognizer } from '$lib/modules/gifts/gift_long_press.js';
 	import { Button } from '$lib/components/base/button/index.js';
+	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 
 	interface WishlistGiftDraggableWrapperProps {
 		index: number;
@@ -278,7 +279,7 @@
 			aria-label={m.gift_reorder_grip_label()}
 			title={m.gift_reorder_keyboard_hint()}
 			class={cn(
-				'absolute right-1 top-1 z-50 grid size-10 cursor-grab touch-none place-items-center rounded-[calc(var(--radius-panel)-4px)] border-2 border-ink bg-card p-0 shadow-sticker transition-[opacity,transform] duration-200 ease-spring hover:bg-accent focus-visible:opacity-100 active:cursor-grabbing motion-safe:group-hover/gift-card:-translate-y-1 motion-safe:group-focus-within/gift-card:-translate-y-1 sm:right-auto sm:left-2 sm:top-2 sm:z-10 sm:size-auto sm:rounded sm:border-0 sm:bg-card/80 sm:p-0.5 sm:opacity-60 sm:shadow-none',
+				'group/grip elevation-owner elevation-owner-raised absolute right-1 top-1 z-50 grid size-10 cursor-grab touch-none place-items-center rounded-[calc(var(--radius-panel)-4px)] p-0 focus-visible:opacity-100 active:cursor-grabbing sm:right-auto sm:left-2 sm:top-2 sm:z-10 sm:size-auto sm:rounded sm:opacity-60',
 				selectionLayout === 'list' &&
 					'left-[var(--gift-list-corner-left)] right-auto sm:left-2',
 			)}
@@ -286,7 +287,11 @@
 			onpointerdown={(event) => onreorderpointerdown(event, index)}
 			onkeydown={handleGripKeydown}
 		>
-			<GripVerticalIcon class="size-4 text-muted-foreground" />
+			<ElevationSurface
+				class="grid size-full place-items-center rounded-[inherit] border-2 border-ink bg-card shadow-sticker transition-[translate,scale,box-shadow,background-color,opacity] duration-200 ease-spring group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5 group-hover/grip:bg-accent sm:border-0 sm:bg-card/80 sm:p-0.5 sm:shadow-none"
+			>
+				<GripVerticalIcon class="size-4 text-muted-foreground" />
+			</ElevationSurface>
 		</button>
 	{/if}
 	<div

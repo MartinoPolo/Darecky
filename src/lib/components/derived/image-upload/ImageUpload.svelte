@@ -213,7 +213,8 @@
 			<Button
 				size="icon-sm"
 				intent="ghost"
-				class={styles.removeButton()}
+				class={styles.removeButtonOwner()}
+				surfaceClass={styles.removeButtonSurface()}
 				onclick={handleRemove}
 				aria-label={m.image_upload_remove()}
 			>

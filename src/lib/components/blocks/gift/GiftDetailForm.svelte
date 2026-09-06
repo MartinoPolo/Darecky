@@ -779,7 +779,8 @@
 								type="button"
 								intent="ghost-overlay"
 								size="icon-sm"
-								class="absolute top-2 right-2 rounded-full bg-surface/90 shadow-sm"
+								class="absolute top-2 right-2 rounded-full"
+								surfaceClass="bg-surface/90 shadow-sm"
 								onclick={openImageEditor}
 								aria-label={m.gift_image_replace_cta()}
 							>

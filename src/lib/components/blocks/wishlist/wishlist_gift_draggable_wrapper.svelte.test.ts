@@ -189,8 +189,11 @@ describe('WishlistGiftDraggableWrapper — grip follows the card hover lift', ()
 		const wrapper = container.querySelector('[data-gift-item]') as HTMLElement;
 		expect(wrapper.className).toContain('group/gift-card');
 		const grip = wrapper.querySelector('button') as HTMLElement;
-		expect(grip.className).toContain('group-hover/gift-card:-translate-y-1');
-		expect(grip.className).toContain('group-focus-within/gift-card:-translate-y-1');
+		const gripSurface = grip.querySelector(':scope > .elevation-surface') as HTMLElement;
+		expect(grip.className).not.toContain('group-hover/gift-card:-translate-y-1');
+		expect(grip.className).not.toContain('group-focus-within/gift-card:-translate-y-1');
+		expect(gripSurface.className).toContain('group-hover/gift-card:-translate-y-0.5');
+		expect(gripSurface.className).toContain('group-focus-within/gift-card:-translate-y-0.5');
 		await unmount();
 	});
 });

@@ -111,7 +111,8 @@
 		<Button
 			intent="ghost"
 			size="icon-sm"
-			class="shrink-0 text-muted-foreground hover:text-destructive"
+			class="shrink-0"
+			surfaceClass="text-muted-foreground group-hover:text-destructive"
 			{disabled}
 			onclick={onremove}
 			aria-label={m.gift_link_remove()}
