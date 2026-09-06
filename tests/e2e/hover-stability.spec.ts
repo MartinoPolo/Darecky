@@ -27,12 +27,33 @@ interface PointerSample {
 	translateY: number;
 }
 
+interface HoverEventDetail {
+	type: string;
+	time: number;
+	clientX: number;
+	clientY: number;
+	relatedTarget: string | null;
+	hitTarget: string | null;
+	focusTarget: string | null;
+	documentFocused: boolean;
+	visibility: DocumentVisibilityState;
+}
+
+interface HoverEventEvidence {
+	enter: number;
+	leave: number;
+	over: number;
+	out: number;
+	details: HoverEventDetail[];
+}
+
 interface StationaryEvidence {
 	control: string;
 	coordinate: { x: number; y: number };
 	restingRect: { x: number; y: number; width: number; height: number };
 	pseudoAfter: { content: string; height: number; top: string };
-	events: { enter: number; leave: number; over: number; out: number };
+	entryEvents: HoverEventEvidence;
+	events: HoverEventEvidence;
 	lowerBoundaryReachable: boolean;
 	hoverTransitions: number;
 	verticalTravel: number;
@@ -47,9 +68,8 @@ async function launchZoomableContext(
 	const profile = testInfo.outputPath('chromium-profile');
 	await rm(profile, { recursive: true, force: true });
 	const context = await chromium.launchPersistentContext(profile, {
-		// Chromium's unpacked-extension support requires headed mode. Linux CI
-		// supplies the display with xvfb-run in checks.yml.
-		headless: false,
+		channel: 'chromium',
+		headless: true,
 		viewport: { width: 1602, height: 1100 },
 		deviceScaleFactor: 2,
 		args: [
@@ -69,7 +89,7 @@ async function setRealBrowserZoom(
 	baseline: { dpr: number; innerWidth: number } | null,
 ) {
 	await page.goto(`${baseURL}/w/xmas2026?browserZoom=${zoom}`, {
-		waitUntil: 'domcontentloaded',
+		waitUntil: 'load',
 	});
 	await expect(page.getByTestId('wishlist-toolbar')).toBeVisible();
 
@@ -123,24 +143,57 @@ async function stationaryLowerEdge(
 	};
 
 	await control.evaluate((element) => {
+		type ProbeState = HoverEventEvidence & { startedAt: number };
 		type ProbeElement = Element & {
-			__hoverProbe?: { enter: number; leave: number; over: number; out: number };
+			__hoverProbe?: ProbeState;
 			__hoverProbeInstalled?: boolean;
 		};
 		const probed = element as ProbeElement;
-		probed.__hoverProbe = { enter: 0, leave: 0, over: 0, out: 0 };
+		probed.__hoverProbe = {
+			enter: 0,
+			leave: 0,
+			over: 0,
+			out: 0,
+			details: [],
+			startedAt: performance.now(),
+		};
 		if (probed.__hoverProbeInstalled === true) {
 			return;
 		}
 		probed.__hoverProbeInstalled = true;
+		const describeTarget = (target: EventTarget | null) => {
+			if (!(target instanceof Element)) {
+				return null;
+			}
+			return `${target.tagName.toLowerCase()}${target.id ? `#${target.id}` : ''}${
+				target.classList.length > 0 ? `.${[...target.classList].slice(0, 3).join('.')}` : ''
+			}`;
+		};
 		for (const [eventName, key] of [
 			['mouseenter', 'enter'],
 			['mouseleave', 'leave'],
 			['mouseover', 'over'],
 			['mouseout', 'out'],
 		] as const) {
-			element.addEventListener(eventName, () => {
-				probed.__hoverProbe![key] += 1;
+			element.addEventListener(eventName, (event) => {
+				const state = probed.__hoverProbe!;
+				const mouseEvent = event as MouseEvent;
+				state[key] += 1;
+				if (state.details.length < 16) {
+					state.details.push({
+						type: eventName,
+						time: performance.now() - state.startedAt,
+						clientX: mouseEvent.clientX,
+						clientY: mouseEvent.clientY,
+						relatedTarget: describeTarget(mouseEvent.relatedTarget),
+						hitTarget: describeTarget(
+							document.elementFromPoint(mouseEvent.clientX, mouseEvent.clientY),
+						),
+						focusTarget: describeTarget(document.activeElement),
+						documentFocused: document.hasFocus(),
+						visibility: document.visibilityState,
+					});
+				}
 			});
 		}
 	});
@@ -151,7 +204,21 @@ async function stationaryLowerEdge(
 	}, coordinate);
 	expect(lowerBoundaryReachable, `${controlName} resting lower boundary is reachable`).toBe(true);
 	await page.mouse.move(coordinate.x, coordinate.y);
-	const samples = await control.evaluate(async (element, point) => {
+	const measurement = await control.evaluate(async (element, point) => {
+		type ProbeState = HoverEventEvidence & { startedAt: number };
+		type ProbeElement = Element & { __hoverProbe?: ProbeState };
+		await new Promise<void>((resolveFrame) =>
+			requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())),
+		);
+		const state = (element as ProbeElement).__hoverProbe!;
+		const entryEvents = { ...state, details: [...state.details] };
+		const initiallyHovered = element.matches(':hover');
+		state.enter = 0;
+		state.leave = 0;
+		state.over = 0;
+		state.out = 0;
+		state.details = [];
+		state.startedAt = performance.now();
 		const frames: PointerSample[] = [];
 		const start = performance.now();
 		do {
@@ -167,19 +234,25 @@ async function stationaryLowerEdge(
 				translateY: Number.parseFloat(translateY) || 0,
 			});
 		} while (performance.now() - start < 650);
-		return frames;
+		return {
+			entryEvents,
+			initiallyHovered,
+			samples: frames,
+			events: { ...state, details: [...state.details] },
+		};
 	}, coordinate);
+	const { samples, events, entryEvents } = measurement;
+	expect(entryEvents.enter, `${controlName} pointer entry must enter once`).toBe(1);
+	expect(entryEvents.leave, `${controlName} pointer entry must not leave`).toBe(0);
+	expect(entryEvents.out, `${controlName} pointer entry must not move out`).toBe(0);
+	expect(measurement.initiallyHovered, `${controlName} starts stationary sampling hovered`).toBe(
+		true,
+	);
 	expect(
 		samples.every(({ reachable }) => reachable),
 		`${controlName} lower boundary stays reachable throughout motion`,
 	).toBe(true);
 
-	const events = await control.evaluate((element) => {
-		type ProbeElement = Element & {
-			__hoverProbe?: { enter: number; leave: number; over: number; out: number };
-		};
-		return (element as ProbeElement).__hoverProbe!;
-	});
 	const hoverTransitions = samples.slice(1).filter((sample, index) => {
 		return sample.hovered !== samples[index]!.hovered;
 	}).length;
@@ -189,6 +262,7 @@ async function stationaryLowerEdge(
 		control: controlName,
 		coordinate,
 		restingRect: box!,
+		entryEvents,
 		events,
 		pseudoAfter: restingAfter,
 		lowerBoundaryReachable,
@@ -242,9 +316,17 @@ async function bottomToTopSweep(page: Page, control: Locator, controlName: strin
 	};
 }
 
+function expectNoStationaryTransitions(evidence: StationaryEvidence, scenario = '') {
+	for (const eventName of ['enter', 'leave', 'over', 'out'] as const) {
+		expect(
+			evidence.events[eventName],
+			`${evidence.control} must have no stationary ${eventName} event${scenario}`,
+		).toBe(0);
+	}
+}
+
 function expectStableLift(evidence: StationaryEvidence, hoverScale = 1) {
-	expect(evidence.events.enter).toBe(1);
-	expect(evidence.events.leave).toBe(0);
+	expectNoStationaryTransitions(evidence);
 	expect(evidence.hoverTransitions).toBe(0);
 	expect(evidence.samples.every(({ hovered }) => hovered)).toBe(true);
 	expect(evidence.verticalTravel).toBeLessThanOrEqual(
@@ -289,7 +371,6 @@ async function expectSafeClick(page: Page, control: Locator) {
 }
 
 test.describe('Issue #346 stable hover hit regions', () => {
-	// Headed Chromium contexts share the display pointer; concurrent windows can steal hover.
 	test.describe.configure({ mode: 'default', timeout: 180_000 });
 
 	test('focused gift consumers retain nested hit targets at 1/soft', async ({
@@ -483,14 +564,10 @@ test.describe('Issue #346 stable hover hit regions', () => {
 
 			for (const scenario of evidence) {
 				for (const control of scenario.controls) {
-					expect(
-						control.events.enter,
-						`${control.control} lower extension must belong to its effective hit region`,
-					).toBe(1);
-					expect(
-						control.events.leave,
-						`${control.control} repeatedly leaves at zoom ${scenario.zoom}, depth ${scenario.depth}`,
-					).toBe(0);
+					expectNoStationaryTransitions(
+						control,
+						` at zoom ${scenario.zoom}, depth ${scenario.depth}`,
+					);
 					expect(control.samples.every(({ hovered }) => hovered)).toBe(true);
 					expect(control.hoverTransitions).toBe(0);
 					if (control.control === 'Add gift button') {

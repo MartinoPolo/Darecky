@@ -69,6 +69,7 @@ const PRIORITY_ID = `${PREFIX}priority`;
 const CATEGORY_ID = `${PREFIX}category`;
 const BULK_GIFT_ONE_ID = `${PREFIX}bulk-gift-one`;
 const BULK_GIFT_TWO_ID = `${PREFIX}bulk-gift-two`;
+const BULK_GIFT_UNSELECTED_ID = `${PREFIX}bulk-gift-unselected`;
 
 class ProbeRollback extends Error {}
 
@@ -292,8 +293,10 @@ describe.skipIf(!DB_READY)('createGift remote boundary [real DB]', () => {
 		});
 	});
 
-	it('applies every bulk mutation to one and multiple gifts, including a real priority id', async () => {
+	it('persists shared-list bulk mutations for one and multiple selected gifts in and after grace', async () => {
 		const database = getDb();
+		const createdBeforeSharing = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const bulkGiftIds = [BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID, BULK_GIFT_UNSELECTED_ID];
 		await database.insert(gift).values([
 			{
 				id: BULK_GIFT_ONE_ID,
@@ -301,6 +304,7 @@ describe.skipIf(!DB_READY)('createGift remote boundary [real DB]', () => {
 				name: 'Bulk gift one',
 				received: false,
 				sortOrder: 20,
+				createdAt: createdBeforeSharing,
 			},
 			{
 				id: BULK_GIFT_TWO_ID,
@@ -308,102 +312,152 @@ describe.skipIf(!DB_READY)('createGift remote boundary [real DB]', () => {
 				name: 'Bulk gift two',
 				received: false,
 				sortOrder: 21,
+				createdAt: createdBeforeSharing,
+			},
+			{
+				id: BULK_GIFT_UNSELECTED_ID,
+				wishlistId: WISHLIST_ID,
+				name: 'Bulk gift unselected',
+				received: false,
+				sortOrder: 22,
+				createdAt: createdBeforeSharing,
 			},
 		]);
 
-		for (const giftIds of [[BULK_GIFT_ONE_ID], [BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID]]) {
-			for (const action of [
-				{ action: 'priority' as const, priorityLevelId: PRIORITY_ID },
-				{ action: 'category' as const, categoryId: CATEGORY_ID },
-				{ action: 'imageFit' as const, fit: 'fit' as const },
-				{ action: 'imageBackground' as const, background: '#000000' as const },
-				{ action: 'received' as const, received: true },
-			]) {
-				const result = await callBulkUpdateGifts(
-					{ user: { id: ACTOR_ID } },
-					{ wishlistId: WISHLIST_ID, giftIds, ...action },
-				);
-				expect(result.updatedIds).toEqual(expect.arrayContaining(giftIds));
-				if (giftIds.length === 1) {
-					const [persisted] = await database
-						.select({
-							priorityLevelId: gift.priorityLevelId,
-							categoryId: gift.categoryId,
-							imageMeta: gift.imageMeta,
-							received: gift.received,
-						})
-						.from(gift)
-						.where(eq(gift.id, BULK_GIFT_ONE_ID));
-					switch (action.action) {
-						case 'priority':
-							expect(persisted?.priorityLevelId).toBe(PRIORITY_ID);
-							break;
-						case 'category':
-							expect(persisted?.categoryId).toBe(CATEGORY_ID);
-							break;
-						case 'imageFit':
-							expect(persisted?.imageMeta?.fitMode).toBe('contain-padded');
-							break;
-						case 'imageBackground':
-							expect(persisted?.imageMeta?.bgColor).toBe('#000000');
-							break;
-						case 'received':
-							expect(persisted?.received).toBe(true);
+		const presentationActions = [
+			{
+				input: { action: 'priority' as const, priorityLevelId: PRIORITY_ID },
+				assertPersisted: (row: typeof gift.$inferSelect) =>
+					expect(row.priorityLevelId).toBe(PRIORITY_ID),
+			},
+			{
+				input: { action: 'category' as const, categoryId: CATEGORY_ID },
+				assertPersisted: (row: typeof gift.$inferSelect) =>
+					expect(row.categoryId).toBe(CATEGORY_ID),
+			},
+			{
+				input: { action: 'imageFit' as const, fit: 'fit' as const },
+				assertPersisted: (row: typeof gift.$inferSelect) =>
+					expect(row.imageMeta?.fitMode).toBe('contain-padded'),
+			},
+			{
+				input: { action: 'imageBackground' as const, background: '#000000' as const },
+				assertPersisted: (row: typeof gift.$inferSelect) =>
+					expect(row.imageMeta?.bgColor).toBe('#000000'),
+			},
+		];
+
+		try {
+			for (const graceOpen of [true, false]) {
+				await database
+					.update(wishlist)
+					.set({ sharedAt: new Date(Date.now() - (graceOpen ? 30_000 : 3 * 60_000)) })
+					.where(eq(wishlist.id, WISHLIST_ID));
+
+				for (const selectedGiftIds of [
+					[BULK_GIFT_ONE_ID],
+					[BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID],
+				]) {
+					for (const { input, assertPersisted } of presentationActions) {
+						await database
+							.update(gift)
+							.set({
+								priorityLevelId: null,
+								categoryId: null,
+								imageMeta: null,
+								editedAfterShareAt: null,
+								preEditShareSnapshot: null,
+							})
+							.where(inArray(gift.id, bulkGiftIds));
+
+						const result = await callBulkUpdateGifts(
+							{ user: { id: ACTOR_ID } },
+							{ wishlistId: WISHLIST_ID, giftIds: selectedGiftIds, ...input },
+						);
+						expect(result.updatedIds).toHaveLength(selectedGiftIds.length);
+						expect(result.updatedIds).toEqual(expect.arrayContaining(selectedGiftIds));
+
+						const stored = await database
+							.select()
+							.from(gift)
+							.where(inArray(gift.id, bulkGiftIds));
+						for (const row of stored) {
+							if (selectedGiftIds.includes(row.id)) {
+								assertPersisted(row);
+								expect(row.editedAfterShareAt).toBeInstanceOf(Date);
+								expect(row.preEditShareSnapshot === null).toBe(!graceOpen);
+							} else {
+								expect(row).toMatchObject({
+									priorityLevelId: null,
+									categoryId: null,
+									imageMeta: null,
+									editedAfterShareAt: null,
+									preEditShareSnapshot: null,
+								});
+							}
+						}
 					}
 				}
 			}
-		}
 
-		const stored = await database
-			.select({
-				id: gift.id,
-				priorityLevelId: gift.priorityLevelId,
-				categoryId: gift.categoryId,
-				imageMeta: gift.imageMeta,
-				received: gift.received,
-			})
-			.from(gift)
-			.where(inArray(gift.id, [BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID]))
-			.orderBy(asc(gift.id));
-		expect(stored).toEqual([
-			expect.objectContaining({
-				priorityLevelId: PRIORITY_ID,
-				categoryId: CATEGORY_ID,
-				imageMeta: expect.objectContaining({
-					fitMode: 'contain-padded',
-					bgColor: '#000000',
-				}),
-				received: true,
-			}),
-			expect.objectContaining({
-				priorityLevelId: PRIORITY_ID,
-				categoryId: CATEGORY_ID,
-				imageMeta: expect.objectContaining({
-					fitMode: 'contain-padded',
-					bgColor: '#000000',
-				}),
-				received: true,
-			}),
-		]);
-		await database.delete(gift).where(inArray(gift.id, [BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID]));
+			for (const selectedGiftIds of [
+				[BULK_GIFT_ONE_ID],
+				[BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID],
+			]) {
+				await database
+					.update(gift)
+					.set({ received: false, editedAfterShareAt: null, preEditShareSnapshot: null })
+					.where(inArray(gift.id, bulkGiftIds));
+				await callBulkUpdateGifts(
+					{ user: { id: ACTOR_ID } },
+					{
+						wishlistId: WISHLIST_ID,
+						giftIds: selectedGiftIds,
+						action: 'received',
+						received: true,
+					},
+				);
+				const stored = await database
+					.select()
+					.from(gift)
+					.where(inArray(gift.id, bulkGiftIds));
+				for (const row of stored) {
+					expect(row.received).toBe(selectedGiftIds.includes(row.id));
+					expect(row.editedAfterShareAt).toBeNull();
+				}
+			}
+		} finally {
+			await database.delete(gift).where(inArray(gift.id, bulkGiftIds));
+			await database
+				.update(wishlist)
+				.set({ sharedAt: null })
+				.where(eq(wishlist.id, WISHLIST_ID));
+		}
 	});
 
-	it('rolls back every bulk update when one locked gift disappears before the update', async () => {
+	it('rolls back every shared-list presentation update when one locked gift disappears', async () => {
 		const database = getDb();
+		const createdBeforeSharing = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		await database
+			.update(wishlist)
+			.set({ sharedAt: new Date(Date.now() - 3 * 60_000) })
+			.where(eq(wishlist.id, WISHLIST_ID));
 		await database.insert(gift).values([
 			{
 				id: BULK_GIFT_ONE_ID,
 				wishlistId: WISHLIST_ID,
 				name: 'Bulk gift one',
-				received: false,
+				priorityLevelId: null,
 				sortOrder: 20,
+				createdAt: createdBeforeSharing,
 			},
 			{
 				id: BULK_GIFT_TWO_ID,
 				wishlistId: WISHLIST_ID,
 				name: 'Bulk gift two',
-				received: false,
+				priorityLevelId: null,
 				sortOrder: 21,
+				createdAt: createdBeforeSharing,
 			},
 		]);
 		setBulkUpdateAfterRowsLockedHookForTest(async (tx) => {
@@ -416,8 +470,8 @@ describe.skipIf(!DB_READY)('createGift remote boundary [real DB]', () => {
 					{
 						wishlistId: WISHLIST_ID,
 						giftIds: [BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID],
-						action: 'received',
-						received: true,
+						action: 'priority',
+						priorityLevelId: PRIORITY_ID,
 					},
 				),
 			).rejects.toMatchObject({
@@ -429,14 +483,19 @@ describe.skipIf(!DB_READY)('createGift remote boundary [real DB]', () => {
 		}
 
 		const stored = await database
-			.select({ id: gift.id, received: gift.received })
+			.select({
+				id: gift.id,
+				priorityLevelId: gift.priorityLevelId,
+				editedAfterShareAt: gift.editedAfterShareAt,
+			})
 			.from(gift)
 			.where(inArray(gift.id, [BULK_GIFT_ONE_ID, BULK_GIFT_TWO_ID]))
 			.orderBy(asc(gift.id));
 		expect(stored).toEqual([
-			{ id: BULK_GIFT_ONE_ID, received: false },
-			{ id: BULK_GIFT_TWO_ID, received: false },
+			{ id: BULK_GIFT_ONE_ID, priorityLevelId: null, editedAfterShareAt: null },
+			{ id: BULK_GIFT_TWO_ID, priorityLevelId: null, editedAfterShareAt: null },
 		]);
+		await database.update(wishlist).set({ sharedAt: null }).where(eq(wishlist.id, WISHLIST_ID));
 	});
 
 	it('round-trips decimal single and range prices through create and update', async () => {

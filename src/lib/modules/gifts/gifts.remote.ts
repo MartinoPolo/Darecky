@@ -785,7 +785,7 @@ function bulkJsonbValue(value: unknown) {
 }
 
 function bulkTimestampValue(value: Date | null) {
-	return value === null ? sql`NULL::timestamptz` : sql`${value}::timestamptz`;
+	return value === null ? sql`NULL::timestamptz` : sql`${value.toISOString()}::timestamptz`;
 }
 
 type GiftTransaction = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
