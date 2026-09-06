@@ -487,8 +487,15 @@ test('all six mobile bulk actions refresh and persist on a shared list for one a
 
 	await page.keyboard.press('Escape');
 	await expect(sheet).toBeHidden();
-	await toolbar.getByRole('button', { name: m.done() }).click();
+	await toolbar.getByRole('button', { name: m.cancel() }).click();
 	await page.reload();
+	await expect(gift(page, 'Stan pro dva')).toBeVisible();
+	await page.getByTestId('mobile-display-trigger').click();
+	const displaySheet = page.getByRole('dialog', { name: m.gift_display_options() });
+	await displaySheet.getByTestId('mobile-sheet-filter-switch').click();
+	await displaySheet.getByRole('checkbox', { name: m.gift_filter_show_received() }).check();
+	await page.keyboard.press('Escape');
+	await expect(displaySheet).toBeHidden();
 	firstGift = gift(page, 'Kolo pro výlety');
 	secondGift = gift(page, 'Stan pro dva');
 	await waitForReceivedState(firstGift, true);
@@ -542,7 +549,7 @@ test('all six mobile bulk actions refresh and persist on a shared list for one a
 	).toHaveCount(0);
 
 	await page.keyboard.press('Escape');
-	await toolbar.getByRole('button', { name: m.done() }).click();
+	await toolbar.getByRole('button', { name: m.cancel() }).click();
 	await page.reload();
 	firstGift = gift(page, 'Kolo pro výlety');
 	secondGift = gift(page, 'Stan pro dva');
