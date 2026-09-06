@@ -85,6 +85,9 @@
 	// on card hover/focus; visitors rely on the shared cursor-pointer + hover lift only.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
 	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
+	const hasMultipleActions = $derived(
+		hasReceivedPrimary && isVisitorOrModerator && hasReservationAction,
+	);
 
 	const isDimmed = $derived(presentation.isDimmed);
 	const styles = $derived(giftCardVariants({ dimmed: isDimmed }));
@@ -153,14 +156,7 @@
 
 		<GiftStateOverlay
 			model={presentation.overlay}
-			class={cn(
-				narrowViewportState.current && presentation.showLike && 'pt-12 pr-12',
-				narrowViewportState.current &&
-					hasReceivedPrimary &&
-					isVisitorOrModerator &&
-					hasReservationAction &&
-					'pb-14',
-			)}
+			class={cn(narrowViewportState.current && presentation.showLike && 'pt-12 pr-12')}
 		/>
 		{#if !contextualMode && narrowViewportState.current && presentation.showLike && visitorGift}
 			<LikeButton
@@ -171,18 +167,6 @@
 				countOverlay
 				class="absolute top-1 right-1 z-20 size-10 rounded-full"
 				surfaceClass="border-2 border-ink bg-card p-0 shadow-sticker"
-			/>
-		{/if}
-
-		{#if hasReceivedPrimary && isVisitorOrModerator && visitorGift}
-			<ReserveButton
-				gift={visitorGift}
-				{isArchived}
-				size="xl"
-				{onreserve}
-				{onunreserve}
-				class="absolute right-[9.5px] bottom-[9.5px] left-[6.5px] z-20 h-auto min-h-12 min-w-0 w-auto"
-				surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight"
 			/>
 		{/if}
 	</div>
@@ -252,15 +236,33 @@
 					giftName={gift.name}
 					likeCount={visitorGift.likeCount}
 					size="md"
-					class="h-10 shrink-0 self-start"
+					class="h-(--size-control-md) shrink-0 self-start"
 				/>
 			{/if}
-			<div data-testid="gift-card-reservation-actions" class={styles.reservationActions()}>
-				<GiftActionRow {onmore}>
+			<div
+				data-testid="gift-card-reservation-actions"
+				class={cn(styles.reservationActions(), !hasMultipleActions && 'sm:flex-initial')}
+			>
+				{#snippet secondaryReservationAction()}
+					{#if visitorGift}
+						<ReserveButton
+							gift={visitorGift}
+							{isArchived}
+							size="md"
+							{onreserve}
+							{onunreserve}
+							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
+						/>
+					{/if}
+				{/snippet}
+				<GiftActionRow
+					{onmore}
+					secondary={hasMultipleActions ? secondaryReservationAction : undefined}
+				>
 					{#if !canManage && isVisitorOrModerator && visitorGift && onmore === undefined}
 						<PurchasedToggle
 							gift={visitorGift}
-							size="xl"
+							size="md"
 							class="w-full max-sm:hidden"
 						/>
 					{/if}
@@ -271,18 +273,18 @@
 							{role}
 							{isArchived}
 							{onreceived}
-							size="xl"
+							size="md"
 							compactLabel
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight [&_svg]:hidden"
+							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1 [&_svg]:hidden"
 						/>
 					{:else if isVisitorOrModerator && visitorGift}
 						<ReserveButton
 							gift={visitorGift}
 							{isArchived}
-							size="xl"
+							size="md"
 							{onreserve}
 							{onunreserve}
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight"
+							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 						/>
 					{/if}
 				</GiftActionRow>

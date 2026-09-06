@@ -860,7 +860,7 @@ describe('GiftCard unified state presentation (issues #328 and #330)', () => {
 });
 
 describe('GiftCard Like geometry (issue #330 follow-up)', () => {
-	it('keeps the desktop footer Like at least 40px wide without constraining count growth', async () => {
+	it('uses the compact desktop footer height without constraining Like count growth', async () => {
 		await page.viewport(800, 720);
 		const withoutCountHost = await renderCardInGridColumn(makeVisitorGift({ likeCount: 0 }));
 		const withoutCount = withoutCountHost
@@ -872,7 +872,7 @@ describe('GiftCard Like geometry (issue #330 follow-up)', () => {
 
 		expect(withoutCountFooter.contains(withoutCount)).toBe(true);
 		expect(withoutCount.getBoundingClientRect().width).toBeGreaterThanOrEqual(40);
-		expect(withoutCount.getBoundingClientRect().height).toBeCloseTo(40, 0);
+		expect(withoutCount.getBoundingClientRect().height).toBeCloseTo(32, 0);
 
 		const withCountHost = await renderCardInGridColumn(
 			makeVisitorGift({ id: 'gift-with-count', likeCount: 123 }),
@@ -886,10 +886,10 @@ describe('GiftCard Like geometry (issue #330 follow-up)', () => {
 
 		expect(withCountFooter.contains(withCount)).toBe(true);
 		expect(withCount.getBoundingClientRect().width).toBeGreaterThan(40);
-		expect(withCount.getBoundingClientRect().height).toBeCloseTo(40, 0);
+		expect(withCount.getBoundingClientRect().height).toBeCloseTo(32, 0);
 	});
 
-	it('keeps the Like target 40px square on mobile and 40px high beside a tall desktop footer', async () => {
+	it('keeps the image Like target 40px square on mobile', async () => {
 		await page.viewport(390, 720);
 		const mobileHost = document.createElement('div');
 		mobileHost.style.width = '179px';
@@ -921,16 +921,6 @@ describe('GiftCard Like geometry (issue #330 follow-up)', () => {
 			mobileLikeRect.top + mobileLikeRect.height / 2,
 			1,
 		);
-
-		await page.viewport(800, 720);
-		const desktopHost = await renderCardInGridColumn(makeVisitorGift({ likeCount: 12 }));
-		const desktopLike = desktopHost
-			.querySelector('[data-like-heart]')
-			?.closest('button') as HTMLElement;
-		const footer = desktopHost.querySelector('[data-testid="gift-card-footer"]') as HTMLElement;
-		footer.style.height = '86px';
-		expect(footer.getBoundingClientRect().height).toBeCloseTo(86, 0);
-		expect(desktopLike.getBoundingClientRect().height).toBeCloseTo(40, 0);
 	});
 });
 
@@ -952,6 +942,55 @@ describe('GiftCard actions (issue #255)', () => {
 
 		expect(host.querySelector('[data-like-heart]')).toBeNull();
 		expect(host.querySelector('[data-testid="reserve-button"]')).toBeTruthy();
+	});
+
+	it('keeps manager reservation and received callbacks in the footer without duplicates', async () => {
+		await page.viewport(800, 720);
+		const onreserve = vi.fn();
+		const onreceived = vi.fn();
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		fixedHosts.add(host);
+		await render(
+			GiftCardTestHost,
+			{
+				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
+				role: WISHLIST_ROLES.moderator,
+				onreserve,
+				onreceived,
+			},
+			{ baseElement: host },
+		);
+
+		const footer = host.querySelector('[data-testid="gift-card-footer"]') as HTMLElement;
+		const image = host.querySelector('[data-testid="gift-card-image-frame"]') as HTMLElement;
+		const reserve = host.querySelectorAll<HTMLElement>('[data-testid="reserve-button"]');
+		const received = host.querySelector(
+			'[data-testid="gift-received-toggle"]',
+		) as HTMLButtonElement;
+		expect(reserve).toHaveLength(1);
+		expect(footer.contains(reserve[0]!)).toBe(true);
+		expect(image.querySelector('button')).toBeNull();
+		reserve[0]!.click();
+		received.click();
+		expect(onreserve).toHaveBeenCalledOnce();
+		expect(onreceived).toHaveBeenCalledWith('gift-1', true);
+
+		const withoutReceivedHost = document.createElement('div');
+		document.body.appendChild(withoutReceivedHost);
+		fixedHosts.add(withoutReceivedHost);
+		await render(
+			GiftCardTestHost,
+			{
+				gift: makeVisitorGift({ id: 'gift-without-received', myReservationId: null }),
+				role: WISHLIST_ROLES.moderator,
+				onreserve: () => {},
+			},
+			{ baseElement: withoutReceivedHost },
+		);
+		expect(withoutReceivedHost.querySelectorAll('[data-testid="reserve-button"]')).toHaveLength(
+			1,
+		);
 	});
 
 	it('does not host reservation release even when the context permits it', async () => {
@@ -1013,23 +1052,37 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 				'[data-testid="gift-received-toggle"], [data-testid="reserve-button"]',
 			) as HTMLElement;
 			const card = host.firstElementChild as HTMLElement;
+			const expectedControlSize = viewport < 640 ? 48 : 32;
+			const actions = Array.from(row.querySelectorAll<HTMLElement>('button'));
 			expect(primary).toBeTruthy();
 			expect(more).toBeTruthy();
-			expect(primary.getBoundingClientRect().height).toBeCloseTo(
-				more.getBoundingClientRect().height,
-				0,
-			);
-			expectRaisedActionShadowInside(primary, card);
-			expectRaisedActionShadowInside(more, card);
+			for (const action of actions) {
+				expect(action.getBoundingClientRect().height).toBeCloseTo(expectedControlSize, 0);
+				expectRaisedActionShadowInside(action, card);
+			}
 			if (role === WISHLIST_ROLES.recipient) {
 				expect(host.querySelector('[data-like-heart]')).toBeNull();
 				expect(host.querySelector('[data-testid="reserve-button"]')).toBeNull();
 			}
 			if (role === WISHLIST_ROLES.moderator) {
 				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+				const received = host.querySelector(
+					'[data-testid="gift-received-toggle"]',
+				) as HTMLElement;
+				expect(actions).toHaveLength(3);
 				expect(
 					host.querySelector('[data-testid="gift-card-image-frame"]')?.contains(reserve),
-				).toBe(true);
+				).toBe(false);
+				expect(row.contains(reserve)).toBe(true);
+				if (viewport < 640) {
+					expect(reserve.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+						received.getBoundingClientRect().top,
+					);
+				} else {
+					const widths = actions.map((action) => action.getBoundingClientRect().width);
+					expect(widths[1]).toBeCloseTo(widths[0]!, 0);
+					expect(widths[2]).toBeCloseTo(32, 0);
+				}
 			}
 		},
 	);
@@ -1073,12 +1126,17 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 					received ? m.gift_mark_unreceived() : m.gift_mark_received(),
 				);
 				expect(more.getAttribute('aria-label')).toBe(m.gift_more_actions());
-				expect(primary.getBoundingClientRect().height).toBeCloseTo(
-					more.getBoundingClientRect().height,
-					0,
+				const actions = [reserve, primary, more];
+				for (const action of actions) {
+					expect(action.getBoundingClientRect().height).toBeCloseTo(48, 0);
+					expectRaisedActionShadowInside(action, card);
+				}
+				expect(
+					host.querySelector('[data-testid="gift-card-image-frame"]')?.contains(reserve),
+				).toBe(false);
+				expect(reserve.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+					primary.getBoundingClientRect().top,
 				);
-				expectRaisedActionShadowInside(primary, card);
-				expectRaisedActionShadowInside(more, card);
 			} finally {
 				overwriteGetLocale(() => 'cs');
 			}
@@ -1345,7 +1403,7 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 			];
 		});
 
-		expect(visibleButtons).toHaveLength(2);
+		expect(visibleButtons).toHaveLength(3);
 		for (const { button, label } of paintedLabels) {
 			expect(label.left).toBeGreaterThanOrEqual(button.left);
 			expect(label.right).toBeLessThanOrEqual(button.right);

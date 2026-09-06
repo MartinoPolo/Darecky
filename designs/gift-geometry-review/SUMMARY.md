@@ -1,10 +1,10 @@
 # Gift Geometry Review — Design Summary
 
-**Base:** Variant C · **Status:** Approved and refined.
+**Base:** Variant C · **Status:** Refined; action placement and desktop sizing revised after implementation review.
 
 ## Refinements Applied
 
-The user approved the focused specimen as presented and requested finalization. `refined.html` retains its layout and interactions; only approval copy and asset paths changed. The approval includes the labelled enlarged-text alternative and manager secondary-action placement. Historical A/B are retired. Requirements and geometry remain authoritative in the design brief, not this summary.
+The user initially approved the focused specimen, then rejected the implemented manager reservation overlay and oversized desktop footer actions. Reserve/cancel now belongs in the bottom action area beside Received and More when space permits, never over the image. Desktop actions use the existing compact Reserve control size; mobile retains larger touch targets. Narrow manager layouts may stack the square image and action content rather than overlay or clip controls. These corrections supersede the action placement and sizing shown in `refined.html`. Historical A/B remain retired. Requirements and geometry remain authoritative in the design brief.
 
 ## Component Map
 
@@ -28,7 +28,7 @@ None. No dependency or primitive was added.
 
 | Component                    | Path                                                                     | Adaptation                                                                                                           |
 | ---------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| GiftCard                     | `src/lib/components/blocks/gift/GiftCard.svelte`                         | Image-overlay controls and shared contained action lane                                                              |
+| GiftCard                     | `src/lib/components/blocks/gift/GiftCard.svelte`                         | Footer reservation/received controls and shared contained action lane                                                              |
 | GiftListItem                 | `src/lib/components/blocks/gift/GiftListItem.svelte`                     | Bordered horizontal surface, image/content density, accessible enlarged-text reflow                                  |
 | LikeButton                   | `src/lib/components/blocks/gift/LikeButton.svelte`                       | Existing `appearance="ghost"`, `showCount`, `countOverlay=false`; include visible zero count and overlay composition |
 | GiftReceivedToggle           | `src/lib/components/blocks/gift/GiftReceivedToggle.svelte`               | Existing role/archive callbacks; matching adjacent size and localized short/full labels                              |

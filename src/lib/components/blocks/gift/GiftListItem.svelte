@@ -76,6 +76,9 @@
 	// Edit-icon hover affordance (issue #125 REQ-3): mirrors GiftCard's manager-only pencil icon.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
 	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
+	const hasMultipleActions = $derived(
+		hasReceivedPrimary && isVisitorOrModerator && hasReservationAction,
+	);
 	const isDimmed = $derived(presentation.isDimmed);
 	const primaryLink = $derived(getPrimaryGiftLink(gift.links));
 	const domain = $derived(extractGiftDomain(gift.links));
@@ -95,6 +98,7 @@
 				reserverLine !== null &&
 				reserverLine !== '' &&
 				'gift-list-item-manager-dense',
+			hasMultipleActions && 'gift-list-item-multiple-actions',
 		)}
 	>
 		<!-- The 1:1 thumb fills the card's inner height in the normal horizontal layout. -->
@@ -147,28 +151,11 @@
 					)}
 				/>
 			{/if}
-			<GiftStateOverlay
-				model={presentation.overlay}
-				class={cn(
-					'pt-[3.25rem]',
-					hasReceivedPrimary && isVisitorOrModerator && hasReservationAction && 'pb-14',
-				)}
-			/>
-			{#if hasReceivedPrimary && isVisitorOrModerator && visitorGift}
-				<ReserveButton
-					gift={visitorGift}
-					{isArchived}
-					size="xl"
-					{onreserve}
-					{onunreserve}
-					class="absolute right-[9.5px] bottom-[9.5px] left-[6.5px] z-20 h-auto min-h-12 min-w-0 w-auto"
-					surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight"
-				/>
-			{/if}
+			<GiftStateOverlay model={presentation.overlay} class="pt-[3.25rem]" />
 		</div>
 
-		<!-- Content and primary reservation action stay beside the image at every width. The dim
-	     lives here (not on the row) so the centered state overlay stays crisp. -->
+		<!-- Ordinary rows keep content beside the image; narrow manager rows with multiple actions
+	     stack below it. The dim lives here so the centered state overlay stays crisp. -->
 		<div
 			data-testid="gift-list-content"
 			class={cn(
@@ -246,11 +233,26 @@
 					class="mt-auto flex min-w-0 flex-col gap-1.5 pt-1.5"
 					data-testid="gift-list-actions"
 				>
-					<GiftActionRow {onmore}>
+					{#snippet secondaryReservationAction()}
+						{#if visitorGift}
+							<ReserveButton
+								gift={visitorGift}
+								{isArchived}
+								size="md"
+								{onreserve}
+								{onunreserve}
+								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
+							/>
+						{/if}
+					{/snippet}
+					<GiftActionRow
+						{onmore}
+						secondary={hasMultipleActions ? secondaryReservationAction : undefined}
+					>
 						{#if !canManage && isVisitorOrModerator && visitorGift && onmore === undefined}
 							<PurchasedToggle
 								gift={visitorGift}
-								size="xl"
+								size="md"
 								class="w-full max-sm:hidden"
 							/>
 						{/if}
@@ -261,18 +263,18 @@
 								{role}
 								{isArchived}
 								{onreceived}
-								size="xl"
+								size="md"
 								compactLabel
-								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight [&_svg]:hidden"
+								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1 [&_svg]:hidden"
 							/>
 						{:else if isVisitorOrModerator && visitorGift}
 							<ReserveButton
 								gift={visitorGift}
 								{isArchived}
-								size="xl"
+								size="md"
 								{onreserve}
 								{onunreserve}
-								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight"
+								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 							/>
 						{/if}
 					</GiftActionRow>
@@ -325,8 +327,28 @@
 		}
 	}
 
+	@container gift-list (width < 40rem) {
+		.gift-list-item-multiple-actions {
+			display: flex;
+			height: auto;
+			flex-direction: column;
+		}
+
+		.gift-list-item-multiple-actions .gift-list-image {
+			width: 100%;
+			height: auto;
+			aspect-ratio: 1;
+			border-right: 0;
+			border-bottom: 2px solid var(--ink);
+		}
+
+		.gift-list-item-multiple-actions .gift-list-image-frame {
+			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
+		}
+	}
+
 	@container gift-list (width < 20rem) {
-		.gift-list-item-manager-dense {
+		.gift-list-item-manager-dense:not(.gift-list-item-multiple-actions) {
 			display: flex;
 			height: auto;
 			flex-direction: column;
@@ -342,7 +364,7 @@
 	}
 
 	@container gift-list (width < 20rem) {
-		.gift-list-item-manager-dense .gift-list-image {
+		.gift-list-item-manager-dense:not(.gift-list-item-multiple-actions) .gift-list-image {
 			width: 100%;
 			height: auto;
 			aspect-ratio: 1;
@@ -350,7 +372,7 @@
 			border-bottom: 2px solid var(--ink);
 		}
 
-		.gift-list-item-manager-dense .gift-list-image-frame {
+		.gift-list-item-manager-dense:not(.gift-list-item-multiple-actions) .gift-list-image-frame {
 			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
 		}
 	}
