@@ -20,7 +20,9 @@ function getAuthContext(): AuthContext {
 	return { user, session };
 }
 
-export function guardedQuery<TResult>(handler: (authContext: AuthContext) => TResult) {
+export function guardedQuery<TResult>(
+	handler: (authContext: AuthContext) => TResult | Promise<TResult>,
+) {
 	return query(() => {
 		const authContext = getAuthContext();
 		return handler(authContext);
@@ -29,7 +31,10 @@ export function guardedQuery<TResult>(handler: (authContext: AuthContext) => TRe
 
 export function guardedQueryWithArgs<TSchema extends StandardSchemaV1, TResult>(
 	schema: TSchema,
-	handler: (authContext: AuthContext, arg: StandardSchemaV1.InferOutput<TSchema>) => TResult,
+	handler: (
+		authContext: AuthContext,
+		arg: StandardSchemaV1.InferOutput<TSchema>,
+	) => TResult | Promise<TResult>,
 ) {
 	return query(schema, (arg: StandardSchemaV1.InferOutput<TSchema>) => {
 		const authContext = getAuthContext();
@@ -42,7 +47,7 @@ export function publicQuery<TSchema extends StandardSchemaV1, TResult>(
 	handler: (
 		authContext: AuthContext | null,
 		arg: StandardSchemaV1.InferOutput<TSchema>,
-	) => TResult,
+	) => TResult | Promise<TResult>,
 ) {
 	return query(schema, (arg: StandardSchemaV1.InferOutput<TSchema>) => {
 		const event = getRequestEvent();
@@ -55,7 +60,10 @@ export function publicQuery<TSchema extends StandardSchemaV1, TResult>(
 
 export function guardedCommand<TSchema extends StandardSchemaV1, TResult>(
 	schema: TSchema,
-	handler: (authContext: AuthContext, arg: StandardSchemaV1.InferOutput<TSchema>) => TResult,
+	handler: (
+		authContext: AuthContext,
+		arg: StandardSchemaV1.InferOutput<TSchema>,
+	) => TResult | Promise<TResult>,
 ) {
 	return command(schema, (arg: StandardSchemaV1.InferOutput<TSchema>) => {
 		const authContext = getAuthContext();
@@ -63,7 +71,9 @@ export function guardedCommand<TSchema extends StandardSchemaV1, TResult>(
 	});
 }
 
-export function guardedCommandNoArgs<TResult>(handler: (authContext: AuthContext) => TResult) {
+export function guardedCommandNoArgs<TResult>(
+	handler: (authContext: AuthContext) => TResult | Promise<TResult>,
+) {
 	return command(() => {
 		const authContext = getAuthContext();
 		return handler(authContext);
@@ -75,7 +85,7 @@ export function publicCommand<TSchema extends StandardSchemaV1, TResult>(
 	handler: (
 		authContext: AuthContext | null,
 		arg: StandardSchemaV1.InferOutput<TSchema>,
-	) => TResult,
+	) => TResult | Promise<TResult>,
 ) {
 	return command(schema, (arg: StandardSchemaV1.InferOutput<TSchema>) => {
 		const event = getRequestEvent();

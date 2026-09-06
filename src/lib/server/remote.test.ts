@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, expectTypeOf, beforeEach } from 'vitest';
 import * as v from 'valibot';
 import type { User, Session } from 'better-auth';
 
@@ -52,6 +52,44 @@ function setupUnauthenticatedEvent(): void {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+});
+
+describe('async remote handlers', () => {
+	it('exposes resolved query data rather than nested promises', async () => {
+		setupAuthenticatedEvent();
+		const handler = async () => 'resolved';
+		const guarded = guardedQuery(handler);
+		const guardedWithArgs = guardedQueryWithArgs(v.string(), handler);
+		const publicWithArgs = publicQuery(v.string(), handler);
+
+		expectTypeOf<ReturnType<typeof guarded>['current']>().toEqualTypeOf<string | undefined>();
+		expectTypeOf<ReturnType<typeof guardedWithArgs>['current']>().toEqualTypeOf<
+			string | undefined
+		>();
+		expectTypeOf<ReturnType<typeof publicWithArgs>['current']>().toEqualTypeOf<
+			string | undefined
+		>();
+
+		await expect(guarded()).resolves.toBe('resolved');
+		await expect(guardedWithArgs('argument')).resolves.toBe('resolved');
+		await expect(publicWithArgs('argument')).resolves.toBe('resolved');
+	});
+
+	it('exposes a single promise for command results', async () => {
+		setupAuthenticatedEvent();
+		const handler = async () => 'resolved';
+		const guarded = guardedCommandNoArgs(handler);
+		const guardedWithArgs = guardedCommand(v.string(), handler);
+		const publicWithArgs = publicCommand(v.string(), handler);
+
+		expectTypeOf(guarded).returns.toExtend<Promise<string>>();
+		expectTypeOf(guardedWithArgs).returns.toExtend<Promise<string>>();
+		expectTypeOf(publicWithArgs).returns.toExtend<Promise<string>>();
+
+		await expect(guarded()).resolves.toBe('resolved');
+		await expect(guardedWithArgs('argument')).resolves.toBe('resolved');
+		await expect(publicWithArgs('argument')).resolves.toBe('resolved');
+	});
 });
 
 describe('guardedQuery', () => {
