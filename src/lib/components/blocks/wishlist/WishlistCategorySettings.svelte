@@ -25,7 +25,7 @@
 	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
 	import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import { onDestroy, tick } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import { giftCategoryColorForIndex } from '$lib/modules/gift-categories/gift_category_colors.js';
 	import { createCategorySettingsMotion } from './wishlist_category_settings_motion.svelte.js';
 
@@ -47,7 +47,6 @@
 		id: string | null;
 		label: string;
 		color: string;
-		usedCount: number;
 	}
 	interface PendingRemoval {
 		type: 'custom' | 'preset';
@@ -80,8 +79,37 @@
 	let confirmedRemovalCategoryIds = $state<string[]>([]);
 	let removalTrigger = $state<HTMLElement | null>(null);
 	let categoryRowsElement = $state<HTMLElement | null>(null);
+	let usageRefreshStatus = $state<'loading' | 'fresh' | 'error'>('loading');
+	const categoryControlsDisabled = $derived(saving || usageRefreshStatus !== 'fresh');
 	const categoryMotion = createCategorySettingsMotion();
 	onDestroy(() => categoryMotion.destroy());
+	onMount(() => {
+		void refreshCategoryUsage();
+	});
+
+	async function refreshCategoryUsage() {
+		usageRefreshStatus = 'loading';
+		try {
+			if (categoriesQuery.current === undefined) {
+				await categoriesQuery;
+			} else {
+				await categoriesQuery.refresh();
+			}
+			usageRefreshStatus = 'fresh';
+		} catch (thrown) {
+			console.error('Failed to refresh category usage:', thrown);
+			usageRefreshStatus = 'error';
+		}
+	}
+
+	function usedCountForCategoryId(categoryId: string | null): number {
+		if (categoryId === null) {
+			return 0;
+		}
+		return (
+			categoriesQuery.current?.find((category) => category.id === categoryId)?.usedCount ?? 0
+		);
+	}
 
 	function snapshot(): string {
 		return JSON.stringify({
@@ -134,7 +162,6 @@
 				id: category.id,
 				label: category.customLabel ?? '',
 				color: category.color,
-				usedCount: category.usedCount,
 			}));
 		enabledPresets = categories.flatMap((category) => category.presetKey ?? []);
 		presetColors = Object.fromEntries(
@@ -160,7 +187,6 @@
 				id: null,
 				label,
 				color: giftCategoryColorForIndex(nextCustomColorIndex),
-				usedCount: 0,
 			},
 			...customDrafts,
 		];
@@ -220,14 +246,18 @@
 		}
 	}
 	async function requestCustomRemoval(category: CustomDraft, trigger: HTMLElement) {
-		if (category.id !== null && category.usedCount > 0) {
+		if (categoryControlsDisabled) {
+			return;
+		}
+		const usedCount = usedCountForCategoryId(category.id);
+		if (category.id !== null && usedCount > 0) {
 			removalTrigger = trigger;
 			pendingRemoval = {
 				type: 'custom',
 				key: category.key,
 				categoryId: category.id,
 				label: category.label.trim(),
-				usedCount: category.usedCount,
+				usedCount,
 			};
 			return;
 		}
@@ -293,14 +323,7 @@
 				confirmedRemovalCategoryIds = [];
 				baseline = '';
 				seededSignature = '';
-				try {
-					await categoriesQuery.refresh();
-				} catch (refreshError) {
-					console.error(
-						'Failed to refresh category settings after conflict:',
-						refreshError,
-					);
-				}
+				await refreshCategoryUsage();
 			}
 			toastError(translateServerError(thrown));
 		} finally {
@@ -312,6 +335,17 @@
 <form id="wishlist-categories-form" class="flex flex-col gap-5" onsubmit={save}>
 	<p class="text-sm text-muted-foreground">{m.gift_categories_settings_hint()}</p>
 	<HelpText>{m.gift_category_color_save_hint()}</HelpText>
+	{#if usageRefreshStatus === 'error'}
+		<div
+			class="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 p-3"
+			role="alert"
+		>
+			<p class="text-sm text-destructive">{m.error_generic()}</p>
+			<Button type="button" size="sm" intent="outline" onclick={refreshCategoryUsage}>
+				{m.import_wizard_retry()}
+			</Button>
+		</div>
+	{/if}
 
 	<div class="flex flex-col gap-2">
 		<h3 class="text-base font-semibold">{m.gift_category_create()}</h3>
@@ -321,13 +355,14 @@
 				maxlength={MAX_CUSTOM_GIFT_CATEGORY_LABEL_LENGTH}
 				placeholder={m.gift_category_custom_placeholder()}
 				class="min-w-56 flex-1"
-				disabled={saving}
+				disabled={categoryControlsDisabled}
 				onkeydown={handleCreateKeydown}
 			/>
 			<Button
 				type="button"
 				onclick={createCustom}
-				disabled={saving || customLabel.trim() === ''}>{m.gift_category_create()}</Button
+				disabled={categoryControlsDisabled || customLabel.trim() === ''}
+				>{m.gift_category_create()}</Button
 			>
 		</div>
 	</div>
@@ -338,6 +373,7 @@
 			<HelpText>{m.gift_categories_empty()}</HelpText>
 		{:else}
 			{#each customDrafts as category, index (category.key)}
+				{@const usedCount = usedCountForCategoryId(category.id)}
 				<div
 					class="flex items-center gap-2 rounded-lg border border-border border-l-4 bg-surface px-3 py-2"
 					style:border-left-color={category.color}
@@ -350,25 +386,25 @@
 						<ColorPicker
 							bind:value={category.color}
 							label={category.label}
-							disabled={saving}
+							disabled={categoryControlsDisabled}
 						/>
 						<Input
 							bind:value={category.label}
 							maxlength={MAX_CUSTOM_GIFT_CATEGORY_LABEL_LENGTH}
 							class="min-w-0 flex-1"
-							disabled={saving}
+							disabled={categoryControlsDisabled}
 						/>
 						<span
 							data-testid="gift-category-used-count"
 							class="w-20 shrink-0 text-right text-xs text-muted-foreground"
-							>{m.gift_category_usage_compact({ count: category.usedCount })}</span
+							>{m.gift_category_usage_compact({ count: usedCount })}</span
 						>
 					</div>
 					<Button
 						type="button"
 						size="icon-sm"
 						intent="ghost"
-						disabled={saving || index === 0}
+						disabled={categoryControlsDisabled || index === 0}
 						onclick={() => move(index, -1)}
 						aria-label={m.move_up()}><ArrowUpIcon /></Button
 					>
@@ -376,7 +412,7 @@
 						type="button"
 						size="icon-sm"
 						intent="ghost"
-						disabled={saving || index === customDrafts.length - 1}
+						disabled={categoryControlsDisabled || index === customDrafts.length - 1}
 						onclick={() => move(index, 1)}
 						aria-label={m.move_down()}><ArrowDownIcon /></Button
 					>
@@ -384,7 +420,7 @@
 						type="button"
 						size="icon-sm"
 						intent="ghost"
-						disabled={saving}
+						disabled={categoryControlsDisabled}
 						onclick={(event) => requestCustomRemoval(category, event.currentTarget)}
 						aria-label={m.delete()}><TrashIcon /></Button
 					>
@@ -414,7 +450,7 @@
 					<Checkbox
 						id={`gift-category-preset-${preset.key}`}
 						{checked}
-						disabled={saving}
+						disabled={categoryControlsDisabled}
 						onCheckedChange={(value) =>
 							togglePreset(preset.key, value === true, label, usedCount)}
 					/>
@@ -426,7 +462,7 @@
 							value={presetColors[preset.key] ?? preset.color}
 							onValueChange={(value) => (presetColors[preset.key] = value)}
 							{label}
-							disabled={saving}
+							disabled={categoryControlsDisabled}
 						/>
 						<span
 							data-testid="gift-category-used-count"

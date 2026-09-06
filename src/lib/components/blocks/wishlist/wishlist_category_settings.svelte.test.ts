@@ -15,7 +15,9 @@ const remoteMocks = vi.hoisted(() => ({
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
 vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
 	getGiftCategorySettingsRows: vi.fn(() => ({
-		current: remoteMocks.categories,
+		get current() {
+			return remoteMocks.categories;
+		},
 		refresh: remoteMocks.refresh,
 	})),
 	saveGiftCategorySettingsCommand: remoteMocks.save,
@@ -68,6 +70,46 @@ beforeEach(() => {
 });
 
 describe('WishlistCategorySettings', () => {
+	it('refreshes stale usage before enabling removal and uses the fresh count', async () => {
+		remoteMocks.categories = [category({ customLabel: 'Sport', usedCount: 0 })];
+		let finishRefresh!: () => void;
+		remoteMocks.refresh.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					finishRefresh = () => {
+						remoteMocks.categories = [category({ customLabel: 'Sport', usedCount: 1 })];
+						resolve();
+					};
+				}),
+		);
+		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
+		const removeButton = screen.getByRole('button', { name: m.delete() });
+
+		await expect.element(removeButton).toBeDisabled();
+		finishRefresh();
+		await expect.element(removeButton).toBeEnabled();
+		await removeButton.click();
+
+		await expect.element(page.getByRole('dialog')).toBeVisible();
+		expect(page.getByRole('dialog').element().textContent).toContain('1');
+	});
+
+	it('keeps category controls disabled after a refresh failure and retries safely', async () => {
+		remoteMocks.categories = [category({ customLabel: 'Sport', usedCount: 0 })];
+		remoteMocks.refresh
+			.mockRejectedValueOnce(new Error('refresh failed'))
+			.mockResolvedValueOnce(undefined);
+		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
+
+		await expect.element(page.getByRole('alert')).toBeVisible();
+		await expect.element(screen.getByRole('button', { name: m.delete() })).toBeDisabled();
+		await page.getByRole('button', { name: m.import_wizard_retry() }).click();
+
+		await vi.waitFor(() => expect(remoteMocks.refresh).toHaveBeenCalledTimes(2));
+		await expect.element(screen.getByRole('button', { name: m.delete() })).toBeEnabled();
+		expect(page.getByRole('alert').elements()).toHaveLength(0);
+	});
+
 	it('shows a right-aligned compact usage count, including zero, beside every active category', async () => {
 		remoteMocks.categories = [
 			category({ id: 'custom', customLabel: 'Sport', usedCount: 0 }),
@@ -178,6 +220,8 @@ describe('WishlistCategorySettings', () => {
 			new Error(SERVER_ERROR.GIFT_CATEGORY_REMOVAL_CONFIRMATION_MISMATCH),
 		);
 		const screen = render(WishlistCategorySettings, { wishlistId: 'wishlist-1' });
+		await vi.waitFor(() => expect(remoteMocks.refresh).toHaveBeenCalledOnce());
+		remoteMocks.refresh.mockClear();
 
 		await screen.getByRole('button', { name: m.delete() }).click();
 		await page.getByTestId('gift-category-remove-confirm').click();

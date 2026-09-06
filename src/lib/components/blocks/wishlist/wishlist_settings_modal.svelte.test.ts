@@ -9,6 +9,7 @@ import { GIFT_CATEGORY_PRESETS } from '$lib/modules/gift-categories/types.js';
 import { createDefaultWishlistSlots } from '$lib/modules/images/index.js';
 
 const remoteMocks = vi.hoisted(() => ({
+	refreshGiftCategorySettings: vi.fn().mockResolvedValue(undefined),
 	saveGiftCategorySettingsCommand: vi.fn(),
 	saveWishlistSettings: vi.fn(),
 }));
@@ -18,7 +19,10 @@ vi.mock('$lib/modules/wishlists/wishlist_settings.remote.js', () => ({
 }));
 vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
 	getGiftCategories: vi.fn(() => ({ current: [] })),
-	getGiftCategorySettingsRows: vi.fn(() => ({ current: [] })),
+	getGiftCategorySettingsRows: vi.fn(() => ({
+		current: [],
+		refresh: remoteMocks.refreshGiftCategorySettings,
+	})),
 	saveGiftCategorySettingsCommand: remoteMocks.saveGiftCategorySettingsCommand,
 }));
 
