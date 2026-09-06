@@ -278,19 +278,15 @@
 			type="button"
 			aria-label={m.gift_reorder_grip_label()}
 			title={m.gift_reorder_keyboard_hint()}
-			class={cn(
-				'group/grip elevation-owner elevation-owner-raised absolute right-1 top-1 z-50 grid size-10 cursor-grab touch-none place-items-center rounded-[calc(var(--radius-panel)-4px)] p-0 focus-visible:opacity-100 active:cursor-grabbing sm:right-auto sm:left-2 sm:top-2 sm:z-10 sm:size-auto sm:rounded sm:opacity-60',
-				selectionLayout === 'list' &&
-					'left-[var(--gift-list-corner-left)] right-auto sm:left-2',
-			)}
+			class="group/grip elevation-owner elevation-owner-raised absolute left-0 top-0 z-50 grid size-[60px] cursor-grab touch-none place-items-start rounded-[var(--radius-panel)] p-0 outline-offset-[-3px] focus-visible:outline-[3px] focus-visible:outline-ring active:cursor-grabbing sm:left-1 sm:top-1 sm:size-8 sm:rounded-[calc(var(--radius-panel)-4px)]"
 			data-prevent-gift-card-open
 			onpointerdown={(event) => onreorderpointerdown(event, index)}
 			onkeydown={handleGripKeydown}
 		>
 			<ElevationSurface
-				class="grid size-full place-items-center rounded-[inherit] border-2 border-ink bg-card shadow-sticker transition-[translate,scale,box-shadow,background-color,opacity] duration-200 ease-spring group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5 group-hover/grip:bg-accent sm:border-0 sm:bg-card/80 sm:p-0.5 sm:shadow-none"
+				class="ml-1 mt-1 grid size-10 place-items-center rounded-[12px] border-2 border-ink bg-card transition-[translate,scale,box-shadow,background-color,opacity] duration-200 ease-spring group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5 group-hover/grip:bg-accent sm:size-6 sm:rounded-[8px]"
 			>
-				<GripVerticalIcon class="size-4 text-muted-foreground" />
+				<GripVerticalIcon class="size-5 text-muted-foreground sm:size-4" />
 			</ElevationSurface>
 		</button>
 	{/if}
