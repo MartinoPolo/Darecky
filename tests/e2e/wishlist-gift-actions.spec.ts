@@ -47,8 +47,12 @@ async function selectPriorityFilter(page: Page, name: string) {
 }
 
 async function waitForReceivedState(giftRow: Locator, received: boolean) {
-	await expect(giftRow.getByTestId('gift-received-toggle')).toHaveText(
-		received ? /Označit jako nepřijatý/ : /Označit jako přijatý/,
+	const action = giftRow.getByTestId('gift-received-toggle');
+	await expect(action).toHaveAccessibleName(
+		received ? m.gift_mark_unreceived() : m.gift_mark_received(),
+	);
+	await expect(action).toHaveText(
+		received ? m.gift_unreceived_compact() : m.gift_received_compact(),
 	);
 }
 

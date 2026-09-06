@@ -8,6 +8,7 @@ import type { GiftForVisitor } from '$lib/modules/gifts/types.js';
 import { WISHLIST_ROLES, type WishlistRole } from '$lib/modules/wishlists/types.js';
 import { IMAGE_FIT_MODES, type ImageMetadata } from '$lib/modules/images/index.js';
 import * as m from '$lib/paraglide/messages.js';
+import { overwriteGetLocale } from '$lib/paraglide/runtime.js';
 
 // GiftImage transitively imports the images module barrel, which reads `$env/dynamic/public`.
 // vitest-browser-svelte mounts without SvelteKit's page bootstrap, so the virtual module
@@ -100,6 +101,21 @@ function firstNonBlankTextNode(surface: HTMLElement): Text {
 	throw new Error(
 		`Expected a nonblank text node inside the direct elevation surface: ${surface.outerHTML}`,
 	);
+}
+
+function expectRaisedActionShadowInside(action: HTMLElement, boundary: HTMLElement): void {
+	const surface = action.querySelector(':scope > .elevation-surface') as HTMLElement;
+	const surfaceStyle = getComputedStyle(surface);
+	const shadowOffset = Number.parseFloat(
+		surfaceStyle.getPropertyValue('--elevation-ordinary-offset'),
+	);
+	const surfaceRect = surface.getBoundingClientRect();
+	const boundaryRect = boundary.getBoundingClientRect();
+
+	expect(surfaceStyle.boxShadow).not.toBe('none');
+	expect(shadowOffset).toBeGreaterThan(0);
+	expect(surfaceRect.right + shadowOffset).toBeLessThanOrEqual(boundaryRect.right + 0.5);
+	expect(surfaceRect.bottom + shadowOffset).toBeLessThanOrEqual(boundaryRect.bottom + 0.5);
 }
 
 function makeVisitorGift(overrides: Partial<GiftForVisitor> = {}): GiftForVisitor {
@@ -1003,12 +1019,8 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 				more.getBoundingClientRect().height,
 				0,
 			);
-			expect(more.getBoundingClientRect().right + 3).toBeLessThanOrEqual(
-				card.getBoundingClientRect().right,
-			);
-			expect(more.getBoundingClientRect().bottom + 3).toBeLessThanOrEqual(
-				card.getBoundingClientRect().bottom,
-			);
+			expectRaisedActionShadowInside(primary, card);
+			expectRaisedActionShadowInside(more, card);
 			if (role === WISHLIST_ROLES.recipient) {
 				expect(host.querySelector('[data-like-heart]')).toBeNull();
 				expect(host.querySelector('[data-testid="reserve-button"]')).toBeNull();
@@ -1021,6 +1033,90 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 			}
 		},
 	);
+
+	it.each([
+		{ locale: 'cs' as const, received: false },
+		{ locale: 'cs' as const, received: true },
+		{ locale: 'en' as const, received: false },
+		{ locale: 'en' as const, received: true },
+	])(
+		'contains localized manager actions and shadows for $locale (received: $received)',
+		async ({ locale, received }) => {
+			overwriteGetLocale(() => locale);
+			await page.viewport(390, 900);
+			const host = document.createElement('div');
+			host.style.width = '296px';
+			document.body.appendChild(host);
+			fixedHosts.add(host);
+			try {
+				await render(
+					GiftCardTestHost,
+					{
+						gift: makeVisitorGift({ received }),
+						role: WISHLIST_ROLES.moderator,
+						onreceived: () => {},
+						onunreserve: () => {},
+						onmore: () => {},
+					},
+					{ baseElement: host },
+				);
+				const card = host.firstElementChild as HTMLElement;
+				const primary = host.querySelector(
+					'[data-testid="gift-received-toggle"]',
+				) as HTMLElement;
+				const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+				expect(reserve.getAttribute('aria-label')).toBe(
+					m.reserve_button_cancel_aria({ name: REALISTIC_LONG_NAME }),
+				);
+				expect(primary.getAttribute('aria-label')).toBe(
+					received ? m.gift_mark_unreceived() : m.gift_mark_received(),
+				);
+				expect(more.getAttribute('aria-label')).toBe(m.gift_more_actions());
+				expect(primary.getBoundingClientRect().height).toBeCloseTo(
+					more.getBoundingClientRect().height,
+					0,
+				);
+				expectRaisedActionShadowInside(primary, card);
+				expectRaisedActionShadowInside(more, card);
+			} finally {
+				overwriteGetLocale(() => 'cs');
+			}
+		},
+	);
+
+	it('keeps both moving-surface shadows contained at 200% root text', async () => {
+		await page.viewport(390, 900);
+		const previousFontSize = document.documentElement.style.fontSize;
+		document.documentElement.style.fontSize = '32px';
+		const host = document.createElement('div');
+		host.style.width = '296px';
+		document.body.appendChild(host);
+		fixedHosts.add(host);
+		try {
+			await render(
+				GiftCardTestHost,
+				{
+					gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
+					role: WISHLIST_ROLES.visitor,
+					onreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+			const card = host.firstElementChild as HTMLElement;
+			const primary = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+			const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			expect(primary.getBoundingClientRect().height).toBeCloseTo(
+				more.getBoundingClientRect().height,
+				0,
+			);
+			expectRaisedActionShadowInside(primary, card);
+			expectRaisedActionShadowInside(more, card);
+		} finally {
+			document.documentElement.style.fontSize = previousFontSize;
+		}
+	});
 });
 
 describe('GiftCard reservation-action layout (issue #211)', () => {

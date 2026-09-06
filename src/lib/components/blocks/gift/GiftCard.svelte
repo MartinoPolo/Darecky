@@ -84,6 +84,7 @@
 	// Edit-icon hover affordance (issue #125 REQ-3): editing roles see a pencil icon appear
 	// on card hover/focus; visitors rely on the shared cursor-pointer + hover lift only.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
+	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
 
 	const isDimmed = $derived(presentation.isDimmed);
 	const styles = $derived(giftCardVariants({ dimmed: isDimmed }));
@@ -155,7 +156,7 @@
 			class={cn(
 				narrowViewportState.current && presentation.showLike && 'pt-12 pr-12',
 				narrowViewportState.current &&
-					canManage &&
+					hasReceivedPrimary &&
 					isVisitorOrModerator &&
 					hasReservationAction &&
 					'pb-14',
@@ -173,7 +174,7 @@
 			/>
 		{/if}
 
-		{#if !contextualMode && canManage && isVisitorOrModerator && visitorGift}
+		{#if hasReceivedPrimary && isVisitorOrModerator && visitorGift}
 			<ReserveButton
 				gift={visitorGift}
 				{isArchived}
@@ -243,7 +244,7 @@
 		{/if}
 	</div>
 
-	{#if !contextualMode && ((canManage && !isArchived && onreceived !== undefined) || (isVisitorOrModerator && hasReservationAction) || onmore)}
+	{#if !contextualMode && (hasReceivedPrimary || (isVisitorOrModerator && hasReservationAction) || onmore)}
 		<div class={styles.footer()} data-testid="gift-card-footer">
 			{#if !narrowViewportState.current && presentation.showLike && visitorGift}
 				<LikeButton
@@ -263,7 +264,7 @@
 							class="w-full max-sm:hidden"
 						/>
 					{/if}
-					{#if canManage && onreceived !== undefined}
+					{#if hasReceivedPrimary}
 						<GiftReceivedToggle
 							giftId={gift.id}
 							received={gift.received}

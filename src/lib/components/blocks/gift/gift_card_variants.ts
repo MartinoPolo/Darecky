@@ -19,7 +19,7 @@ export const giftCardVariants = tv({
 	slots: {
 		// The `group/gift-card` triggers only mirror the drag grip so the card and grip lift in
 		// lock-step; the card itself lifts through the semantic owner selector in app.css.
-		card: 'group relative isolate grid min-h-[280px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-panel bg-card sm:row-span-7 sm:min-h-0 sm:grid-rows-subgrid',
+		card: 'group relative isolate grid h-full min-h-[280px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-panel bg-card sm:row-span-7 sm:min-h-0 sm:grid-rows-subgrid',
 		plate: 'elevation-ordinary pointer-events-none absolute inset-0 z-[1] rounded-panel border-[2.5px] border-ink bg-transparent transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5',
 		// 4:3 (issue #183, revises the earlier 1:1 shape): shorter cards, same
 		// `minmax(280px, 1fr)` grid column sizing.

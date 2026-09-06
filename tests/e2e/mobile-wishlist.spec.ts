@@ -308,7 +308,7 @@ test.describe('mobile wishlist acceptance', () => {
 		await page.context().close();
 	});
 
-	test('list presentation is distinct, equal-height, persistent and uses 128px edge imagery', async ({
+	test('list presentation is distinct, equal-height, persistent and uses full-height square imagery', async ({
 		browser,
 		request,
 		baseURL,
@@ -340,11 +340,14 @@ test.describe('mobile wishlist acceptance', () => {
 					itemBoxes[index]!.y - (itemBoxes[index - 1]!.y + itemBoxes[index - 1]!.height),
 				).toBeCloseTo(10, 0);
 			}
-			for (const image of await page.getByTestId('gift-list-image').all()) {
-				const imageBox = await box(image);
-				expect(imageBox.width).toBeGreaterThanOrEqual(112);
-				expect(imageBox.width).toBeLessThanOrEqual(128);
+			for (const item of items) {
+				const imageBox = await box(item.getByTestId('gift-list-image'));
+				const itemBox = await box(item);
+				const border = await item.evaluate((element) =>
+					Number.parseFloat(getComputedStyle(element).borderTopWidth),
+				);
 				expect(imageBox.width).toBeCloseTo(imageBox.height, 0);
+				expect(imageBox.height).toBeCloseTo(itemBox.height - 2 * border, 0);
 			}
 			const titleSizes = await list
 				.locator('h3')

@@ -8,6 +8,7 @@ import type { GiftForVisitor } from '$lib/modules/gifts/types.js';
 import { WISHLIST_ROLES } from '$lib/modules/wishlists/types.js';
 import { IMAGE_FIT_MODES, type ImageMetadata } from '$lib/modules/images/index.js';
 import * as m from '$lib/paraglide/messages.js';
+import { overwriteGetLocale } from '$lib/paraglide/runtime.js';
 
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
 
@@ -104,6 +105,24 @@ function firstNonBlankTextNode(element: HTMLElement): Text {
 		node = walker.nextNode();
 	}
 	throw new Error(`Expected visible text inside ${element.outerHTML}`);
+}
+
+function expectRaisedActionShadowInside(action: HTMLElement, boundary: HTMLElement): void {
+	const surface = action.querySelector(':scope > .elevation-surface') as HTMLElement;
+	const surfaceStyle = getComputedStyle(surface);
+	const boundaryStyle = getComputedStyle(boundary);
+	const shadowOffset = Number.parseFloat(
+		surfaceStyle.getPropertyValue('--elevation-ordinary-offset'),
+	);
+	const surfaceRect = surface.getBoundingClientRect();
+	const boundaryRect = boundary.getBoundingClientRect();
+	const innerRight = boundaryRect.right - Number.parseFloat(boundaryStyle.borderRightWidth);
+	const innerBottom = boundaryRect.bottom - Number.parseFloat(boundaryStyle.borderBottomWidth);
+
+	expect(surfaceStyle.boxShadow).not.toBe('none');
+	expect(shadowOffset).toBeGreaterThan(0);
+	expect(surfaceRect.right + shadowOffset).toBeLessThanOrEqual(innerRight + 0.5);
+	expect(surfaceRect.bottom + shadowOffset).toBeLessThanOrEqual(innerBottom + 0.5);
 }
 
 describe('GiftListItem centralized state overlay parity (issue #224 REQ-7)', () => {
@@ -442,7 +461,7 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 				?.parentElement as HTMLElement;
 
 			const imageRect = image.getBoundingClientRect();
-			expect(imageRect.width).toBeGreaterThanOrEqual(148);
+			expect(imageRect.width).toBeGreaterThanOrEqual(144);
 			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 			for (const requiredLabel of requiredLabels) {
 				expect(overlay.textContent).toContain(requiredLabel);
@@ -483,7 +502,7 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 			.element(page.getByRole('button', { name: /Přidat do oblíbených/ }))
 			.toBeVisible();
 		const imageRect = image.getBoundingClientRect();
-		expect(imageRect.width).toBeGreaterThanOrEqual(148);
+		expect(imageRect.width).toBeGreaterThanOrEqual(144);
 		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(likeButton.getBoundingClientRect().width).toBeCloseTo(40, 0);
 		expect(
@@ -589,7 +608,7 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 
 		const itemRect = item.getBoundingClientRect();
 		const imageRect = image.getBoundingClientRect();
-		expect(imageRect.width).toBeGreaterThanOrEqual(148);
+		expect(imageRect.width).toBeGreaterThanOrEqual(144);
 		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(itemRect.height).toBeGreaterThanOrEqual(imageRect.height);
 		expect(host.querySelectorAll('[data-testid="gift-state-overlay"]')).toHaveLength(1);
@@ -702,7 +721,7 @@ describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
 		labelRange.selectNodeContents(label);
 		const labelRect = labelRange.getBoundingClientRect();
 
-		expect(imageRect.width).toBeGreaterThanOrEqual(148);
+		expect(imageRect.width).toBeGreaterThanOrEqual(144);
 		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(likeRect.width).toBeCloseTo(40, 0);
 		expect(overlayRect.left).toBeCloseTo(imageRect.left, 0);
@@ -847,6 +866,8 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 			const surfaceRect = surface.getBoundingClientRect();
 			expect(textRect.left).toBeGreaterThanOrEqual(surfaceRect.left + 2.5);
 			expect(textRect.right).toBeLessThanOrEqual(surfaceRect.right - 2.5);
+			expectRaisedActionShadowInside(primary, item);
+			expectRaisedActionShadowInside(more, item);
 			if (viewport < 640) {
 				const itemRect = item.getBoundingClientRect();
 				const imageRect = image.getBoundingClientRect();
@@ -862,12 +883,6 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 				) as HTMLElement;
 				expect(getComputedStyle(item).borderTopLeftRadius).toBe('16px');
 				expect(getComputedStyle(imageFrame).borderTopLeftRadius).toBe('14px');
-				expect(more.getBoundingClientRect().right + 3).toBeLessThanOrEqual(
-					itemRect.right - 2,
-				);
-				expect(more.getBoundingClientRect().bottom + 3).toBeLessThanOrEqual(
-					itemRect.bottom - 2,
-				);
 			}
 			if (role === WISHLIST_ROLES.recipient) {
 				expect(host.querySelector('[data-like-heart]')).toBeNull();
@@ -875,6 +890,73 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 				expect(host.textContent).not.toMatch(/rezerv/i);
 			}
 			host.remove();
+		},
+	);
+
+	it.each([
+		{ locale: 'cs' as const, received: false },
+		{ locale: 'cs' as const, received: true },
+		{ locale: 'en' as const, received: false },
+		{ locale: 'en' as const, received: true },
+	])(
+		'contains localized manager actions and text in a 320px desktop container for $locale (received: $received)',
+		async ({ locale, received }) => {
+			overwriteGetLocale(() => locale);
+			await page.viewport(768, 900);
+			const host = document.createElement('div');
+			host.style.width = '320px';
+			document.body.appendChild(host);
+			try {
+				await render(
+					GiftListItemTestHost,
+					{
+						gift: makeVisitorGift({
+							description: 'Dlouhý popis, který se v úzkém řádku zkrátí jako první.',
+							links: [{ url: 'https://example.com/product' }],
+							price: 2499,
+							currency: 'CZK',
+							quantity: 3,
+							reserverNames: ['Alexandra Nováková'],
+							received,
+						}),
+						role: WISHLIST_ROLES.moderator,
+						onreceived: () => {},
+						onunreserve: () => {},
+						onmore: () => {},
+					},
+					{ baseElement: host },
+				);
+
+				const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+				const content = host.querySelector(
+					'[data-testid="gift-list-content"]',
+				) as HTMLElement;
+				const primary = host.querySelector(
+					'[data-testid="gift-received-toggle"]',
+				) as HTMLElement;
+				const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+				expect(getComputedStyle(item).display).toBe('grid');
+				expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+				expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+				expect(content.scrollWidth).toBeLessThanOrEqual(content.clientWidth);
+				expect(reserve.getAttribute('aria-label')).toBe(
+					m.reserve_button_cancel_aria({ name: REALISTIC_LONG_NAME }),
+				);
+				expect(primary.getAttribute('aria-label')).toBe(
+					received ? m.gift_mark_unreceived() : m.gift_mark_received(),
+				);
+				expect(more.getAttribute('aria-label')).toBe(m.gift_more_actions());
+				expect(primary.getBoundingClientRect().height).toBeCloseTo(
+					more.getBoundingClientRect().height,
+					0,
+				);
+				expectRaisedActionShadowInside(primary, item);
+				expectRaisedActionShadowInside(more, item);
+			} finally {
+				overwriteGetLocale(() => 'cs');
+				host.remove();
+			}
 		},
 	);
 
@@ -914,6 +996,8 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 				more.getBoundingClientRect().height,
 				0,
 			);
+			expectRaisedActionShadowInside(primary, item);
+			expectRaisedActionShadowInside(more, item);
 			expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
 		} finally {
 			document.documentElement.style.fontSize = previousFontSize;

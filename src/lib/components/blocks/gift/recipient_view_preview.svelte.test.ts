@@ -147,26 +147,36 @@ describe('recipient-view preview reservation privacy (#241)', () => {
 		},
 	);
 
-	it('restores normal reservation-aware presentation when the flag is disabled', async () => {
-		const screen = await render(RecipientViewPreviewTestHost, {
-			gift: makeReservedGift(),
-			role: WISHLIST_ROLES.moderator,
-			surface: 'card',
-			hideReservationState: false,
-		});
+	it.each(['card', 'list'] as const)(
+		'restores exactly one reservation action without a received callback on %s',
+		async (surface) => {
+			const screen = await render(RecipientViewPreviewTestHost, {
+				gift: makeReservedGift(),
+				role: WISHLIST_ROLES.moderator,
+				surface,
+				hideReservationState: false,
+			});
 
-		const overlay = screen.getByTestId('gift-state-overlay');
-		await expect.element(screen.getByText('Rezervováno vámi', { exact: true })).toBeVisible();
-		const reserverLine = screen.getByText(/Babička/);
-		await expect.element(reserverLine).toBeVisible();
-		expect(reserverLine.element().textContent).toContain('Babička');
-		expect(overlay.element().contains(reserverLine.element())).toBe(false);
-		expect(overlay.element().textContent).not.toContain('Babička');
-		await expect
-			.element(screen.getByText('2 rezervováno', { exact: true }))
-			.not.toBeInTheDocument();
-		await expect.element(screen.getByTestId('reserve-button')).toBeInTheDocument();
+			const overlay = screen.getByTestId('gift-state-overlay');
+			await expect
+				.element(screen.getByText('Rezervováno vámi', { exact: true }))
+				.toBeVisible();
+			const reserverLine = screen.getByText(/Babička/);
+			await expect.element(reserverLine).toBeVisible();
+			expect(reserverLine.element().textContent).toContain('Babička');
+			expect(overlay.element().contains(reserverLine.element())).toBe(false);
+			expect(overlay.element().textContent).not.toContain('Babička');
+			await expect
+				.element(screen.getByText('2 rezervováno', { exact: true }))
+				.not.toBeInTheDocument();
+			expect(
+				screen.container.querySelectorAll('[data-testid="reserve-button"]'),
+			).toHaveLength(1);
+			await expect
+				.element(screen.getByTestId('gift-received-toggle'))
+				.not.toBeInTheDocument();
 
-		await screen.unmount();
-	});
+			await screen.unmount();
+		},
+	);
 });

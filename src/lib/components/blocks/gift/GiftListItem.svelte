@@ -75,6 +75,7 @@
 	);
 	// Edit-icon hover affordance (issue #125 REQ-3): mirrors GiftCard's manager-only pencil icon.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
+	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
 	const isDimmed = $derived(presentation.isDimmed);
 	const primaryLink = $derived(getPrimaryGiftLink(gift.links));
 	const domain = $derived(extractGiftDomain(gift.links));
@@ -88,7 +89,13 @@
 <div class="gift-list-query-container w-full">
 	<div
 		data-testid="gift-list-item"
-		class="gift-list-item group grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors hover:bg-muted/50"
+		class={cn(
+			'gift-list-item group grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors hover:bg-muted/50',
+			hasReceivedPrimary &&
+				reserverLine !== null &&
+				reserverLine !== '' &&
+				'gift-list-item-manager-dense',
+		)}
 	>
 		<!-- The 1:1 thumb fills the card's inner height in the normal horizontal layout. -->
 		<div
@@ -144,10 +151,10 @@
 				model={presentation.overlay}
 				class={cn(
 					'pt-[3.25rem]',
-					canManage && isVisitorOrModerator && hasReservationAction && 'max-sm:pb-14',
+					hasReceivedPrimary && isVisitorOrModerator && hasReservationAction && 'pb-14',
 				)}
 			/>
-			{#if !contextualMode && canManage && isVisitorOrModerator && visitorGift}
+			{#if hasReceivedPrimary && isVisitorOrModerator && visitorGift}
 				<ReserveButton
 					gift={visitorGift}
 					{isArchived}
@@ -171,7 +178,7 @@
 		>
 			<div class="flex items-start gap-1.5">
 				<h3
-					class="line-clamp-2 min-h-8 min-w-0 flex-1 font-heading text-[13px] font-semibold leading-4 text-foreground sm:min-h-0 sm:text-base sm:leading-snug"
+					class="gift-list-title line-clamp-2 min-h-8 min-w-0 flex-1 font-heading text-[13px] font-semibold leading-4 text-foreground sm:min-h-0 sm:text-base sm:leading-snug"
 				>
 					{gift.name}
 				</h3>
@@ -230,10 +237,11 @@
 				description={gift.description}
 				descriptionAppends={gift.descriptionAppends}
 				showAppends={false}
-				descriptionClass="line-clamp-1 max-sm:hidden"
+				class="gift-list-description"
+				descriptionClass="line-clamp-1"
 			/>
 
-			{#if !contextualMode && ((canManage && !isArchived && onreceived !== undefined) || (isVisitorOrModerator && hasReservationAction) || onmore)}
+			{#if !contextualMode && (hasReceivedPrimary || (isVisitorOrModerator && hasReservationAction) || onmore)}
 				<div
 					class="mt-auto flex min-w-0 flex-col gap-1.5 pt-1.5"
 					data-testid="gift-list-actions"
@@ -246,7 +254,7 @@
 								class="w-full max-sm:hidden"
 							/>
 						{/if}
-						{#if canManage && onreceived !== undefined}
+						{#if hasReceivedPrimary}
 							<GiftReceivedToggle
 								giftId={gift.id}
 								received={gift.received}
@@ -280,15 +288,24 @@
 	}
 
 	.gift-list-item {
-		--gift-list-content-floor: calc(var(--size-control-xl) + 0.375rem + 5.875rem);
+		--gift-list-content-floor: 9.25rem;
 		--gift-list-image-size: clamp(
-			148px,
-			min(49cqi, calc(100cqi - var(--gift-list-content-floor))),
-			190px
+			9rem,
+			min(34cqi, calc(100cqi - var(--gift-list-content-floor) - 0.25rem)),
+			13rem
 		);
-		box-sizing: content-box;
+
+		box-sizing: border-box;
 		grid-template-columns: var(--gift-list-image-size) minmax(0, 1fr);
-		height: var(--gift-list-image-size);
+		height: calc(var(--gift-list-image-size) + 0.25rem);
+	}
+
+	.gift-list-item-manager-dense {
+		--gift-list-image-size: clamp(
+			9rem,
+			calc(100cqi - var(--gift-list-content-floor) - 0.25rem),
+			13rem
+		);
 	}
 
 	.gift-list-image {
@@ -296,20 +313,36 @@
 		height: var(--gift-list-image-size);
 	}
 
-	@media (min-width: 640px) {
-		.gift-list-item {
-			--gift-list-image-size: clamp(198px, 30cqi, 208px);
+	@container gift-list (width <= 24rem) {
+		.gift-list-title {
+			-webkit-line-clamp: 1;
+			line-clamp: 1;
+			min-height: 0;
+		}
+
+		:global(.gift-list-description) {
+			display: none;
 		}
 	}
 
-	@container gift-list (max-width: 18rem) {
-		.gift-list-item {
+	@container gift-list (width < 20rem) {
+		.gift-list-item-manager-dense {
 			display: flex;
 			height: auto;
 			flex-direction: column;
 		}
+	}
 
-		.gift-list-image {
+	@container gift-list (width < 18.5rem) {
+		.gift-list-item:not(.gift-list-item-manager-dense) {
+			display: flex;
+			height: auto;
+			flex-direction: column;
+		}
+	}
+
+	@container gift-list (width < 20rem) {
+		.gift-list-item-manager-dense .gift-list-image {
 			width: 100%;
 			height: auto;
 			aspect-ratio: 1;
@@ -317,7 +350,21 @@
 			border-bottom: 2px solid var(--ink);
 		}
 
-		.gift-list-image-frame {
+		.gift-list-item-manager-dense .gift-list-image-frame {
+			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
+		}
+	}
+
+	@container gift-list (width < 18.5rem) {
+		.gift-list-item:not(.gift-list-item-manager-dense) .gift-list-image {
+			width: 100%;
+			height: auto;
+			aspect-ratio: 1;
+			border-right: 0;
+			border-bottom: 2px solid var(--ink);
+		}
+
+		.gift-list-item:not(.gift-list-item-manager-dense) .gift-list-image-frame {
 			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
 		}
 	}
