@@ -5,6 +5,7 @@ interface SentryReplayControl {
 	stop(options: { flush: false }): Promise<void>;
 }
 
+// Keep retired authentication URLs excluded from session recordings.
 const SENSITIVE_PATH_PATTERNS = [
 	/^\/(?:en\/)?(?:login|magic-link|register|reset-password)(?:\/|$)/,
 	/^\/(?:en\/)?unsubscribe(?:\/|$)/,

@@ -1,7 +1,6 @@
 export const AUTH_CAPTCHA_ENDPOINTS = [
 	'/sign-up/email',
 	'/sign-in/email',
-	'/sign-in/magic-link',
 	'/request-password-reset',
 ] as const;
 

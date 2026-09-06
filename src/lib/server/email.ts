@@ -23,7 +23,7 @@ interface SendEmailParams {
 	/** Prevents duplicate sends on retry. Use a stable per-event key. */
 	readonly idempotencyKey?: string;
 	/**
-	 * Dev-only: the action link embedded in the email (verify / magic-link / reset).
+	 * Dev-only: the action link embedded in the email (verify / reset).
 	 * Logged to the console in dev so these flows can be exercised locally without a
 	 * deliverable inbox. Ignored in production.
 	 */
@@ -137,7 +137,7 @@ interface ActionEmailParams {
 	readonly copyLinkText?: string;
 	/**
 	 * Unsubscribe/preferences footer (issue #206). Only notification emails pass
-	 * these; auth emails (verify/magic-link/reset) omit them and get no footer.
+	 * these; auth emails (verify/reset) omit them and get no footer.
 	 */
 	readonly footerText?: string;
 	readonly unsubscribeUrl?: string;

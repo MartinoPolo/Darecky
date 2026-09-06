@@ -18,7 +18,6 @@ test.describe('issue #159 control-height geometry', () => {
 			page.locator('#login-password'),
 			page.locator('form button[type="submit"]'),
 			page.getByTestId('google-login'),
-			page.getByTestId('magic-link-login'),
 		];
 
 		for (const control of controls) {

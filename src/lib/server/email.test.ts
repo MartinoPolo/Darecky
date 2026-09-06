@@ -31,7 +31,7 @@ describe('action email rendering', () => {
 	});
 
 	// issue #206: the unsubscribe footer is opt-in per call so auth emails
-	// (verify/magic-link/reset) never render it, while notification emails do.
+	// (verify/reset) never render it, while notification emails do.
 	describe('unsubscribe footer (issue #206)', () => {
 		const baseParams = {
 			heading: 'Gift reserved',

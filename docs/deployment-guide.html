@@ -637,8 +637,7 @@
 								<td><b>Auth</b></td>
 								<td>better-auth (<code>minimal</code>, edge-safe)</td>
 								<td>
-									Email/password + magic-link + optional Google. Sessions stored
-									in Postgres.
+									Email/password + optional Google. Sessions stored in Postgres.
 								</td>
 							</tr>
 						</tbody>
@@ -1199,8 +1198,8 @@
 				<section id="resend">
 					<h2><span class="emoji">✉️</span> Resend – transactional email</h2>
 					<p>
-						Resend sends auth emails (signup verification, password reset, magic-link)
-						and notification emails (liked-gift-reserved, etc.). The wrapper degrades
+						Resend sends auth emails (signup verification, password reset) and
+						notification emails (liked-gift-reserved, etc.). The wrapper degrades
 						gracefully: <b>no API key → it logs to the console instead of sending</b>,
 						so the app never crashes for lack of email.
 					</p>
@@ -1287,7 +1286,7 @@
 					<p>
 						Google login is <b>optional</b> – the provider only registers if <i>both</i>
 						<code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> are
-						present. Email/password + magic-link work without it.
+						present. Email/password works without it.
 					</p>
 
 					<div class="code">

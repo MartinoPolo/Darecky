@@ -18,7 +18,7 @@ covers provisioning the external services and filling in deploy-time config.
 | **Database** | **Neon Postgres** via **Hyperdrive**    | ✅ `getDb()` reads `platform.env.HYPERDRIVE` → falls back to `DATABASE_URL`; `postgres({ prepare: false })` set |
 | **Images**   | **R2** (`prejemesi-images`)             | ✅ binding + upload proxy + public-URL logic                                                                    |
 | **Email**    | **Resend**                              | ✅ wrapper with console fallback                                                                                |
-| **Auth**     | better-auth (edge-compatible `minimal`) | ✅ magic-link + email/password + optional Google                                                                |
+| **Auth**     | better-auth (edge-compatible `minimal`) | ✅ email/password + optional Google                                                                             |
 
 > The SvelteKit Cloudflare adapter outputs a **Worker with Static Assets**
 > (`.svelte-kit/cloudflare/_worker.js` + `ASSETS` binding), **not** a Pages

@@ -182,12 +182,12 @@ Rejected: `user.isAdmin` DB column (buys nothing without an admin UI); admin-imp
 
 ## Authentication & Users
 
-### Auth: email/password + Google + magic link
+### Auth: email/password + optional Google
 
-Decided: 2026-05-29
-What: Three auth methods via BetterAuth. Magic link is critical for low-friction access from shared links.
-Why: People arriving from WhatsApp/email shares shouldn't need to create a password to reserve a gift.
-Rejected: Social-only (excludes non-Google users), password-only (too much friction for casual visitors).
+Decided: 2026-05-29 — Revised by the magic-link removal decision.
+What: BetterAuth supports email/password and optional Google sign-in. Magic-link sign-in is removed from both backend and UI. Email verification and password reset remain enabled; existing accounts, sessions, and verification storage are preserved. Anyone who previously relied on magic links can establish a password through password reset.
+Why: Remove an unnecessary authentication method to reduce attack surface and maintenance. Anonymous reservations and Google still support low-friction participation. This does not replace keeping authentication dependencies patched.
+Rejected: Hiding the magic-link UI while leaving its endpoints active; retaining an inactive implementation; deleting existing users or shared verification storage.
 
 ### Anonymous visitor mode
 
@@ -517,7 +517,7 @@ Rejected: Sort presets in nav dropdown (not discoverable), icon-only sort trigge
 ### Auth Pages: Split screen layout
 
 Decided: 2026-05-30
-What: Auth pages (login, register, magic link) use a split-screen layout — branding/illustration on the left, form on the right. Standalone layout, not inside the app shell.
+What: Auth pages (login, register, password reset) use a split-screen layout — branding/illustration on the left, form on the right. Standalone layout, not inside the app shell.
 Why: Warm, branded experience that establishes the app identity before the user enters.
 Reference: `designs/auth-pages/variant-2.html`.
 
@@ -634,7 +634,7 @@ Rejected: MVP subset first (would leave holes in the core loop).
 ### English URL slugs
 
 Decided: 2026-05-30 — **Revised 2026-08-07**: `/home` joins the slug set; logged-in `/` now redirects to `/home` (see "Logged-in home: Přehled overview at /home").
-What: Routes use English slugs: `/login`, `/register`, `/magic-link`, `/reset-password`, `/home`, `/my-lists`, `/moderated`, `/followed`, `/w/<short-id>`, `/settings`. Logged-in users visiting `/` redirect to `/home`.
+What: Routes use English slugs: `/login`, `/register`, `/reset-password`, `/home`, `/my-lists`, `/moderated`, `/followed`, `/w/<short-id>`, `/settings`. Logged-in users visiting `/` redirect to `/home`.
 Why: Cleaner URLs, no encoding issues with Czech diacritics, consistent with tech conventions.
 Rejected: Czech slugs (`/prihlaseni`, `/moje-seznamy`).
 
@@ -667,13 +667,6 @@ Decided: 2026-05-30
 What: When a user registers with an email that matches anonymous reservations, those reservations are automatically linked to the new account.
 Why: Preserves the anonymous user's actions without manual claim flow. Email is the natural linking key.
 Rejected: Manual claim flow (too complex for V1), no linking (reservations orphaned).
-
-### Magic link redirect to previous page
-
-Decided: 2026-05-30
-What: Magic link encodes a `redirect` param with the full URL the user was on. After clicking the magic link, they return to that page.
-Why: Users typically arrive via a shared wishlist link — they should land back on that wishlist, not a dashboard.
-Rejected: Always redirect to dashboard (breaks the context the user was in).
 
 ### Password reset in V1
 
@@ -728,9 +721,9 @@ Rejected: No defaults (owner must create from scratch), fixed labels (too rigid)
 ### V1 email set
 
 Decided: 2026-05-30
-What: V1 sends these emails via Resend: magic link, password reset, liked gift reserved by someone else, reserved gift edited by moderator, wishlist archived, owner self-promoted to moderator, moderator invite.
+What: Auth emails via Resend are email verification and password reset. Notification emails cover liked gift reserved by someone else, reserved gift edited by moderator, wishlist archived, owner self-promoted to moderator, and moderator invite.
 Why: Covers auth flows + critical notifications + moderator onboarding. No welcome email (low value).
-Rejected: Welcome email (unnecessary), email verification (deferred — too much friction for a family app).
+Rejected: Welcome email (unnecessary).
 
 ### Loading: skeleton + toast + inline errors
 

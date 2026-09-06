@@ -6,7 +6,6 @@ describe('BetterAuth security configuration', () => {
 		expect(AUTH_CAPTCHA_ENDPOINTS).toEqual([
 			'/sign-up/email',
 			'/sign-in/email',
-			'/sign-in/magic-link',
 			'/request-password-reset',
 		]);
 	});

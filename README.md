@@ -54,7 +54,7 @@ surprise intact.
 | UI Components | shadcn-svelte / bits-ui (base → derived → blocks) |
 | Theme         | mode-watcher (light / dark / system)              |
 | Database      | PostgreSQL + Drizzle ORM (strict mode)            |
-| Auth          | BetterAuth (email/password, Google, magic link)   |
+| Auth          | BetterAuth (email/password, Google)               |
 | Validation    | Valibot                                           |
 | i18n          | Paraglide JS (cs primary, en secondary)           |
 | Storage       | Cloudflare R2 (server-proxied uploads)            |
@@ -174,7 +174,7 @@ Copy `.env.example` to `.env` and configure:
 | `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | No       | Presigned direct-to-R2 uploads (#107); same-origin proxy fallback if unset                                      |
 
 Google OAuth is enabled automatically when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
-Registration, password sign-in, magic-link, password-reset, and anonymous reservation requests are
+Registration, password sign-in, password-reset, and anonymous reservation requests are
 protected by Cloudflare Turnstile. Local development uses Cloudflare's published test keys when the two Turnstile
 variables are blank; production fails closed when the secret is missing.
 
@@ -212,7 +212,7 @@ src/
                              #   user.app_background_theme – default | golden-hour | twilight
         seed.ts              # Idempotent test-data seeder
   routes/
-    (auth)/                  # login, register, magic-link, reset-password (split-screen layout)
+    (auth)/                  # login, register, reset-password (split-screen layout)
     (app)/                   # my-lists, moderated, followed, settings, w/[id] (app shell)
                              #   w/[id]/settings – owner-only wishlist appearance (image, theme, per-slot crop)
     +page.svelte             # Landing page

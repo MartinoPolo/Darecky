@@ -5,7 +5,7 @@ export const ROBOTS_NOINDEX_CONTENT = 'noindex, nofollow, noarchive';
 const AUTH_PAGE_PATHS = new Set([
 	'/login',
 	'/register',
-	'/magic-link',
+	'/magic-link', // Retired authentication URLs should remain private.
 	'/reset-password',
 	'/unsubscribe',
 ]);

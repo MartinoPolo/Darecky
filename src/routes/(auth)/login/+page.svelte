@@ -279,12 +279,7 @@
 
 	<AuthDivider />
 
-	<SocialLoginButtons
-		googleLabel={m.login_google()}
-		{callbackUrl}
-		showMagicLink={true}
-		{loading}
-	/>
+	<SocialLoginButtons googleLabel={m.login_google()} {callbackUrl} {loading} />
 
 	<AuthFooterLink
 		promptText={m.login_no_account()}

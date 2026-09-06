@@ -3,22 +3,14 @@
 	import { Button } from '$lib/components/base/button/index.js';
 	import { authClient } from '$lib/auth_client.js';
 	import { localizeInternalHref } from '$lib/i18n/locale.js';
-	import MailIcon from '@lucide/svelte/icons/mail';
-	import * as m from '$lib/paraglide/messages.js';
 
 	interface SocialLoginButtonsProps {
 		googleLabel: string;
 		callbackUrl?: string;
-		showMagicLink?: boolean;
 		loading?: boolean;
 	}
 
-	let {
-		googleLabel,
-		callbackUrl,
-		showMagicLink = false,
-		loading = false,
-	}: SocialLoginButtonsProps = $props();
+	let { googleLabel, callbackUrl, loading = false }: SocialLoginButtonsProps = $props();
 
 	let googleLoading = $state(false);
 
@@ -67,19 +59,6 @@
 	{/if}
 	{googleLabel}
 </Button>
-
-{#if showMagicLink}
-	<Button
-		intent="ghost"
-		size="lg"
-		href={localizeInternalHref(resolve('/magic-link'))}
-		class="mt-2 w-full"
-		data-testid="magic-link-login"
-	>
-		<MailIcon data-icon="inline-start" />
-		{m.login_magic_link()}
-	</Button>
-{/if}
 
 <style>
 	.spinner {

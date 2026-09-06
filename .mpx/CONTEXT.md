@@ -57,7 +57,7 @@ _Avoid_: "list" for Wishlist (ambiguous), "present" for Gift (confusing with tim
 
 | Feature                                                                        | Status      | Version     |
 | ------------------------------------------------------------------------------ | ----------- | ----------- |
-| Authentication (email/password, Google, magic link)                            | Planned     | v1 (PRD #1) |
+| Authentication (email/password, Google)                                        | Planned     | v1 (PRD #1) |
 | Anonymous visitor mode (display name + optional email)                         | Planned     | v1          |
 | Wishlist CRUD (create, edit, archive)                                          | Planned     | v1          |
 | Gift management (add, edit, remove, reorder, image fit/crop)                   | In Progress | v1          |

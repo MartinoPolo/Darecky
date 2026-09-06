@@ -174,7 +174,7 @@ Verification:
 
 ## Turnstile
 
-Protect registration, password sign-in, magic-link request, password-reset request, and
+Protect registration, password sign-in, password-reset request, and
 anonymous reservation. The widget is only the client signal; every protected server
 operation must enforce Siteverify before email, database, or reservation work.
 

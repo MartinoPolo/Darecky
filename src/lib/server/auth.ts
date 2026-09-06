@@ -1,7 +1,6 @@
 import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
-import { magicLink } from 'better-auth/plugins/magic-link';
 import { captcha } from 'better-auth/plugins';
 import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
@@ -101,21 +100,6 @@ export function createAuth(event?: RequestEvent) {
 				endpoints: [...AUTH_CAPTCHA_ENDPOINTS],
 			}),
 			sveltekitCookies(getRequestEvent),
-			magicLink({
-				sendMagicLink: async ({ email, url }) => {
-					await sendEmail({
-						to: email,
-						subject: 'Your Přejeme si sign-in link',
-						...renderActionEmailParts({
-							heading: 'Sign in to Přejeme si',
-							body: 'Click the button below to sign in. This link expires shortly and can only be used once.',
-							buttonLabel: 'Sign in',
-							url,
-						}),
-						actionUrl: url,
-					});
-				},
-			}),
 		],
 	});
 }

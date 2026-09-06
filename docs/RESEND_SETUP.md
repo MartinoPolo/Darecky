@@ -48,7 +48,6 @@ Plenty for dev and early production. Pro ($20/mo) drops the daily cap and raises
 - `src/lib/server/auth.ts` – the three better-auth stubs now send real emails:
     - `sendResetPassword` (password reset)
     - `sendVerificationEmail` (email verification)
-    - `sendMagicLink` (magic-link sign-in)
 - `.env.example` documents `RESEND_API_KEY` and `EMAIL_FROM`.
 
 ## Local setup
@@ -72,7 +71,7 @@ Restart the dev server after editing `.env` so Vite reloads it.
 ### 3. Test the slice
 
 1. `pnpm run dev`
-2. From the login UI, request a **magic link** or **password reset** using your **Resend
+2. From the login UI, request a **password reset** using your **Resend
    account email** (the only deliverable sandbox recipient).
 3. Server console prints `[Email] Sent "..." (id=...)` on success. Check the inbox.
 
@@ -97,7 +96,7 @@ After monitoring delivery, consider tightening `p=quarantine` and then `p=reject
 
 ## Notification email coverage
 
-Auth emails are wired: signup verification, password reset, and magic-link sign-in.
+Auth emails are wired: signup verification and password reset.
 
 Notification dispatcher coverage:
 
