@@ -44,7 +44,7 @@ interface Serde<T> {
 }
 
 class ScopedPersisted<T> {
-	#defaultValue: T;
+	#getDefaultValue: () => T;
 	#getKey: () => string;
 	#onBeforeRead: ((key: string) => void) | undefined;
 	#revision = new StateRaw(0);
@@ -54,18 +54,20 @@ class ScopedPersisted<T> {
 		getKey: () => string;
 		serde: Serde<T>;
 		defaultValue: T;
+		getDefaultValue?: () => T;
 		onBeforeRead?: (key: string) => void;
 	}) {
 		this.#getKey = options.getKey;
 		this.#serde = options.serde;
-		this.#defaultValue = options.defaultValue;
+		this.#getDefaultValue = options.getDefaultValue ?? (() => options.defaultValue);
 		this.#onBeforeRead = options.onBeforeRead;
 	}
 
 	get current(): T {
 		void this.#revision.current;
+		const defaultValue = this.#getDefaultValue();
 		if (!browser) {
-			return this.#defaultValue;
+			return defaultValue;
 		}
 		const key = this.#getKey();
 		this.#onBeforeRead?.(key);
@@ -73,19 +75,19 @@ class ScopedPersisted<T> {
 		try {
 			value = localStorage.getItem(key);
 		} catch {
-			return this.#defaultValue;
+			return defaultValue;
 		}
 		if (value === null) {
-			return this.#defaultValue;
+			return defaultValue;
 		}
 		const parsed = this.#serde.deserialize(value);
 		if (!parsed.success) {
 			try {
-				localStorage.setItem(key, this.#serde.serialize(this.#defaultValue));
+				localStorage.setItem(key, this.#serde.serialize(defaultValue));
 			} catch {
 				// Repair is best effort when browser storage is unavailable.
 			}
-			return this.#defaultValue;
+			return defaultValue;
 		}
 		return parsed.data;
 	}
@@ -240,6 +242,10 @@ function createGiftsContext(
 		getKey: () => wishlistGiftGroupingStorageKey(getWishlistId()),
 		serde: jsonSerde(isGiftGroupingOption),
 		defaultValue: GIFT_GROUPING_OPTIONS.none,
+		getDefaultValue: () =>
+			effectiveGifts.current.some(hasPriorityValue)
+				? GIFT_GROUPING_OPTIONS.priority
+				: GIFT_GROUPING_OPTIONS.none,
 		onBeforeRead: migrateLegacyPriorityGrouping,
 	});
 
