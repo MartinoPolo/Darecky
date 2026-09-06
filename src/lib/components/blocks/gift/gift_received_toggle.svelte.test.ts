@@ -23,6 +23,29 @@ describe('GiftReceivedToggle', () => {
 		},
 	);
 
+	it.each([
+		{ received: false, visible: m.gift_received_compact(), accessible: m.gift_mark_received() },
+		{
+			received: true,
+			visible: m.gift_unreceived_compact(),
+			accessible: m.gift_mark_unreceived(),
+		},
+	])(
+		'uses the compact $visible label with the full accessible name',
+		async ({ received, visible, accessible }) => {
+			const screen = await render(GiftReceivedToggle, {
+				giftId: 'gift-compact',
+				received,
+				role: WISHLIST_ROLES.recipient,
+				compactLabel: true,
+				onreceived: vi.fn(),
+			});
+
+			await expect.element(screen.getByRole('button', { name: accessible })).toBeVisible();
+			await expect.element(screen.getByText(visible, { exact: true })).toBeVisible();
+		},
+	);
+
 	it('does not render for a visitor', async () => {
 		await render(GiftReceivedToggle, {
 			giftId: 'gift-1',

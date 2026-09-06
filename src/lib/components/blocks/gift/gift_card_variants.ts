@@ -19,12 +19,12 @@ export const giftCardVariants = tv({
 	slots: {
 		// The `group/gift-card` triggers only mirror the drag grip so the card and grip lift in
 		// lock-step; the card itself lifts through the semantic owner selector in app.css.
-		card: 'group relative isolate grid h-[280px] grid-rows-[136px_minmax(0,1fr)_auto] rounded-panel bg-card sm:row-span-7 sm:h-auto sm:grid-rows-subgrid',
+		card: 'group relative isolate grid min-h-[280px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-panel bg-card sm:row-span-7 sm:min-h-0 sm:grid-rows-subgrid',
 		plate: 'elevation-ordinary pointer-events-none absolute inset-0 z-[1] rounded-panel border-[2.5px] border-ink bg-transparent transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5',
 		// 4:3 (issue #183, revises the earlier 1:1 shape): shorter cards, same
 		// `minmax(280px, 1fr)` grid column sizing.
 		imageArea:
-			'relative isolate row-start-1 h-[136px] w-full overflow-hidden rounded-t-[calc(var(--radius-panel)-2.5px)] border-b-[2.5px] border-ink bg-surface sm:h-auto sm:aspect-[4/3]',
+			'relative isolate row-start-1 aspect-[4/3] w-full overflow-hidden rounded-t-[calc(var(--radius-panel)-2.5px)] border-b-[2.5px] border-ink bg-surface',
 		/**
 		 * Dotted mat behind the photo (shows through letterboxed photos). Sits on
 		 * its own layer below the image so its opacity can fade up on hover —
@@ -43,10 +43,8 @@ export const giftCardVariants = tv({
 		priorityEyebrow: 'row-start-3 mt-2 hidden items-center gap-1 sm:flex',
 		linkList: 'row-start-4 mt-2 hidden flex-col sm:flex',
 		// min-w-0: grid items (unlike flex) get an automatic min-content floor that can force the row wider (#211).
-		footer: 'row-start-3 flex min-h-12 min-w-0 items-stretch justify-between gap-1 border-t border-dashed border-border px-1.5 py-1 sm:row-start-7 sm:min-h-0 sm:gap-2 sm:border-0 sm:px-4 sm:pt-1 sm:pb-3.5',
-		// Stacks mark-as-bought + cancel vertically; shrink-to-fit column, buttons get `w-full` from the caller (#211).
-		reservationActions:
-			'grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-1.5 sm:flex sm:flex-initial sm:flex-col',
+		footer: 'row-start-3 flex min-w-0 items-stretch justify-between gap-1.5 border-t border-dashed border-border p-[6.5px] sm:row-start-7 sm:gap-2 sm:border-0 sm:px-4 sm:pt-1 sm:pb-[15px]',
+		reservationActions: 'flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-initial',
 		/** Edit-icon hover affordance for managers (issue #125 REQ-3): hidden until card hover/focus. */
 		editIcon:
 			'absolute top-2.5 right-2.5 z-10 flex items-center justify-center rounded-full border-2 border-ink bg-card p-1.5 opacity-0 shadow-sticker transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100',

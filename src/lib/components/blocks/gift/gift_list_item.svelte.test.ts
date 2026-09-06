@@ -94,6 +94,18 @@ function textOutsideOverlay(host: HTMLElement): string {
 	return clone.textContent ?? '';
 }
 
+function firstNonBlankTextNode(element: HTMLElement): Text {
+	const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+	let node = walker.nextNode();
+	while (node !== null) {
+		if ((node.textContent?.trim().length ?? 0) > 0) {
+			return node as Text;
+		}
+		node = walker.nextNode();
+	}
+	throw new Error(`Expected visible text inside ${element.outerHTML}`);
+}
+
 describe('GiftListItem centralized state overlay parity (issue #224 REQ-7)', () => {
 	it('does not render the grid-only category badge for a categorized gift (issue #265)', async () => {
 		const host = await renderItem(
@@ -420,7 +432,7 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 			requiredLabels: [m.gift_received_badge(), m.gift_reserved_by_other_overlay()],
 		},
 	])(
-		'keeps $label overlay clear of Like on a 128px thumbnail',
+		'keeps $label overlay clear of Like on the responsive square thumbnail',
 		async ({ gift, requiredLabels }) => {
 			await page.viewport(390, 720);
 			const host = await renderItem(makeVisitorGift(gift), WISHLIST_ROLES.visitor);
@@ -429,7 +441,9 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 			const likeButton = host.querySelector('[data-like-heart]')
 				?.parentElement as HTMLElement;
 
-			expect(image.getBoundingClientRect().width).toBeCloseTo(128, 0);
+			const imageRect = image.getBoundingClientRect();
+			expect(imageRect.width).toBeGreaterThanOrEqual(148);
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 			for (const requiredLabel of requiredLabels) {
 				expect(overlay.textContent).toContain(requiredLabel);
 			}
@@ -445,7 +459,7 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 		},
 	);
 
-	it('keeps a long unavailable overlay clear of the visible Like control on a 128px mobile thumbnail', async () => {
+	it('keeps a long unavailable overlay clear of the visible Like control on a mobile square thumbnail', async () => {
 		await page.viewport(390, 720);
 		const host = await renderItem(
 			makeVisitorGift({
@@ -468,7 +482,9 @@ describe('GiftListItem unified state presentation (issue #328)', () => {
 		await expect
 			.element(page.getByRole('button', { name: /Přidat do oblíbených/ }))
 			.toBeVisible();
-		expect(image.getBoundingClientRect().width).toBeCloseTo(128, 0);
+		const imageRect = image.getBoundingClientRect();
+		expect(imageRect.width).toBeGreaterThanOrEqual(148);
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(likeButton.getBoundingClientRect().width).toBeCloseTo(40, 0);
 		expect(
 			rectanglesIntersect(badge.getBoundingClientRect(), likeButton.getBoundingClientRect()),
@@ -562,7 +578,7 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 	});
 
-	it('renders one opaque 128px standalone card with a consolidated state overlay', async () => {
+	it('renders one auto-height row with a full responsive square image and consolidated state overlay', async () => {
 		await page.viewport(390, 720);
 		const host = await renderItem(
 			makeVisitorGift({ isFullyReserved: true, myReservationId: null }),
@@ -571,13 +587,16 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
 		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
 
-		expect(item.getBoundingClientRect().height).toBeCloseTo(128, 0);
-		expect(image.getBoundingClientRect().width).toBeCloseTo(128, 0);
+		const itemRect = item.getBoundingClientRect();
+		const imageRect = image.getBoundingClientRect();
+		expect(imageRect.width).toBeGreaterThanOrEqual(148);
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+		expect(itemRect.height).toBeGreaterThanOrEqual(imageRect.height);
 		expect(host.querySelectorAll('[data-testid="gift-state-overlay"]')).toHaveLength(1);
 		expect(host.querySelector('[data-testid="gift-reserved-sticker"]')).toBeNull();
 	});
 
-	it('shows only Received directly for a mobile moderator while preserving Reserve on desktop', async () => {
+	it('keeps Received and More in content while preserving manager Reserve over the image', async () => {
 		await page.viewport(390, 720);
 		const host = document.createElement('div');
 		document.body.appendChild(host);
@@ -600,7 +619,12 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 		expect(more).toBeTruthy();
 		expect(getComputedStyle(received).display).not.toBe('none');
 		expect(getComputedStyle(more).display).not.toBe('none');
-		expect(getComputedStyle(reserve).display).toBe('none');
+		expect(getComputedStyle(reserve).display).not.toBe('none');
+		expect(host.querySelector('[data-testid="gift-list-image"]')?.contains(reserve)).toBe(true);
+		expect(received.getBoundingClientRect().height).toBeCloseTo(
+			more.getBoundingClientRect().height,
+			0,
+		);
 
 		await page.viewport(800, 720);
 		expect(getComputedStyle(reserve).display).not.toBe('none');
@@ -644,7 +668,7 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 });
 
 describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
-	it('contains a long centered state label beside the 40px Like on the 128px image', async () => {
+	it('contains a long centered state label beside the 40px Like on the responsive image', async () => {
 		await page.viewport(390, 720);
 		const host = document.createElement('div');
 		host.style.width = '366px';
@@ -678,7 +702,8 @@ describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
 		labelRange.selectNodeContents(label);
 		const labelRect = labelRange.getBoundingClientRect();
 
-		expect(imageRect.width).toBeCloseTo(128, 0);
+		expect(imageRect.width).toBeGreaterThanOrEqual(148);
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
 		expect(likeRect.width).toBeCloseTo(40, 0);
 		expect(overlayRect.left).toBeCloseTo(imageRect.left, 0);
 		expect(overlayRect.right).toBeCloseTo(imageRect.right - 2, 0);
@@ -764,6 +789,167 @@ describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
 		for (const pill of pills) {
 			expect(rectanglesIntersect(likeRect, pill.getBoundingClientRect())).toBe(false);
 		}
+		host.remove();
+	});
+});
+
+describe('GiftListItem approved action geometry (issue #350)', () => {
+	it.each([
+		{ viewport: 320, role: WISHLIST_ROLES.visitor, reservationId: null },
+		{ viewport: 390, role: WISHLIST_ROLES.visitor, reservationId: 'mine' },
+		{ viewport: 768, role: WISHLIST_ROLES.recipient, reservationId: null },
+		{ viewport: 1440, role: WISHLIST_ROLES.moderator, reservationId: null },
+	])(
+		'contains equal-height primary and More actions at $viewport px for $role',
+		async ({ viewport, role, reservationId }) => {
+			await page.viewport(viewport, 900);
+			const host = document.createElement('div');
+			host.style.width = `${Math.min(viewport - 24, 720)}px`;
+			document.body.appendChild(host);
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						myReservationId: reservationId,
+						reservedCount: reservationId === null ? 0 : 1,
+						isFullyReserved: reservationId !== null,
+					}),
+					role,
+					onreceived: () => {},
+					onreserve: () => {},
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			const row = host.querySelector('[data-testid="gift-action-row"]') as HTMLElement;
+			const more = row.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			const primary = row.querySelector(
+				'[data-testid="gift-received-toggle"], [data-testid="reserve-button"]',
+			) as HTMLElement;
+			expect(primary).toBeTruthy();
+			expect(more).toBeTruthy();
+			expect(primary.getBoundingClientRect().height).toBeCloseTo(
+				more.getBoundingClientRect().height,
+				0,
+			);
+			expect(primary.getBoundingClientRect().right).toBeLessThanOrEqual(
+				more.getBoundingClientRect().left,
+			);
+			const surface = primary.querySelector(':scope > .elevation-surface') as HTMLElement;
+			const textRange = document.createRange();
+			textRange.selectNodeContents(firstNonBlankTextNode(surface));
+			const textRect = textRange.getBoundingClientRect();
+			const surfaceRect = surface.getBoundingClientRect();
+			expect(textRect.left).toBeGreaterThanOrEqual(surfaceRect.left + 2.5);
+			expect(textRect.right).toBeLessThanOrEqual(surfaceRect.right - 2.5);
+			if (viewport < 640) {
+				const itemRect = item.getBoundingClientRect();
+				const imageRect = image.getBoundingClientRect();
+				expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+				expect(content.getBoundingClientRect().left - imageRect.left).toBeCloseTo(
+					imageRect.width,
+					0,
+				);
+				expect(imageRect.top).toBeCloseTo(itemRect.top + 2, 0);
+				expect(imageRect.bottom).toBeCloseTo(itemRect.bottom - 2, 0);
+				const imageFrame = image.querySelector(
+					'[data-testid="image-frame"]',
+				) as HTMLElement;
+				expect(getComputedStyle(item).borderTopLeftRadius).toBe('16px');
+				expect(getComputedStyle(imageFrame).borderTopLeftRadius).toBe('14px');
+				expect(more.getBoundingClientRect().right + 3).toBeLessThanOrEqual(
+					itemRect.right - 2,
+				);
+				expect(more.getBoundingClientRect().bottom + 3).toBeLessThanOrEqual(
+					itemRect.bottom - 2,
+				);
+			}
+			if (role === WISHLIST_ROLES.recipient) {
+				expect(host.querySelector('[data-like-heart]')).toBeNull();
+				expect(host.querySelector('[data-testid="reserve-button"]')).toBeNull();
+				expect(host.textContent).not.toMatch(/rezerv/i);
+			}
+			host.remove();
+		},
+	);
+
+	it('reflows for enlarged root text at a fixed 390px viewport without clipping actions', async () => {
+		await page.viewport(390, 900);
+		const previousFontSize = document.documentElement.style.fontSize;
+		document.documentElement.style.fontSize = '32px';
+		const host = document.createElement('div');
+		host.style.width = '366px';
+		document.body.appendChild(host);
+
+		try {
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						myReservationId: 'mine',
+						isFullyReserved: true,
+					}),
+					role: WISHLIST_ROLES.visitor,
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			const primary = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+			const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			const imageRect = image.getBoundingClientRect();
+			expect(getComputedStyle(item).flexDirection).toBe('column');
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(content.getBoundingClientRect().top).toBeGreaterThanOrEqual(imageRect.bottom);
+			expect(primary.getBoundingClientRect().height).toBeCloseTo(
+				more.getBoundingClientRect().height,
+				0,
+			);
+			expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+		} finally {
+			document.documentElement.style.fontSize = previousFontSize;
+			host.remove();
+		}
+	});
+
+	it('stacks the complete square image above content when actual narrow space is insufficient', async () => {
+		await page.viewport(280, 900);
+		const host = document.createElement('div');
+		host.style.width = '256px';
+		document.body.appendChild(host);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift: makeVisitorGift({
+					myReservationId: null,
+					reservedCount: 0,
+					isFullyReserved: false,
+				}),
+				role: WISHLIST_ROLES.visitor,
+				onreserve: () => {},
+				onmore: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+		const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+		const imageRect = image.getBoundingClientRect();
+		expect(getComputedStyle(item).flexDirection).toBe('column');
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+		expect(content.getBoundingClientRect().top).toBeGreaterThanOrEqual(imageRect.bottom);
+		expect(host.querySelector('[data-testid="reserve-button"]')).toBeTruthy();
+		expect(host.querySelector('[data-testid="gift-more-actions"]')).toBeTruthy();
 		host.remove();
 	});
 });

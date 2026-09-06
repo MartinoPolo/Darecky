@@ -2,8 +2,6 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { Badge } from '$lib/components/base/badge/index.js';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
-	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
-	import { Button } from '$lib/components/base/button/index.js';
 	import GiftImage from '$lib/components/blocks/gift/GiftImage.svelte';
 	import GiftPieceCount from '$lib/components/blocks/gift/GiftPieceCount.svelte';
 	import GiftLinkList from '$lib/components/blocks/gift/GiftLinkList.svelte';
@@ -31,6 +29,7 @@
 	import { giftCardVariants } from './gift_card_variants.js';
 	import GiftDescription from './GiftDescription.svelte';
 	import GiftCategoryBadge from './GiftCategoryBadge.svelte';
+	import GiftActionRow from './GiftActionRow.svelte';
 	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 
 	interface GiftCardProps {
@@ -78,19 +77,15 @@
 	);
 	const { isVisitorOrModerator, visitorGift, isFullyReserved } = $derived(displayState);
 	const presentation = $derived(displayState.presentation);
+	const hasReservationAction = $derived(
+		visitorGift !== null &&
+			(visitorGift.myReservationId !== null || (!isArchived && !isFullyReserved)),
+	);
 	// Edit-icon hover affordance (issue #125 REQ-3): editing roles see a pencil icon appear
 	// on card hover/focus; visitors rely on the shared cursor-pointer + hover lift only.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
 
 	const isDimmed = $derived(presentation.isDimmed);
-	const hasDesktopAction = $derived(
-		presentation.showLike ||
-			(canManage && !isArchived && onreceived !== undefined) ||
-			(isVisitorOrModerator &&
-				visitorGift != null &&
-				(visitorGift.myReservationId != null || (!isArchived && !isFullyReserved))),
-	);
-
 	const styles = $derived(giftCardVariants({ dimmed: isDimmed }));
 
 	const imageSrc = $derived(resolveGiftImageUrl(gift.imageUrl, gift.imageKey));
@@ -157,7 +152,14 @@
 
 		<GiftStateOverlay
 			model={presentation.overlay}
-			class={narrowViewportState.current && presentation.showLike ? 'pt-12' : undefined}
+			class={cn(
+				narrowViewportState.current && presentation.showLike && 'pt-12 pr-12',
+				narrowViewportState.current &&
+					canManage &&
+					isVisitorOrModerator &&
+					hasReservationAction &&
+					'pb-14',
+			)}
 		/>
 		{#if !contextualMode && narrowViewportState.current && presentation.showLike && visitorGift}
 			<LikeButton
@@ -168,6 +170,18 @@
 				countOverlay
 				class="absolute top-1 right-1 z-20 size-10 rounded-full"
 				surfaceClass="border-2 border-ink bg-card p-0 shadow-sticker"
+			/>
+		{/if}
+
+		{#if !contextualMode && canManage && isVisitorOrModerator && visitorGift}
+			<ReserveButton
+				gift={visitorGift}
+				{isArchived}
+				size="xl"
+				{onreserve}
+				{onunreserve}
+				class="absolute right-[9.5px] bottom-[9.5px] left-[6.5px] z-20 h-auto min-h-12 min-w-0 w-auto"
+				surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight"
 			/>
 		{/if}
 	</div>
@@ -229,11 +243,8 @@
 		{/if}
 	</div>
 
-	{#if !contextualMode && ((canManage && !isArchived && onreceived !== undefined) || (isVisitorOrModerator && visitorGift) || onmore)}
-		<div
-			class={cn(styles.footer(), !hasDesktopAction && 'sm:hidden')}
-			data-testid="gift-card-footer"
-		>
+	{#if !contextualMode && ((canManage && !isArchived && onreceived !== undefined) || (isVisitorOrModerator && hasReservationAction) || onmore)}
+		<div class={styles.footer()} data-testid="gift-card-footer">
 			{#if !narrowViewportState.current && presentation.showLike && visitorGift}
 				<LikeButton
 					giftId={gift.id}
@@ -243,49 +254,37 @@
 					class="h-10 shrink-0 self-start"
 				/>
 			{/if}
-			<div
-				data-testid="gift-card-reservation-actions"
-				class={cn(
-					styles.reservationActions(),
-					onmore && 'max-sm:grid-cols-[minmax(0,1fr)_40px]',
-				)}
-			>
-				{#if canManage && onreceived !== undefined}
-					<GiftReceivedToggle
-						giftId={gift.id}
-						received={gift.received}
-						{role}
-						{isArchived}
-						{onreceived}
-						class="min-h-10 min-w-0 w-full shrink max-sm:min-h-11"
-						surfaceClass="gap-0 whitespace-normal px-1 text-xs leading-tight [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
-					/>
-				{/if}
-				{#if isVisitorOrModerator && visitorGift}
-					<PurchasedToggle gift={visitorGift} class="w-full max-sm:hidden" />
-					<ReserveButton
-						gift={visitorGift}
-						{isArchived}
-						size="md"
-						{onreserve}
-						{onunreserve}
-						class={cn('min-h-10 w-full', canManage && 'max-sm:hidden')}
-						surfaceClass="gap-0 whitespace-normal px-1 text-xs leading-tight [&_svg]:hidden sm:gap-1.5 sm:px-3 sm:text-(length:--text-md) sm:leading-none sm:[&_svg]:block"
-					/>
-				{/if}
-				{#if onmore}
-					<Button
-						intent="outline"
-						class="h-auto min-h-10 w-10 shrink-0 self-stretch sm:hidden"
-						surfaceClass="p-0"
-						aria-label={m.gift_more_actions()}
-						data-testid="gift-more-actions"
-						onclick={(event) => {
-							event.stopPropagation();
-							onmore();
-						}}><EllipsisIcon /></Button
-					>
-				{/if}
+			<div data-testid="gift-card-reservation-actions" class={styles.reservationActions()}>
+				<GiftActionRow {onmore}>
+					{#if !canManage && isVisitorOrModerator && visitorGift && onmore === undefined}
+						<PurchasedToggle
+							gift={visitorGift}
+							size="xl"
+							class="w-full max-sm:hidden"
+						/>
+					{/if}
+					{#if canManage && onreceived !== undefined}
+						<GiftReceivedToggle
+							giftId={gift.id}
+							received={gift.received}
+							{role}
+							{isArchived}
+							{onreceived}
+							size="xl"
+							compactLabel
+							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight [&_svg]:hidden"
+						/>
+					{:else if isVisitorOrModerator && visitorGift}
+						<ReserveButton
+							gift={visitorGift}
+							{isArchived}
+							size="xl"
+							{onreserve}
+							{onunreserve}
+							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight"
+						/>
+					{/if}
+				</GiftActionRow>
 			</div>
 		</div>
 	{/if}

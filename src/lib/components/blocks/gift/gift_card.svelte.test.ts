@@ -960,6 +960,69 @@ describe('GiftCard actions (issue #255)', () => {
 	});
 });
 
+describe('GiftCard approved action geometry (issue #350)', () => {
+	it.each([
+		{ viewport: 320, width: 296, role: WISHLIST_ROLES.visitor, reservationId: null },
+		{ viewport: 390, width: 179, role: WISHLIST_ROLES.visitor, reservationId: 'mine' },
+		{ viewport: 768, width: 280, role: WISHLIST_ROLES.recipient, reservationId: null },
+		{ viewport: 1440, width: 360, role: WISHLIST_ROLES.moderator, reservationId: null },
+	])(
+		'contains equal-height primary and More actions at $viewport px for $role',
+		async ({ viewport, width, role, reservationId }) => {
+			await page.viewport(viewport, 900);
+			const host = document.createElement('div');
+			host.style.width = `${width}px`;
+			document.body.appendChild(host);
+			fixedHosts.add(host);
+			await render(
+				GiftCardTestHost,
+				{
+					gift: makeVisitorGift({
+						myReservationId: reservationId,
+						reservedCount: reservationId === null ? 0 : 1,
+						isFullyReserved: reservationId !== null,
+					}),
+					role,
+					onreceived: () => {},
+					onreserve: () => {},
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const row = host.querySelector('[data-testid="gift-action-row"]') as HTMLElement;
+			const more = row.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			const primary = row.querySelector(
+				'[data-testid="gift-received-toggle"], [data-testid="reserve-button"]',
+			) as HTMLElement;
+			const card = host.firstElementChild as HTMLElement;
+			expect(primary).toBeTruthy();
+			expect(more).toBeTruthy();
+			expect(primary.getBoundingClientRect().height).toBeCloseTo(
+				more.getBoundingClientRect().height,
+				0,
+			);
+			expect(more.getBoundingClientRect().right + 3).toBeLessThanOrEqual(
+				card.getBoundingClientRect().right,
+			);
+			expect(more.getBoundingClientRect().bottom + 3).toBeLessThanOrEqual(
+				card.getBoundingClientRect().bottom,
+			);
+			if (role === WISHLIST_ROLES.recipient) {
+				expect(host.querySelector('[data-like-heart]')).toBeNull();
+				expect(host.querySelector('[data-testid="reserve-button"]')).toBeNull();
+			}
+			if (role === WISHLIST_ROLES.moderator) {
+				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+				expect(
+					host.querySelector('[data-testid="gift-card-image-frame"]')?.contains(reserve),
+				).toBe(true);
+			}
+		},
+	);
+});
+
 describe('GiftCard reservation-action layout (issue #211)', () => {
 	it('lets a direct mobile Reserve action fill the full actions width when More is absent', async () => {
 		await page.viewport(390, 720);
@@ -987,7 +1050,7 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		);
 	});
 
-	it('hides an onmore-only archived recipient footer on desktop but keeps More on mobile', async () => {
+	it('keeps an onmore-only archived recipient footer available on desktop and mobile', async () => {
 		await page.viewport(800, 720);
 		const host = document.createElement('div');
 		document.body.appendChild(host);
@@ -1007,7 +1070,8 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		const more = host.querySelector(
 			`[aria-label="${m.gift_more_actions()}"]`,
 		) as HTMLButtonElement;
-		expect(getComputedStyle(footer).display).toBe('none');
+		expect(getComputedStyle(footer).display).not.toBe('none');
+		expect(getComputedStyle(more).display).not.toBe('none');
 		await page.viewport(390, 720);
 		expect(getComputedStyle(more).display).not.toBe('none');
 	});
@@ -1064,8 +1128,8 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 
 		const purchased = host.querySelector(
 			`[aria-label="${m.gift_mark_bought()}"]`,
-		) as HTMLButtonElement;
-		expect(getComputedStyle(purchased).display).toBe('none');
+		) as HTMLButtonElement | null;
+		expect(purchased).toBeNull();
 		const more = host.querySelector(
 			`[aria-label="${m.gift_more_actions()}"]`,
 		) as HTMLButtonElement;
@@ -1100,7 +1164,7 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		expect(directAction).toBeTruthy();
 		expect(more).toBeTruthy();
 		expect(directAction.getBoundingClientRect().height).toBeGreaterThanOrEqual(40);
-		expect(more.getBoundingClientRect().width).toBeCloseTo(40, 0);
+		expect(more.getBoundingClientRect().width).toBeCloseTo(48, 0);
 		expect(more.getBoundingClientRect().height).toBeCloseTo(
 			directAction.getBoundingClientRect().height,
 			0,
@@ -1159,7 +1223,9 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		const actionRect = firstAction.getBoundingClientRect();
 		const moreRect = firstMore.getBoundingClientRect();
 		const visibleButtons = Array.from(
-			firstAction.parentElement!.querySelectorAll<HTMLButtonElement>('button'),
+			firstAction
+				.closest('[data-testid="gift-action-row"]')!
+				.querySelectorAll<HTMLButtonElement>('button'),
 		).filter((button) => getComputedStyle(button).display !== 'none');
 		const paintedLabels = visibleButtons.flatMap((button) => {
 			const surface = button.querySelector(':scope > .elevation-surface') as HTMLElement;
