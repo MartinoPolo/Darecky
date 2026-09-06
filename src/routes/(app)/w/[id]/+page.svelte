@@ -133,6 +133,7 @@
 		resetPriorityLevelLoaderForWishlistChange,
 		settlePriorityLevelLoad,
 	} from './priority_level_loader.js';
+	import { GIFT_VIEW_MODES } from '$lib/modules/gifts/types.js';
 	import type {
 		GiftFilters,
 		GiftSortOption,
@@ -942,7 +943,7 @@
 	}
 
 	function handleViewModeChange(mode: GiftViewMode) {
-		if (!reorderMode) {
+		if (!reorderMode || mode === GIFT_VIEW_MODES.card || mode === GIFT_VIEW_MODES.list) {
 			giftsContext.viewMode.current = mode;
 		}
 	}

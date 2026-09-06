@@ -184,6 +184,90 @@ test('gift order persists after card drag and rapid list keyboard moves', async 
 	await expect(page.locator('[data-gift-item]')).toHaveCount(3);
 });
 
+test('reorder keeps its order and keyboard controls while switching Grid to List and back', async ({
+	browser,
+	request,
+	baseURL,
+}, testInfo) => {
+	const user = createTestUser('gift-reorder-layout-switch');
+	const page = await registerAndGetPage(browser, request, baseURL!, user);
+	await createWishlistAndNavigate(page, 'Gift Reorder Layout Switching');
+
+	const names = ['Layout Switch Gift A', 'Layout Switch Gift B', 'Layout Switch Gift C'];
+	for (const name of names) {
+		await addGift(page, name);
+	}
+
+	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	const listMode = page.getByRole('radio', { name: 'Seznam', exact: true });
+	const gridMode = page.getByRole('radio', { name: 'Karta', exact: true });
+	await expect(listMode).toBeEnabled();
+	await expect(gridMode).toBeEnabled();
+
+	const aHandle = giftItem(page, names[0]!).getByRole('button', {
+		name: REORDER_HANDLE,
+		exact: true,
+	});
+	const cBox = await giftItem(page, names[2]!).boundingBox();
+	const handleBox = await aHandle.boundingBox();
+	expect(cBox).not.toBeNull();
+	expect(handleBox).not.toBeNull();
+	const mutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
+	await page.mouse.move(
+		handleBox!.x + handleBox!.width / 2,
+		handleBox!.y + handleBox!.height / 2,
+	);
+	await page.mouse.down();
+	await page.mouse.move(cBox!.x + cBox!.width / 2, cBox!.y + cBox!.height / 2, { steps: 10 });
+	await page.mouse.up();
+	await mutation;
+	const draggedOrder = await visibleGiftNames(page);
+	expect(draggedOrder).not.toEqual(names);
+	await page.screenshot({ path: testInfo.outputPath('reorder-grid.png'), fullPage: true });
+
+	const switchMutations: Response[] = [];
+	const recordSwitchMutation = (response: Response) => {
+		if (isSuccessfulRemoteMutation(response)) switchMutations.push(response);
+	};
+	page.on('response', recordSwitchMutation);
+	await listMode.click();
+	await expect(listMode).toBeChecked();
+	await expect.poll(() => visibleGiftNames(page)).toEqual(draggedOrder);
+	await page.screenshot({ path: testInfo.outputPath('reorder-list.png'), fullPage: true });
+	await gridMode.click();
+	await expect(gridMode).toBeChecked();
+	await expect.poll(() => visibleGiftNames(page)).toEqual(draggedOrder);
+	await page.waitForTimeout(250);
+	page.off('response', recordSwitchMutation);
+	expect(switchMutations).toHaveLength(0);
+
+	const firstHandle = giftItem(page, draggedOrder[0]!).getByRole('button', {
+		name: REORDER_HANDLE,
+		exact: true,
+	});
+	const keyboardMutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
+	await firstHandle.focus();
+	await firstHandle.press('ArrowDown');
+	await keyboardMutation;
+	const finalOrder = await visibleGiftNames(page);
+	expect(finalOrder).not.toEqual(draggedOrder);
+
+	const toolbar = page.getByTestId('wishlist-toolbar');
+	const desktopBox = await toolbar.boundingBox();
+	expect(desktopBox).not.toBeNull();
+	expect(desktopBox!.x + desktopBox!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+	await page.setViewportSize({ width: 320, height: 760 });
+	const mobileBox = await toolbar.boundingBox();
+	expect(mobileBox).not.toBeNull();
+	expect(mobileBox!.x).toBeGreaterThanOrEqual(0);
+	expect(mobileBox!.x + mobileBox!.width).toBeLessThanOrEqual(320);
+	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeEnabled();
+
+	await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
+	await page.reload({ waitUntil: 'load' });
+	await expect.poll(() => visibleGiftNames(page)).toEqual(finalOrder);
+});
+
 test('latest gift order survives immediate reopen, no-op entry, a second reorder, and reload', async ({
 	browser,
 	request,

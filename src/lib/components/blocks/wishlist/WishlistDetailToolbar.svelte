@@ -564,7 +564,7 @@
 
 {#snippet mobileDisplayControls()}
 	<div class="mobile-browse-row" data-mobile-toolbar-row>
-		<GiftViewSwitcher value={viewMode} onchange={onviewmodechange} disabled={reorderMode} />
+		<GiftViewSwitcher value={viewMode} onchange={onviewmodechange} />
 		<div class="mobile-browse-spacer"></div>
 		<SimpleTooltip text={m.gift_display_options()}>
 			<Button
@@ -638,6 +638,7 @@
 
 {#snippet mobileReorderControls()}
 	<div class="mobile-reorder-row" data-mobile-toolbar-row>
+		<GiftViewSwitcher value={viewMode} onchange={onviewmodechange} />
 		<strong class="mobile-mode-label">{m.gift_reorder_mode_label()}</strong>
 		<Button
 			bind:ref={mobileReorderDoneButton}
@@ -914,11 +915,7 @@
 					>
 						{#if mobileViewportMode === false}
 							<div class="toolbar-responsive-view-switcher">
-								<GiftViewSwitcher
-									value={viewMode}
-									onchange={onviewmodechange}
-									disabled={reorderMode}
-								/>
+								<GiftViewSwitcher value={viewMode} onchange={onviewmodechange} />
 							</div>
 						{/if}
 
