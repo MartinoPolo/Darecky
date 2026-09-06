@@ -6,6 +6,7 @@ import {
 	createWishlistAndNavigate,
 	createWishlistForSomeoneAndNavigate,
 	addGift,
+	shareWishlist,
 } from './fixtures/wishlist-helpers.js';
 
 function gift(page: Page, name: string) {
@@ -127,6 +128,7 @@ async function applyNestedBulkOption(
 	await expect(sheet.locator(`[data-mobile-bulk-action="${action}"]`)).toContainText(
 		selectedLabel!,
 	);
+	return selectedLabel!;
 }
 
 async function selectionCount(toolbar: Locator, count: number) {
@@ -442,7 +444,7 @@ test('mobile bulk priority succeeds for one and multiple selected gifts', async 
 	await page.context().close();
 });
 
-test('all six mobile bulk actions mutate one and multiple selected gifts', async ({
+test('all six mobile bulk actions refresh and persist on a shared list for one and multiple gifts', async ({
 	browser,
 	request,
 	baseURL,
@@ -454,15 +456,16 @@ test('all six mobile bulk actions mutate one and multiple selected gifts', async
 		createTestUser('gift-actions-mobile-mutation-matrix'),
 	);
 	await createActionFixture(page);
+	await shareWishlist(page);
 	const sourcePath = new URL(page.url()).pathname;
 	const destinationPath = await createAdditionalWishlist(page, 'Cíl hromadného kopírování');
 	await page.goto(sourcePath);
 	await expect(page.locator('[data-gift-item]')).toHaveCount(2);
 	await dismissToasts(page);
 	await page.setViewportSize({ width: 390, height: 760 });
-	const firstGift = gift(page, 'Kolo pro výlety');
-	const secondGift = gift(page, 'Stan pro dva');
-	const contextSheet = await openMobileGiftActions(page, firstGift, 'Kolo pro výlety');
+	let firstGift = gift(page, 'Kolo pro výlety');
+	let secondGift = gift(page, 'Stan pro dva');
+	let contextSheet = await openMobileGiftActions(page, firstGift, 'Kolo pro výlety');
 	await contextSheet.getByRole('button', { name: /Vybrat více dárků/ }).click();
 	const toolbar = page.getByRole('region', { name: m.gift_selection_toolbar(), exact: true });
 	await toolbar.getByRole('button', { name: m.gift_selection_actions() }).click();
@@ -484,15 +487,47 @@ test('all six mobile bulk actions mutate one and multiple selected gifts', async
 
 	await page.keyboard.press('Escape');
 	await expect(sheet).toBeHidden();
+	await toolbar.getByRole('button', { name: m.done() }).click();
+	await page.reload();
+	firstGift = gift(page, 'Kolo pro výlety');
+	secondGift = gift(page, 'Stan pro dva');
+	await waitForReceivedState(firstGift, true);
+	await waitForReceivedState(secondGift, false);
+	contextSheet = await openMobileGiftActions(page, firstGift, 'Kolo pro výlety');
+	await contextSheet.getByRole('button', { name: /Vybrat více dárků/ }).click();
 	await secondGift.click();
 	await selectionCount(toolbar, 2);
 	await toolbar.getByRole('button', { name: m.gift_selection_actions() }).click();
 	sheet = page.getByRole('dialog', { name: m.gift_selection_actions() });
-	await applyNestedBulkOption(page, sheet, 'priority', 2, 2);
-	await applyNestedBulkOption(page, sheet, 'category', 2, 2);
-	await applyNestedBulkOption(page, sheet, 'imageFit', m.image_fit_fill(), 2);
-	await applyNestedBulkOption(page, sheet, 'imageBackground', m.image_background_white(), 2);
-	await applyNestedBulkOption(page, sheet, 'received', m.gift_mark_unreceived(), 2);
+	for (const action of ['priority', 'category', 'imageFit', 'imageBackground', 'received']) {
+		await expect(sheet.locator(`[data-mobile-bulk-action="${action}"]`)).toContainText(
+			m.gift_selection_mixed(),
+		);
+	}
+
+	const priorityLabel = await applyNestedBulkOption(page, sheet, 'priority', 2, 2);
+	const categoryLabel = await applyNestedBulkOption(page, sheet, 'category', 2, 2);
+	const imageFitLabel = await applyNestedBulkOption(
+		page,
+		sheet,
+		'imageFit',
+		m.image_fit_fill(),
+		2,
+	);
+	const imageBackgroundLabel = await applyNestedBulkOption(
+		page,
+		sheet,
+		'imageBackground',
+		m.image_background_white(),
+		2,
+	);
+	const receivedLabel = await applyNestedBulkOption(
+		page,
+		sheet,
+		'received',
+		m.gift_mark_unreceived(),
+		2,
+	);
 	await sheet.locator('[data-mobile-bulk-action="copy"]').click();
 	copySheet = page.getByRole('dialog', { name: m.gift_bulk_copy_title() });
 	await expect(copySheet.getByRole('button', { name: m.gift_bulk_copy_confirm() })).toBeEnabled();
@@ -505,6 +540,29 @@ test('all six mobile bulk actions mutate one and multiple selected gifts', async
 	await expect(
 		page.locator('[data-sonner-toast]').filter({ hasText: m.error_generic() }),
 	).toHaveCount(0);
+
+	await page.keyboard.press('Escape');
+	await toolbar.getByRole('button', { name: m.done() }).click();
+	await page.reload();
+	firstGift = gift(page, 'Kolo pro výlety');
+	secondGift = gift(page, 'Stan pro dva');
+	await waitForReceivedState(firstGift, false);
+	await waitForReceivedState(secondGift, false);
+	contextSheet = await openMobileGiftActions(page, firstGift, 'Kolo pro výlety');
+	await contextSheet.getByRole('button', { name: /Vybrat více dárků/ }).click();
+	await secondGift.click();
+	await toolbar.getByRole('button', { name: m.gift_selection_actions() }).click();
+	sheet = page.getByRole('dialog', { name: m.gift_selection_actions() });
+	for (const [action, label] of [
+		['priority', priorityLabel],
+		['category', categoryLabel],
+		['imageFit', imageFitLabel],
+		['imageBackground', imageBackgroundLabel],
+		['received', receivedLabel],
+	] as const) {
+		await expect(sheet.locator(`[data-mobile-bulk-action="${action}"]`)).toContainText(label);
+	}
+
 	await page.goto(destinationPath);
 	await expect(page.locator('[data-gift-item]')).toHaveCount(3);
 	await expect(gift(page, 'Kolo pro výlety')).toHaveCount(2);
