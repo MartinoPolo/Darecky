@@ -185,6 +185,7 @@
 			() => wishlist?.status === 'archived',
 			() => isAuthenticated,
 			() => likedGiftIds,
+			() => isGiftDataLoading || wishlist.shortId !== shortId,
 		),
 	);
 

@@ -201,6 +201,19 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
 	const listMode = page.getByRole('radio', { name: 'Seznam', exact: true });
 	const gridMode = page.getByRole('radio', { name: 'Karta', exact: true });
+	const giftCollection = page.locator('[data-wishlist-gift-collection]');
+	const expectCollectionAnimationsSettled = async () => {
+		await expect
+			.poll(() =>
+				giftCollection.evaluate((element) => ({
+					opacity: getComputedStyle(element).opacity,
+					animationsSettled: element
+						.getAnimations()
+						.every((animation) => ['finished', 'idle'].includes(animation.playState)),
+				})),
+			)
+			.toEqual({ opacity: '1', animationsSettled: true });
+	};
 	await expect(listMode).toBeEnabled();
 	await expect(gridMode).toBeEnabled();
 
@@ -223,6 +236,7 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 	await mutation;
 	const draggedOrder = await visibleGiftNames(page);
 	expect(draggedOrder).not.toEqual(names);
+	await expectCollectionAnimationsSettled();
 	await page.screenshot({ path: testInfo.outputPath('reorder-grid.png'), fullPage: true });
 
 	const switchMutationRequests: Request[] = [];
@@ -234,10 +248,13 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 	page.on('request', recordSwitchMutation);
 	await listMode.click();
 	await expect(listMode).toBeChecked();
+	await expect(giftCollection).toHaveAttribute('data-view-mode', 'list');
 	await expect.poll(() => visibleGiftNames(page)).toEqual(draggedOrder);
+	await expectCollectionAnimationsSettled();
 	await page.screenshot({ path: testInfo.outputPath('reorder-list.png'), fullPage: true });
 	await gridMode.click();
 	await expect(gridMode).toBeChecked();
+	await expect(giftCollection).toHaveAttribute('data-view-mode', 'card');
 	await expect.poll(() => visibleGiftNames(page)).toEqual(draggedOrder);
 	await page.waitForTimeout(250);
 	page.off('request', recordSwitchMutation);
@@ -245,6 +262,7 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 
 	await listMode.click();
 	await expect(listMode).toBeChecked();
+	await expect(giftCollection).toHaveAttribute('data-view-mode', 'list');
 	const listHandle = giftItem(page, draggedOrder[0]!).getByRole('button', {
 		name: REORDER_HANDLE,
 		exact: true,
@@ -260,6 +278,7 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 
 	await gridMode.click();
 	await expect(gridMode).toBeChecked();
+	await expect(giftCollection).toHaveAttribute('data-view-mode', 'card');
 	await expect.poll(() => visibleGiftNames(page)).toEqual(listKeyboardOrder);
 	const gridHandle = giftItem(page, listKeyboardOrder[0]!).getByRole('button', {
 		name: REORDER_HANDLE,

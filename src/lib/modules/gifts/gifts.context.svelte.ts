@@ -130,6 +130,7 @@ export function setGiftsContext(
 	getIsArchived: () => boolean,
 	getIsAuthenticated: () => boolean,
 	getLikedIds: () => string[],
+	getIsGiftDataLoading: () => boolean = () => false,
 ) {
 	const context = createGiftsContext(
 		getWishlistId,
@@ -138,6 +139,7 @@ export function setGiftsContext(
 		getIsArchived,
 		getIsAuthenticated,
 		getLikedIds,
+		getIsGiftDataLoading,
 	);
 	setGiftsInternal(context);
 	return context;
@@ -214,6 +216,7 @@ function createGiftsContext(
 	getIsArchived: () => boolean,
 	getIsAuthenticated: () => boolean,
 	getLikedIds: () => string[],
+	getIsGiftDataLoading: () => boolean,
 ) {
 	const gifts = new Derived(getGifts);
 	const viewerRole = new Derived(getRole);
@@ -342,6 +345,9 @@ function createGiftsContext(
 	});
 
 	$effect(() => {
+		if (getIsGiftDataLoading()) {
+			return;
+		}
 		const effective = effectiveGrouping.current;
 		if (browser && grouping.current !== effective) {
 			grouping.current = effective;

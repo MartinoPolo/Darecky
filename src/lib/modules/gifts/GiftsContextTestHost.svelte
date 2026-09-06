@@ -7,15 +7,20 @@
 	let {
 		initialWishlistId = 'wishlist-a',
 		initialGifts = [],
+		initialLoading = false,
+		loadedGifts = [],
 		role = 'visitor',
 	}: {
 		initialWishlistId?: string;
 		initialGifts?: GiftForVisitor[];
+		initialLoading?: boolean;
+		loadedGifts?: GiftForVisitor[];
 		role?: WishlistRole;
 	} = $props();
 
 	let wishlistId = $state(untrack(() => initialWishlistId));
 	let gifts = $state(untrack(() => initialGifts));
+	let loading = $state(untrack(() => initialLoading));
 	const context = setGiftsContext(
 		() => wishlistId,
 		() => gifts,
@@ -23,7 +28,13 @@
 		() => false,
 		() => true,
 		() => [],
+		() => loading,
 	);
+
+	function loadGifts() {
+		gifts = loadedGifts;
+		loading = false;
+	}
 
 	function prioritizedGift(): GiftForVisitor {
 		return {
@@ -64,6 +75,7 @@
 <div data-testid="stored">
 	{localStorage.getItem(wishlistGiftGroupingStorageKey(wishlistId)) ?? ''}
 </div>
+<button onclick={loadGifts}>Load gifts</button>
 <button onclick={() => (gifts = [prioritizedGift()])}>Add priority</button>
 <button onclick={() => (gifts = [])}>Remove priorities</button>
 <button onclick={() => (wishlistId = 'wishlist-a')}>Wishlist A</button>

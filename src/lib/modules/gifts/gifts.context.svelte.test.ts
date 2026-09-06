@@ -99,6 +99,52 @@ describe('wishlist grouping preference default (#363)', () => {
 		},
 	);
 
+	it.each([
+		[GIFT_GROUPING_OPTIONS.priority, { priority: true }],
+		[GIFT_GROUPING_OPTIONS.category, { category: true }],
+	] as const)(
+		'preserves saved %s while gift data loads and after matching data arrives',
+		async (saved, giftOptions) => {
+			const storageKey = wishlistGiftGroupingStorageKey('wishlist-a');
+			localStorage.setItem(storageKey, JSON.stringify(saved));
+			const screen = render(GiftsContextTestHost, {
+				initialLoading: true,
+				loadedGifts: [makeGift(giftOptions)],
+			});
+
+			await expect.element(screen.getByTestId('grouping')).toHaveTextContent(saved);
+			await expect
+				.element(screen.getByTestId('effective-grouping'))
+				.toHaveTextContent(GIFT_GROUPING_OPTIONS.none);
+			expect(localStorage.getItem(storageKey)).toBe(JSON.stringify(saved));
+
+			await screen.getByRole('button', { name: 'Load gifts' }).click();
+			await expectGrouping(screen, saved);
+			expect(localStorage.getItem(storageKey)).toBe(JSON.stringify(saved));
+		},
+	);
+
+	it.each([GIFT_GROUPING_OPTIONS.priority, GIFT_GROUPING_OPTIONS.category])(
+		'coerces saved %s only after loaded gift data proves it unavailable',
+		async (saved) => {
+			const storageKey = wishlistGiftGroupingStorageKey('wishlist-a');
+			localStorage.setItem(storageKey, JSON.stringify(saved));
+			const screen = render(GiftsContextTestHost, {
+				initialLoading: true,
+				loadedGifts: [],
+			});
+
+			await expect.element(screen.getByTestId('grouping')).toHaveTextContent(saved);
+			expect(localStorage.getItem(storageKey)).toBe(JSON.stringify(saved));
+
+			await screen.getByRole('button', { name: 'Load gifts' }).click();
+			await expectGrouping(screen, GIFT_GROUPING_OPTIONS.none);
+			await expect
+				.poll(() => localStorage.getItem(storageKey))
+				.toBe(JSON.stringify(GIFT_GROUPING_OPTIONS.none));
+		},
+	);
+
 	it('keeps saved and unsaved wishlist scopes independent while navigating', async () => {
 		localStorage.setItem(
 			wishlistGiftGroupingStorageKey('wishlist-a'),
