@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="cs" data-palette="sky">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Přejeme si · Gift geometry · Focused specimens</title>
+		<link rel="stylesheet" href="../../tokens.css" />
+		<link rel="stylesheet" href="../../open-issue-review/assets/app.css" />
+		<link rel="stylesheet" href="focused-gifts.css" />
+	</head>
+	<body>
+		<main>
+			<header class="review-header">
+				<a href="../../open-issue-review/index.html">← Přehled návrhů</a>
+				<p class="eyebrow">VARIANT C · FOCUSED SPECIMENS · #350 · NOT APPROVED</p>
+				<h1>Stejné okraje. Různé akce.</h1>
+				<p>Bez okolní aplikace. Kontrolujte pouze obrázek, hustotu obsahu a tlačítka.</p>
+			</header>
+			<nav class="review-tabs" aria-label="Část návrhu">
+				<button data-view="list" aria-pressed="true">1. Seznam</button>
+				<button data-view="grid" aria-pressed="false">2. Karty</button>
+				<button data-view="reorder" aria-pressed="false">3. Úchyt</button>
+			</nav>
+			<section class="review-question" aria-labelledby="question-title">
+				<h2 id="question-title"></h2>
+				<p id="question-copy"></p>
+			</section>
+			<div id="reorder-layout" hidden aria-label="Rozložení ukázky pořadí">
+				<button class="control" data-reorder-layout="list" aria-pressed="true">
+					Seznam
+				</button>
+				<button class="control" data-reorder-layout="grid" aria-pressed="false">
+					Karty
+				</button>
+			</div>
+			<details class="test-tools">
+				<summary>Zátěžové stavy · nástroje prototypu</summary>
+				<div class="tool-grid">
+					<label
+						>Role pro všechny ukázky<select id="role">
+							<option value="mixed">Výchozí ukázky</option>
+							<option value="visitor">Návštěvník</option>
+							<option value="gifter">Dárce s vlastní rezervací</option>
+							<option value="recipient">Obdarovaný</option>
+							<option value="manager">Správce</option>
+						</select></label
+					>
+					<label
+						>Obsah<select id="content">
+							<option value="normal">Stejný produkt pro porovnání</option>
+							<option value="varied">Dlouhý text / bez obrázku / více odkazů</option>
+							<option value="empty">Prázdný seznam</option>
+							<option value="loading">Načítání</option>
+						</select></label
+					>
+					<label><input id="archived" type="checkbox" /> Archivovaný seznam</label>
+					<label><input id="fail" type="checkbox" /> Příští akce selže</label>
+					<label
+						><input id="large-text" type="checkbox" /> Text 200 % · přístupná
+						alternativa</label
+					>
+					<label><input id="english" type="checkbox" /> English specimen labels</label>
+					<label><input id="dark" type="checkbox" /> Tmavý vzhled</label>
+					<label><input id="selection" type="checkbox" /> Souvislý obrys výběru</label>
+					<button id="reset" class="control">Obnovit ukázky</button>
+				</div>
+			</details>
+			<p id="accessibility-note" class="review-question" hidden>
+				<strong>Výslovná výjimka k posouzení:</strong> při 200% textu se úzký Seznam skládá
+				pod čtvercový obrázek. Plná výška čtverce vedle obsahu, všechny akce a dvojnásobný
+				text se na telefonu současně nevejdou. Nic není oříznuto ani zmenšeno; tuto
+				přístupnou alternativu ještě schvalte.
+			</p>
+			<div id="specimens" class="specimens" aria-live="polite"></div>
+			<p id="announcement" role="status" aria-live="polite"></p>
+			<footer>
+				Lokální simulace. Žádná data se neukládají. Otevření detailu ukáže celý text; výběr
+				a pořadí jsou jen náhled. Klávesové šipky na úchytu mění místní pořadí, nikoli
+				produkční seznam.
+			</footer>
+		</main>
+		<dialog id="gift-dialog" aria-labelledby="dialog-title">
+			<h2 id="dialog-title"></h2>
+			<div id="dialog-body"></div>
+			<form method="dialog"><button class="control">Zavřít</button></form>
+		</dialog>
+		<script src="focused-gifts.js"></script>
+	</body>
+</html>

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/base/button/index.js';
-	import { OUTLINE_CONTROL_SURFACE_CLASSES } from '$lib/components/base/button/button_variants.js';
 	import SimpleTooltip from '$lib/components/base/tooltip/SimpleTooltip.svelte';
 	import * as Select from '$lib/components/base/select/index.js';
 	import * as Sheet from '$lib/components/base/sheet/index.js';
@@ -35,7 +34,6 @@
 		type FilterFacetGroup,
 	} from '$lib/components/derived/filter-menu/index.js';
 	import { WISHLIST_ROLES, type WishlistRole } from '$lib/modules/wishlists/types.js';
-	import { cn } from '$lib/utils.js';
 	import { flushSync, onMount, tick, type Snippet } from 'svelte';
 	import { emptyGiftFilters } from '$lib/modules/gifts/gifts.context.svelte.js';
 	import WishlistBottomSheet from './WishlistBottomSheet.svelte';
@@ -476,7 +474,9 @@
 	>
 		<Select.Trigger
 			size="md"
-			class={cn('toolbar-grouping-control min-w-0 px-3', OUTLINE_CONTROL_SURFACE_CLASSES)}
+			appearance="raised"
+			class="toolbar-grouping-control min-w-0"
+			surfaceClass="px-3 group-hover:bg-accent group-hover:text-accent-foreground"
 			aria-label={groupingCombinedLabel}
 			title={groupingCombinedLabel}
 		>

@@ -137,7 +137,7 @@
 			size="icon-sm"
 			disabled
 			aria-label={m.draft_grid_enrich_row()}
-			class="text-muted-foreground"
+			surfaceClass="text-muted-foreground"
 		>
 			<SparklesIcon aria-hidden="true" />
 		</Button>
@@ -146,7 +146,7 @@
 			size="icon-sm"
 			onclick={ondelete}
 			aria-label={m.draft_grid_remove_row()}
-			class={cn('text-muted-foreground', DRAFT_DESTRUCTIVE_HOVER_CLASS)}
+			surfaceClass={cn('text-muted-foreground', DRAFT_DESTRUCTIVE_HOVER_CLASS)}
 		>
 			<Trash2Icon aria-hidden="true" />
 		</Button>
@@ -368,7 +368,7 @@
 			size="icon-sm"
 			disabled
 			aria-label={m.draft_grid_enrich_row()}
-			class="text-muted-foreground"
+			surfaceClass="text-muted-foreground"
 		>
 			<SparklesIcon aria-hidden="true" />
 		</Button>
@@ -377,7 +377,7 @@
 			size="icon-sm"
 			onclick={ondelete}
 			aria-label={m.draft_grid_remove_row()}
-			class={cn('text-muted-foreground', DRAFT_DESTRUCTIVE_HOVER_CLASS)}
+			surfaceClass={cn('text-muted-foreground', DRAFT_DESTRUCTIVE_HOVER_CLASS)}
 		>
 			<Trash2Icon aria-hidden="true" />
 		</Button>

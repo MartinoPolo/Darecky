@@ -17,15 +17,14 @@ import { tv } from 'tailwind-variants';
  */
 export const giftCardVariants = tv({
 	slots: {
-		// The `group/gift-card` triggers apply only when wrapped by WishlistGiftDraggableWrapper (which
-		// owns that named group): they let a hover/focus on the drag grip lift the card in lock-step
-		// with the grip. Standalone (dashboard/storybook) there is no such ancestor, so only the self
-		// `hover:`/`focus-within:` triggers fire — identical to before (issue #224 follow-up).
-		card: 'elevation-ordinary group relative grid h-[280px] grid-rows-[136px_minmax(0,1fr)_auto] overflow-hidden rounded-panel border-[2.5px] border-ink bg-card transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) delay-0 motion-reduce:transition-none sm:row-span-7 sm:h-auto sm:grid-rows-subgrid',
+		// The `group/gift-card` triggers only mirror the drag grip so the card and grip lift in
+		// lock-step; the card itself lifts through the semantic owner selector in app.css.
+		card: 'group relative isolate grid h-[280px] grid-rows-[136px_minmax(0,1fr)_auto] rounded-panel bg-card sm:row-span-7 sm:h-auto sm:grid-rows-subgrid',
+		plate: 'elevation-ordinary pointer-events-none absolute inset-0 z-[1] rounded-panel border-[2.5px] border-ink bg-transparent transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5',
 		// 4:3 (issue #183, revises the earlier 1:1 shape): shorter cards, same
 		// `minmax(280px, 1fr)` grid column sizing.
 		imageArea:
-			'relative isolate row-start-1 h-[136px] w-full overflow-hidden border-b-[2.5px] border-ink bg-surface sm:h-auto sm:aspect-[4/3]',
+			'relative isolate row-start-1 h-[136px] w-full overflow-hidden rounded-t-[calc(var(--radius-panel)-2.5px)] border-b-[2.5px] border-ink bg-surface sm:h-auto sm:aspect-[4/3]',
 		/**
 		 * Dotted mat behind the photo (shows through letterboxed photos). Sits on
 		 * its own layer below the image so its opacity can fade up on hover —
@@ -60,9 +59,7 @@ export const giftCardVariants = tv({
 				body: 'opacity-55 grayscale-50',
 				footer: 'opacity-55 grayscale-50',
 			},
-			false: {
-				card: 'elevation-interactive',
-			},
+			false: { card: 'elevation-owner elevation-owner-raised' },
 		},
 	},
 	defaultVariants: {

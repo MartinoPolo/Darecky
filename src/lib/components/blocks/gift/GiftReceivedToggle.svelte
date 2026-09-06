@@ -13,6 +13,7 @@
 		isArchived?: boolean;
 		size?: 'md' | 'sm';
 		class?: string;
+		surfaceClass?: string;
 		onreceived?: (giftId: string, received: boolean) => void | Promise<void>;
 	}
 
@@ -23,6 +24,7 @@
 		isArchived = false,
 		size = 'md',
 		class: className,
+		surfaceClass,
 		onreceived,
 	}: Props = $props();
 
@@ -54,6 +56,7 @@
 		{size}
 		intent="primary"
 		class={className}
+		{surfaceClass}
 		onclick={handleClick}
 		disabled={pending}
 		data-testid="gift-received-toggle"

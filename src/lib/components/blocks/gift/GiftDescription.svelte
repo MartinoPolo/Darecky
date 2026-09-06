@@ -82,7 +82,8 @@
 				type="button"
 				size="sm"
 				intent="ghost"
-				class="-ml-1.5 h-7 w-fit px-1.5 text-xs text-muted-foreground hover:text-foreground"
+				class="-ml-1.5 h-7 w-fit"
+				surfaceClass="px-1.5 text-xs text-muted-foreground group-hover:text-foreground"
 				aria-expanded={showAllAppends}
 				onclick={toggleAppendHistory}
 				onkeydown={(event: KeyboardEvent) => event.stopPropagation()}

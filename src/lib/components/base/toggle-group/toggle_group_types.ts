@@ -11,5 +11,6 @@ export type ToggleGroupProps = ToggleGroupPrimitive.RootProps & {
 export type ToggleGroupItemProps = WithoutChildrenOrChild<ToggleGroupPrimitive.ItemProps> & {
 	intent?: ToggleIntent;
 	size?: ToggleSize;
+	surfaceClass?: string;
 	children?: Snippet;
 };

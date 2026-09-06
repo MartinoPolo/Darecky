@@ -165,14 +165,16 @@
 				{#if mobileScreen !== 'main'}
 					<Button
 						intent="ghost"
-						class="min-h-11 w-full justify-start"
+						class="min-h-11 w-full"
+						surfaceClass="justify-start"
 						onclick={() => (mobileScreen = 'main')}
 						><ChevronLeftIcon data-icon="inline-start" />{m.gift_context_back()}</Button
 					>
 					{#each [{ id: null, label: mobileScreen === 'priority' ? m.gift_priority_none() : m.gift_category_uncategorized() }, ...(mobileScreen === 'priority' ? priorityLevels : categories)] as choice (choice.id)}
 						<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={() =>
 								finish(() =>
 									mobileScreen === 'priority'
@@ -190,7 +192,8 @@
 				{:else}
 					{#if has('open')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							href={safePrimaryUrl!}
 							target="_blank"
 							rel="external noopener noreferrer"
@@ -199,19 +202,22 @@
 						>{/if}
 					{#if has('copy')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={copyLink}
 							>{@render icon('copy')}{m.gift_context_copy_link()}</Button
 						>{/if}
 					{#if has('edit')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={() => finish(onedit)}
 							>{@render icon('edit')}{m.gift_context_edit()}</Button
 						>{/if}
 					{#if has('priority')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							disabled={!priorityReady}
 							onclick={() => (mobileScreen = 'priority')}
 							>{priorityReady
@@ -220,7 +226,8 @@
 						>{/if}
 					{#if has('category')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							disabled={!categoryReady}
 							onclick={() => (mobileScreen = 'category')}
 							>{categoryReady
@@ -229,7 +236,8 @@
 						>{/if}
 					{#if has('received')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={() => finish(onreceived)}
 							>{@render icon('received')}{received
 								? m.gift_mark_unreceived()
@@ -237,25 +245,29 @@
 						>{/if}
 					{#if has('multiselect')}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={() => finish(onselect)}
 							>{@render icon('multiselect')}{m.gift_context_select_multiple()}</Button
 						>{/if}
 					{#if has('reserve') && onreserve}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={() => finish(onreserve)}
 							>{@render icon('reserve')}{m.reserve_button_reserve()}</Button
 						>{/if}
 					{#if has('cancel-reservation') && oncancelreservation}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							onclick={() => finish(oncancelreservation)}
 							>{@render icon('cancel-reservation')}{m.reserve_button_cancel()}</Button
 						>{/if}
 					{#if has('purchased') && onpurchased}<Button
 							intent="ghost"
-							class="min-h-11 w-full justify-start"
+							class="min-h-11 w-full"
+							surfaceClass="justify-start"
 							aria-pressed={purchased}
 							onclick={() => finish(onpurchased)}
 							>{@render icon('purchased')}{purchased

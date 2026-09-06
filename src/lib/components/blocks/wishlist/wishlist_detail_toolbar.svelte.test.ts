@@ -151,7 +151,10 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		await expect.element(settings).toBeVisible();
 		await expect.element(add).toBeVisible();
 		expect(visibleButtons(toolbar).at(-1)).toBe(add);
-		expect(getComputedStyle(add).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+		expect(
+			getComputedStyle(add.querySelector(':scope > .elevation-surface') as HTMLElement)
+				.backgroundColor,
+		).not.toBe('rgba(0, 0, 0, 0)');
 		await screen.unmount();
 	});
 

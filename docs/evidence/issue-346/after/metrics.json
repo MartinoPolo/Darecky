@@ -1,0 +1,777 @@
+{
+	"stationary": [
+		{
+			"zoom": 1,
+			"depth": "soft",
+			"zoomMetrics": {
+				"dpr": 2,
+				"innerWidth": 1602,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1,
+			"depth": "ink",
+			"zoomMetrics": {
+				"dpr": 2,
+				"innerWidth": 1602,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 90,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 88,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 34,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1,
+			"depth": "black",
+			"zoomMetrics": {
+				"dpr": 2,
+				"innerWidth": 1602,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 85,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1.25,
+			"depth": "soft",
+			"zoomMetrics": {
+				"dpr": 2.5,
+				"innerWidth": 1281,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1.25,
+			"depth": "ink",
+			"zoomMetrics": {
+				"dpr": 2.5,
+				"innerWidth": 1281,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 88,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 86,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1.25,
+			"depth": "black",
+			"zoomMetrics": {
+				"dpr": 2.5,
+				"innerWidth": 1281,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 85,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 89,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 86,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1.5,
+			"depth": "soft",
+			"zoomMetrics": {
+				"dpr": 3,
+				"innerWidth": 1068,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1.5,
+			"depth": "ink",
+			"zoomMetrics": {
+				"dpr": 3,
+				"innerWidth": 1068,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 84,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		},
+		{
+			"zoom": 1.5,
+			"depth": "black",
+			"zoomMetrics": {
+				"dpr": 3,
+				"innerWidth": 1068,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Grouping",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 83,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				},
+				{
+					"control": "Add gift button",
+					"events": {
+						"enter": 1,
+						"leave": 0,
+						"over": 1,
+						"out": 0
+					},
+					"lowerBoundaryReachable": true,
+					"hoverTransitions": 0,
+					"verticalTravel": 0,
+					"sampleCount": 88,
+					"allSamplesHovered": true,
+					"allSamplesReachable": true
+				}
+			]
+		}
+	],
+	"sweep": [
+		{
+			"zoom": 1,
+			"depth": "soft",
+			"zoomMetrics": {
+				"dpr": 2,
+				"innerWidth": 1602,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Gift card",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 507,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1,
+			"depth": "ink",
+			"zoomMetrics": {
+				"dpr": 2,
+				"innerWidth": 1602,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1,
+			"depth": "black",
+			"zoomMetrics": {
+				"dpr": 2,
+				"innerWidth": 1602,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1.25,
+			"depth": "soft",
+			"zoomMetrics": {
+				"dpr": 2.5,
+				"innerWidth": 1281,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1.25,
+			"depth": "ink",
+			"zoomMetrics": {
+				"dpr": 2.5,
+				"innerWidth": 1281,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1.25,
+			"depth": "black",
+			"zoomMetrics": {
+				"dpr": 2.5,
+				"innerWidth": 1281,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1.5,
+			"depth": "soft",
+			"zoomMetrics": {
+				"dpr": 3,
+				"innerWidth": 1068,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1.5,
+			"depth": "ink",
+			"zoomMetrics": {
+				"dpr": 3,
+				"innerWidth": 1068,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		},
+		{
+			"zoom": 1.5,
+			"depth": "black",
+			"zoomMetrics": {
+				"dpr": 3,
+				"innerWidth": 1068,
+				"outerWidth": 1615
+			},
+			"controls": [
+				{
+					"control": "Sort",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Grouping",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				},
+				{
+					"control": "Add gift button",
+					"lowerBoundaryReachable": true,
+					"sampleCount": 36,
+					"interveningUnhoveredCount": 0
+				}
+			]
+		}
+	]
+}

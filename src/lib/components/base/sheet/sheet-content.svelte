@@ -8,7 +8,10 @@
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { ComponentProps } from 'svelte';
 	import type { Side } from './index.js';
-	import { overlayCloseButtonClass } from '$lib/components/base/dialog/dialog_close_button.js';
+	import {
+		overlayCloseButtonClass,
+		overlayCloseButtonSurfaceClass,
+	} from '$lib/components/base/dialog/dialog_close_button.js';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let {
@@ -47,6 +50,7 @@
 						intent="ghost"
 						size="icon-sm"
 						class={overlayCloseButtonClass}
+						surfaceClass={overlayCloseButtonSurfaceClass}
 						{...props}
 					>
 						<XIcon data-icon="inline-start" />

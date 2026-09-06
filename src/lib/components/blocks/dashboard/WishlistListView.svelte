@@ -11,6 +11,7 @@
 	import WishlistSlotImage from '$lib/components/blocks/wishlist/WishlistSlotImage.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 	import GiftIcon from '@lucide/svelte/icons/gift';
+	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 
 	interface WishlistListItem {
 		wishlist: Wishlist;
@@ -41,6 +42,7 @@
 			class={rowVariants.row()}
 			aria-label={item.wishlist.title}
 		>
+			<ElevationSurface plate class={rowVariants.plate()} />
 			<div class={rowVariants.bannerMini()}>
 				<div class="absolute inset-0">
 					<WishlistSlotImage

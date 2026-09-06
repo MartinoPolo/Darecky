@@ -14,6 +14,7 @@
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import { getInitials } from '$lib/utils/initials.js';
 	import type { Snippet } from 'svelte';
+	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
 
 	interface WishlistCardProps {
 		wishlist: Wishlist;
@@ -72,6 +73,7 @@
 	aria-label={wishlistData.title}
 	data-testid="wishlist-card"
 >
+	<ElevationSurface plate class={variants.plate()} />
 	<!-- Banner: taped-notebook tint with dot pattern (photo replaces both when assigned) -->
 	<div class={variants.banner()} aria-hidden="true">
 		<div class="absolute inset-0">

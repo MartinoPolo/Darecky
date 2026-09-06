@@ -113,7 +113,7 @@ export async function loginViaApi(
 	return sessionCookies(response, 'login');
 }
 
-function parseCookiesForContext(rawCookies: string[], baseURL: string) {
+export function parseCookiesForContext(rawCookies: string[], baseURL: string) {
 	const url = new URL(baseURL);
 	return rawCookies.map((raw) => {
 		const [nameValue] = raw.split(';');

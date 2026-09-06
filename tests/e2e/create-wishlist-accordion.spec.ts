@@ -42,6 +42,10 @@ test.describe('Create-wishlist „Další nastavení" accordion', () => {
 		// Expand „Další nastavení", then set both optional fields.
 		await dialog.getByRole('button', { name: 'Další nastavení' }).click();
 		await expect(descriptionInput).toBeVisible({ timeout: 5_000 });
+		// Visible descendants can still be clipped while the accordion changes height.
+		await dialog.locator('[data-slot="accordion-content"]').evaluate(async (element) => {
+			await Promise.all(element.getAnimations().map((animation) => animation.finished));
+		});
 		await descriptionInput.fill(description);
 		// „Malina" is the ruby palette swatch (aria-pressed button carrying the label).
 		await dialog.getByRole('button', { name: 'Malina' }).click();

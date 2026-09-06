@@ -109,7 +109,9 @@ jobs:
             # suite itself is split evenly across all four isolated PostgreSQL services.
             - if: ${{ matrix.shard == 1 }}
               run: pnpm exec vitest run --project server
-            - run: pnpm run test:e2e --shard=${{ matrix.shard }}/4
+            # The real-browser-zoom regression loads an unpacked Chromium extension,
+            # which requires headed mode; provide a virtual display on Linux CI.
+            - run: xvfb-run --auto-servernum pnpm run test:e2e --shard=${{ matrix.shard }}/4
             - uses: actions/upload-artifact@v4
               if: failure()
               with:

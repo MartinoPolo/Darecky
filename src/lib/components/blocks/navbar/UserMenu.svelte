@@ -3,7 +3,10 @@
 	import { goto } from '$app/navigation';
 	import * as DropdownMenu from '$lib/components/base/dropdown-menu/index.js';
 	import { Button } from '$lib/components/base/button/index.js';
-	import { ANCHORED_CIRCULAR_STICKER_BUTTON_CLASSES } from '$lib/components/base/button/button_variants.js';
+	import {
+		ANCHORED_CIRCULAR_STICKER_OWNER_CLASSES,
+		CIRCULAR_STICKER_SURFACE_CLASSES,
+	} from '$lib/components/base/button/button_variants.js';
 	import { Avatar } from '$lib/components/derived/avatar/index.js';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
@@ -36,7 +39,8 @@
 				{...props}
 				intent="ghost"
 				size="icon"
-				class={`rounded-full border-[2.5px] border-ink bg-card hover:bg-card ${ANCHORED_CIRCULAR_STICKER_BUTTON_CLASSES}`}
+				class={`rounded-full ${ANCHORED_CIRCULAR_STICKER_OWNER_CLASSES}`}
+				surfaceClass={`border-[2.5px] border-ink bg-card group-hover:bg-card ${CIRCULAR_STICKER_SURFACE_CLASSES}`}
 				aria-label={m.nav_user_menu({ name: userName })}
 			>
 				<Avatar

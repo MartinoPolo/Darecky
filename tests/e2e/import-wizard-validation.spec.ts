@@ -68,7 +68,7 @@ test.describe('Import wizard required-title validation', () => {
 		await expect(
 			dialog
 				.getByText('Vytvořit seznam', { exact: false })
-				.and(dialog.locator(':not(button)')),
+				.and(dialog.locator(':not(button):not(button *)')),
 		).toHaveCount(0);
 
 		// No literal markdown asterisks anywhere in the dialog (empty-title render bug).
@@ -88,7 +88,7 @@ test.describe('Import wizard required-title validation', () => {
 		await expect(
 			dialog
 				.getByText('Vytvořit seznam', { exact: false })
-				.and(dialog.locator(':not(button)')),
+				.and(dialog.locator(':not(button):not(button *)')),
 		).toBeVisible({
 			timeout: 5_000,
 		});

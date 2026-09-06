@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerViaApi, createAuthenticatedContext } from './fixtures/auth-helpers.js';
 
+// Cold compilation needs a larger budget than navigation in the warmed application.
+test.use({ navigationTimeout: 90_000 });
+test.setTimeout(180_000);
+
 // Warms Vite's on-demand dev compilation for the primary routes so the real suites
 // don't each eat the first-hit transform cost.
 //

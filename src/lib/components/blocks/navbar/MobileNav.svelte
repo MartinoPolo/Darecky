@@ -48,7 +48,8 @@
 		<nav class="flex flex-col gap-1 p-3">
 			<Button
 				intent="primary"
-				class="mb-2 w-full justify-center"
+				class="mb-2 w-full"
+				surfaceClass="justify-center"
 				onclick={() => {
 					open = false;
 					oncreate?.();
@@ -62,8 +63,9 @@
 				<Button
 					intent={isNavActive(link.href) ? 'secondary' : 'ghost'}
 					href={link.href}
-					class={cn(
-						'w-full justify-start',
+					class="w-full"
+					surfaceClass={cn(
+						'justify-start',
 						isNavActive(link.href) && 'font-semibold text-primary',
 					)}
 					onclick={() => (open = false)}

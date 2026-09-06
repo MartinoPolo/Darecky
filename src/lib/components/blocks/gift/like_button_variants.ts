@@ -10,7 +10,9 @@ import { tv } from 'tailwind-variants';
  */
 export const likeButtonVariants = tv({
 	slots: {
-		root: 'group/like inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-2 border-transparent font-bold text-foreground transition-[background-color,transform] hover:bg-like-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:hover:scale-108',
+		root: 'group/like inline-flex cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+		surface:
+			'elevation-surface inline-flex size-full items-center gap-1.5 rounded-[inherit] border-2 border-transparent font-bold text-foreground transition-[background-color,translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) group-hover/like:bg-like-tint',
 		icon: 'text-heart transition-all duration-200',
 		count: 'tabular-nums',
 	},
@@ -25,17 +27,18 @@ export const likeButtonVariants = tv({
 		},
 		size: {
 			sm: {
-				root: 'px-1.5 py-0.5 text-[13px]',
+				surface: 'px-1.5 py-0.5 text-[13px]',
 				icon: 'size-3.5',
 				count: 'text-[12px]',
 			},
 			md: {
-				root: 'px-2 py-1 text-sm',
+				surface: 'px-2 py-1 text-sm',
 				icon: 'size-4',
 				count: 'text-[13px]',
 			},
 			lg: {
-				root: 'min-h-[52px] min-w-[52px] gap-2 px-4 text-base',
+				root: 'min-h-[52px] min-w-[52px]',
+				surface: 'gap-2 px-4 text-base',
 				icon: 'size-5',
 				count: 'text-sm',
 			},
@@ -43,7 +46,8 @@ export const likeButtonVariants = tv({
 		appearance: {
 			ghost: {},
 			sticker: {
-				root: 'elevation-interactive rounded-[7px] border-ink bg-card transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) delay-0 hover:bg-like-tint motion-reduce:transition-none',
+				root: 'elevation-owner elevation-owner-raised elevation-owner-like relative rounded-[7px]',
+				surface: 'border-ink bg-card',
 			},
 		},
 	},

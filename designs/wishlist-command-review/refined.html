@@ -1,0 +1,2678 @@
+<!doctype html>
+<html lang="cs" data-palette="sky">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+		<title>Kontrola příkazů wishlistu · Refined</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<link rel="stylesheet" href="../open-issue-review/assets/app.css" />
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+			}
+			body {
+				overflow: hidden;
+				background: var(--background);
+				color: var(--foreground);
+				font-family: var(--font-body);
+			}
+			button,
+			input {
+				font: inherit;
+				color: inherit;
+			}
+			button {
+				cursor: pointer;
+			}
+			svg {
+				width: 18px;
+				height: 18px;
+				fill: none;
+				stroke: currentColor;
+				stroke-width: 2;
+				stroke-linecap: round;
+				stroke-linejoin: round;
+				pointer-events: none;
+			}
+			.sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
+			.prototype {
+				height: 100%;
+				display: grid;
+				grid-template-columns: 224px minmax(0, 1fr);
+				background: var(--background);
+			}
+			.review {
+				z-index: 80;
+				display: flex;
+				min-height: 0;
+				flex-direction: column;
+				gap: 20px;
+				padding: 20px 16px;
+				border-right: 2.5px solid var(--ink);
+				background: var(--ink);
+				color: var(--primary-foreground);
+				overflow: auto;
+			}
+			.review h1 {
+				margin: 0;
+				font: 650 17px/1.15 var(--font-head);
+				letter-spacing: -0.025em;
+			}
+			.review p {
+				margin: 6px 0 0;
+				color: color-mix(in oklab, var(--primary-foreground) 72%, transparent);
+				font-size: 11px;
+				line-height: 1.45;
+			}
+			.review-toggle {
+				display: none;
+			}
+			.review fieldset {
+				display: grid;
+				gap: 5px;
+				margin: 0;
+				border: 0;
+				padding: 0;
+			}
+			.review legend {
+				padding: 0 0 7px;
+				font-size: 10px;
+				font-weight: 850;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.review-row {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 5px;
+			}
+			.review-btn {
+				min-height: 32px;
+				padding: 4px 7px;
+				border: 1.5px solid color-mix(in oklab, var(--primary-foreground) 40%, transparent);
+				border-radius: 7px;
+				background: transparent;
+				color: inherit;
+				font-size: 11px;
+				font-weight: 750;
+			}
+			.review-btn:hover {
+				background: color-mix(in oklab, var(--primary-foreground) 12%, transparent);
+			}
+			.review-btn:active {
+				transform: translateY(1px);
+			}
+			.review-btn[aria-pressed='true'] {
+				border-color: var(--p-accent);
+				background: var(--p-accent);
+				color: var(--p-on-accent);
+			}
+			.review-btn:disabled {
+				opacity: 0.42;
+				cursor: not-allowed;
+			}
+			.review-btn:focus-visible,
+			.control:focus-visible,
+			.menu-row:focus-visible,
+			.sheet-row:focus-visible,
+			.pill button:focus-visible,
+			.gift-select:focus-visible {
+				outline: 3px solid var(--ring);
+				outline-offset: 2px;
+			}
+			.review-note {
+				margin-top: auto !important;
+				padding-top: 12px;
+				border-top: 1px solid
+					color-mix(in oklab, var(--primary-foreground) 25%, transparent);
+			}
+			.app {
+				position: relative;
+				min-width: 0;
+				height: 100%;
+				overflow: hidden;
+				background: var(--app-page-background);
+			}
+			.app-header {
+				height: 56px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 0 24px;
+				border-bottom: 2.5px solid var(--ink);
+				background: var(--card);
+				box-shadow: 0 2px 0 var(--hard-shadow);
+				position: relative;
+				z-index: 30;
+			}
+			.brand {
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				font: 700 17px var(--font-head);
+				letter-spacing: -0.025em;
+			}
+			.brand-mark {
+				width: 34px;
+				height: 34px;
+				display: grid;
+				place-items: center;
+				border: 2.5px solid var(--ink);
+				border-radius: 11px;
+				background: var(--p-accent);
+				box-shadow: 2px 2px 0 var(--hard-shadow);
+				transform: rotate(-5deg);
+			}
+			.navlinks {
+				display: flex;
+				gap: 4px;
+			}
+			.navlinks span {
+				padding: 6px 9px;
+				border-radius: 999px;
+				font-size: 12px;
+				font-weight: 650;
+			}
+			.navlinks .active {
+				background: var(--accent);
+			}
+			.nav-actions {
+				margin-left: auto;
+				display: flex;
+				align-items: center;
+				gap: 7px;
+			}
+			.avatar {
+				width: 32px;
+				height: 32px;
+				display: grid;
+				place-items: center;
+				border: 2px solid var(--ink);
+				border-radius: 50%;
+				background: var(--accent);
+				font-weight: 800;
+				font-size: 11px;
+			}
+			.control {
+				min-height: 32px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 7px;
+				padding: 0 11px;
+				border: 2px solid var(--ink);
+				border-radius: var(--radius-btn);
+				background: var(--card);
+				box-shadow: 2px 2px 0 var(--hard-shadow);
+				font-size: 12px;
+				font-weight: 750;
+				white-space: nowrap;
+				transition:
+					transform 140ms var(--ease-standard),
+					box-shadow 140ms var(--ease-standard),
+					background 140ms;
+			}
+			.control:hover:not(:disabled) {
+				background: var(--accent);
+				transform: translateY(-1px);
+			}
+			.control:active:not(:disabled),
+			.control[aria-expanded='true'] {
+				transform: translate(1px, 1px);
+				box-shadow: none;
+			}
+			.control:disabled {
+				opacity: 0.45;
+				cursor: not-allowed;
+				box-shadow: none;
+				transform: none;
+			}
+			.control.primary {
+				background: var(--primary);
+				color: var(--primary-foreground);
+			}
+			.control.primary:hover:not(:disabled) {
+				background: color-mix(in oklab, var(--primary) 84%, var(--p-deep));
+			}
+			.control.ghost {
+				border-color: transparent;
+				background: transparent;
+				box-shadow: none;
+			}
+			.control.ghost:hover:not(:disabled) {
+				border-color: var(--border);
+				background: var(--accent);
+			}
+			.control.icon {
+				width: 32px;
+				padding: 0;
+			}
+			.control.danger {
+				color: var(--destructive);
+			}
+			.scroll {
+				height: calc(100% - 56px);
+				overflow: auto;
+				overscroll-behavior: contain;
+				background-image: radial-gradient(
+					color-mix(in oklab, var(--ink) 9%, transparent) 1px,
+					transparent 1px
+				);
+				background-size: 20px 20px;
+			}
+			.page {
+				width: min(1180px, 100%);
+				margin: auto;
+				padding: 20px 24px 72px;
+			}
+			.hero {
+				position: relative;
+				min-height: 176px;
+				overflow: hidden;
+				padding: 25px 270px 22px 76px;
+				border: 2.5px solid var(--ink);
+				border-radius: 18px;
+				background:
+					linear-gradient(
+						90deg,
+						transparent 48px,
+						color-mix(in oklab, var(--destructive) 40%, transparent) 49px,
+						transparent 50px
+					),
+					repeating-linear-gradient(
+						var(--card) 0,
+						var(--card) 27px,
+						color-mix(in oklab, var(--p-brand) 18%, var(--card)) 28px
+					);
+				box-shadow: 7px 7px 0 var(--hard-shadow);
+			}
+			.spiral {
+				position: absolute;
+				left: 18px;
+				top: 10px;
+				bottom: 10px;
+				width: 27px;
+				background: repeating-linear-gradient(
+					to bottom,
+					transparent 0 12px,
+					var(--ink) 13px 16px,
+					transparent 17px 28px
+				);
+				border-left: 3px solid var(--p-bright);
+			}
+			.hero-kicker {
+				color: var(--primary);
+				font: 650 15px var(--font-head);
+			}
+			.hero h2 {
+				margin: 7px 0 8px;
+				font: 700 31px/1.12 var(--font-head);
+				letter-spacing: -0.025em;
+			}
+			.hero-meta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			.chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				min-height: 25px;
+				padding: 3px 9px;
+				border: 1.5px solid var(--ink);
+				border-radius: 999px;
+				background: var(--card);
+				font-size: 11px;
+				font-weight: 700;
+			}
+			.hero-actions {
+				position: absolute;
+				right: 18px;
+				top: 17px;
+				display: flex;
+				gap: 8px;
+			}
+			.hero-art {
+				position: absolute;
+				right: 36px;
+				bottom: 17px;
+				width: 145px;
+				height: 92px;
+				border: 2px solid var(--ink);
+				background: linear-gradient(145deg, var(--p-bright), var(--p-brand));
+				box-shadow: 4px 4px 0 var(--hard-shadow);
+				transform: rotate(2deg);
+			}
+			.hero-art:after {
+				content: '✦  24. 12.  ✦';
+				position: absolute;
+				inset: auto 8px 8px;
+				padding: 7px;
+				border: 1.5px solid var(--ink);
+				background: var(--card);
+				font: 650 12px var(--font-head);
+				text-align: center;
+			}
+			.toolbar-wrap {
+				position: sticky;
+				top: 12px;
+				z-index: 25;
+				margin-top: 18px;
+			}
+			.toolbar-mask {
+				position: absolute;
+				z-index: 0;
+				inset: -12px -18px 0;
+				background: var(--app-page-background);
+				backdrop-filter: blur(10px);
+				pointer-events: none;
+			}
+			.toolbar-mask:after {
+				content: '';
+				position: absolute;
+				top: 100%;
+				inset-inline: 0;
+				height: 24px;
+				background: var(--app-page-background);
+				mask-image: linear-gradient(to bottom, #111, transparent);
+			}
+			.toolbar {
+				position: relative;
+				z-index: 1;
+				min-height: 52px;
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				padding: 8px 10px;
+				border: 2.5px solid var(--ink);
+				border-radius: var(--radius-panel);
+				background: var(--card);
+				box-shadow: 4px 4px 0 var(--hard-shadow);
+			}
+			.view {
+				display: flex;
+				height: 32px;
+				padding: 2px;
+				border: 2px solid var(--ink);
+				border-radius: 9px;
+				background: var(--accent);
+			}
+			.view button {
+				width: 31px;
+				border: 0;
+				border-radius: 5px;
+				background: transparent;
+			}
+			.view button:hover {
+				background: color-mix(in oklab, var(--card) 65%, transparent);
+			}
+			.view button:active {
+				transform: scale(0.94);
+			}
+			.view button[aria-pressed='true'] {
+				background: var(--card);
+				box-shadow: 1px 1px 0 var(--hard-shadow);
+			}
+			.view button:disabled {
+				opacity: 0.4;
+			}
+			.display-trigger .count {
+				min-width: 17px;
+				height: 17px;
+				display: grid;
+				place-items: center;
+				padding: 0 4px;
+				border-radius: 999px;
+				background: var(--p-accent);
+				color: var(--p-on-accent);
+				font-size: 10px;
+			}
+			.toolbar-spacer {
+				flex: 1;
+			}
+			.active-filters {
+				display: flex;
+				align-items: center;
+				gap: 5px;
+				min-width: 0;
+			}
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				max-width: 170px;
+				height: 27px;
+				padding-left: 9px;
+				border: 2px solid var(--ink);
+				border-radius: 999px;
+				background: var(--primary);
+				color: var(--primary-foreground);
+				font-size: 11px;
+				font-weight: 700;
+			}
+			.pill span {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.pill button {
+				width: 23px;
+				height: 23px;
+				border: 0;
+				border-radius: 50%;
+				background: transparent;
+				color: inherit;
+			}
+			.pill button:hover {
+				background: color-mix(in oklab, currentColor 18%, transparent);
+			}
+			.popup {
+				position: absolute;
+				z-index: 45;
+				width: 336px;
+				max-height: min(620px, calc(100vh - 110px));
+				overflow: auto;
+				padding: 7px;
+				border: 2.5px solid var(--ink);
+				border-radius: 12px;
+				background: var(--popover);
+				box-shadow: 6px 6px 0 var(--hard-shadow);
+			}
+			.popup[hidden] {
+				display: none;
+			}
+			.display-menu {
+				top: 47px;
+				left: 76px;
+			}
+			.more-menu {
+				top: 47px;
+				right: 117px;
+				width: 260px;
+			}
+			.hero-menu {
+				top: 50px;
+				right: 18px;
+				width: 268px;
+			}
+			.actions-menu {
+				top: 47px;
+				right: 76px;
+				width: 330px;
+			}
+			.submenu {
+				position: absolute;
+				top: 0;
+				left: calc(100% + 7px);
+				width: 224px;
+				max-height: 480px;
+			}
+			.menu-head {
+				padding: 8px 9px 7px;
+			}
+			.menu-head strong {
+				display: block;
+				font: 650 15px var(--font-head);
+				letter-spacing: -0.02em;
+			}
+			.menu-head span {
+				font-size: 11px;
+				color: var(--muted-foreground);
+			}
+			.menu-group-title {
+				padding: 9px 9px 4px;
+				color: var(--muted-foreground);
+				font-size: 10px;
+				font-weight: 850;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.menu-sep {
+				height: 1px;
+				margin: 5px;
+				background: var(--border);
+			}
+			.menu-row {
+				width: 100%;
+				min-height: 34px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 9px;
+				border: 0;
+				border-radius: 7px;
+				background: transparent;
+				text-align: left;
+				font-size: 12px;
+				font-weight: 650;
+			}
+			.menu-row:hover,
+			.menu-row[aria-current='true'] {
+				background: var(--accent);
+			}
+			.menu-row:active {
+				background: color-mix(in oklab, var(--accent) 70%, var(--primary));
+			}
+			.menu-row:disabled {
+				opacity: 0.42;
+				cursor: not-allowed;
+			}
+			.menu-row .summary {
+				margin-left: auto;
+				max-width: 140px;
+				overflow: hidden;
+				color: var(--muted-foreground);
+				font-size: 10.5px;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.menu-row .tick {
+				margin-left: auto;
+				color: var(--primary);
+				font-weight: 900;
+			}
+			.menu-row.check-row {
+				min-height: 40px;
+			}
+			.fake-check {
+				width: 18px;
+				height: 18px;
+				display: grid;
+				place-items: center;
+				flex: none;
+				border: 2px solid var(--ink);
+				border-radius: 5px;
+				background: var(--card);
+				font-size: 12px;
+			}
+			.menu-row[aria-checked='true'] .fake-check {
+				background: var(--primary);
+				color: var(--primary-foreground);
+			}
+			.reset-row {
+				color: var(--destructive);
+			}
+			.selection-bar {
+				display: none;
+				width: 100%;
+				align-items: center;
+				gap: 9px;
+			}
+			.selection-bar.show {
+				display: flex;
+			}
+			.selection-label {
+				font: 650 13px var(--font-head);
+			}
+			.select-all {
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				font-size: 12px;
+				font-weight: 700;
+			}
+			.select-all input,
+			.sheet-row input {
+				width: 19px;
+				height: 19px;
+				accent-color: var(--primary);
+			}
+			.pending-text {
+				display: none;
+				align-items: center;
+				gap: 6px;
+				color: var(--muted-foreground);
+				font-size: 11px;
+			}
+			.is-pending .pending-text {
+				display: flex;
+			}
+			.spinner {
+				width: 15px;
+				height: 15px;
+				border: 2px solid var(--border);
+				border-top-color: var(--primary);
+				border-radius: 50%;
+				animation: spin 0.75s linear infinite;
+			}
+			.gifts {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: 20px;
+				margin-top: 22px;
+			}
+			.gift {
+				position: relative;
+				overflow: hidden;
+				border: 2.5px solid var(--ink);
+				border-radius: 16px;
+				background: var(--card);
+				box-shadow: 4px 4px 0 var(--hard-shadow);
+			}
+			.gift.selected {
+				box-shadow:
+					inset 0 0 0 3px var(--primary),
+					4px 4px 0 var(--hard-shadow);
+				background: color-mix(in oklab, var(--primary) 10%, var(--card));
+			}
+			.gift-image {
+				height: 150px;
+				border-bottom: 2.5px solid var(--ink);
+				background: linear-gradient(
+					145deg,
+					var(--accent),
+					color-mix(in oklab, var(--primary) 28%, var(--card))
+				);
+				position: relative;
+				display: grid;
+				place-items: center;
+			}
+			.gift:nth-child(2) .gift-image {
+				background: linear-gradient(
+					145deg,
+					color-mix(in oklab, var(--p-accent) 52%, var(--card)),
+					var(--card)
+				);
+			}
+			.gift:nth-child(3) .gift-image {
+				background: linear-gradient(145deg, var(--p-deep), var(--p-bright));
+			}
+			.product-shape {
+				width: 76px;
+				height: 92px;
+				border: 2.5px solid var(--ink);
+				border-radius: 12px;
+				background: var(--card);
+				box-shadow: 5px 6px 0 color-mix(in oklab, var(--ink) 22%, transparent);
+				transform: rotate(-5deg);
+			}
+			.gift:nth-child(2) .product-shape {
+				width: 105px;
+				height: 75px;
+				border-radius: 4px;
+				transform: rotate(5deg);
+			}
+			.gift:nth-child(3) .product-shape {
+				width: 100px;
+				height: 54px;
+				border-radius: 28px;
+				background: var(--p-accent);
+				transform: none;
+			}
+			.gift-body {
+				padding: 13px 14px 15px;
+			}
+			.gift h3 {
+				margin: 0 0 8px;
+				font: 650 15px/1.2 var(--font-head);
+				letter-spacing: -0.02em;
+			}
+			.gift .price {
+				font-weight: 850;
+			}
+			.gift .meta {
+				margin-top: 6px;
+				color: var(--muted-foreground);
+				font-size: 11px;
+			}
+			.gift-select {
+				display: none;
+				position: absolute;
+				z-index: 4;
+				left: 9px;
+				top: 9px;
+				width: 26px;
+				height: 26px;
+				border: 2px solid var(--ink);
+				border-radius: 7px;
+				background: var(--card);
+			}
+			.selection-mode .gift-select {
+				display: grid;
+				place-items: center;
+			}
+			.gift.selected .gift-select {
+				background: var(--primary);
+				color: var(--primary-foreground);
+			}
+			.reorder-handle {
+				display: none;
+				position: absolute;
+				z-index: 4;
+				left: 50%;
+				top: 9px;
+				transform: translateX(-50%);
+				padding: 4px 9px;
+				border: 2px solid var(--ink);
+				border-radius: 999px;
+				background: var(--card);
+				font-size: 10px;
+				font-weight: 850;
+			}
+			.reorder-mode .reorder-handle {
+				display: block;
+			}
+			.reorder-mode .gift {
+				cursor: grab;
+			}
+			.reorder-note {
+				display: none;
+				margin-top: 14px;
+				padding: 9px 12px;
+				border: 1.5px dashed var(--ink);
+				border-radius: 9px;
+				background: var(--card);
+				font-size: 11px;
+			}
+			.reorder-mode .reorder-note {
+				display: block;
+			}
+			.empty-message {
+				display: none;
+				margin-top: 24px;
+				padding: 30px;
+				border: 2px dashed var(--border);
+				border-radius: 16px;
+				background: var(--card);
+				text-align: center;
+			}
+			.empty-message strong {
+				font: 650 18px var(--font-head);
+			}
+			.overlay {
+				position: absolute;
+				z-index: 50;
+				inset: 0;
+				background: color-mix(in oklab, var(--ink) 34%, transparent);
+			}
+			.overlay[hidden],
+			.sheet[hidden] {
+				display: none;
+			}
+			.sheet {
+				position: absolute;
+				z-index: 55;
+				left: 12px;
+				right: 12px;
+				bottom: max(12px, env(safe-area-inset-bottom));
+				max-height: calc(100dvh - 84px);
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+				border: 2.5px solid var(--ink);
+				border-radius: 18px;
+				background: var(--popover);
+				box-shadow: 0 -5px 0 color-mix(in oklab, var(--ink) 20%, transparent);
+			}
+			.sheet-header {
+				min-height: 56px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex: none;
+				padding: 8px 10px 8px 14px;
+				border-bottom: 1px solid var(--border);
+			}
+			.sheet-title-line {
+				display: flex;
+				align-items: baseline;
+				gap: 7px;
+				min-width: 0;
+				padding-right: 4px;
+			}
+			.sheet-title {
+				font: 650 16px var(--font-head);
+				letter-spacing: -0.02em;
+				white-space: nowrap;
+			}
+			.sheet-count {
+				font-size: 12px;
+				font-weight: 800;
+				color: var(--muted-foreground);
+				white-space: nowrap;
+			}
+			.sheet-desc:empty {
+				display: none;
+			}
+			.sheet-desc {
+				color: var(--muted-foreground);
+				font-size: 11px;
+			}
+			.sheet-close {
+				margin-left: auto;
+				flex: none;
+			}
+			.sheet-body {
+				min-height: 0;
+				overflow: auto;
+				padding: 6px;
+			}
+			.sheet-row {
+				width: 100%;
+				min-height: 44px;
+				display: flex;
+				align-items: center;
+				gap: 11px;
+				padding: 7px 10px;
+				border: 0;
+				border-radius: 8px;
+				background: transparent;
+				text-align: left;
+				font-size: 13px;
+				font-weight: 650;
+			}
+			.sheet-row:hover,
+			.sheet-row:focus-visible {
+				background: var(--accent);
+			}
+			.sheet-row:active {
+				background: color-mix(in oklab, var(--accent) 70%, var(--primary));
+			}
+			.sheet-row:disabled {
+				opacity: 0.42;
+			}
+			.sheet-row .row-copy {
+				display: grid;
+				gap: 1px;
+				min-width: 0;
+			}
+			.sheet-row .row-copy small {
+				overflow: hidden;
+				color: var(--muted-foreground);
+				font-size: 10.5px;
+				font-weight: 550;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.sheet-row .chev {
+				margin-left: auto;
+			}
+			.sheet-tabs {
+				order: -1;
+				position: sticky;
+				top: 0;
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 4px;
+				padding: 6px;
+				border-bottom: 1px solid var(--border);
+				background: var(--popover);
+				z-index: 2;
+			}
+			.sheet-tabs button {
+				min-height: 40px;
+				padding: 4px;
+				border: 0;
+				border-radius: 8px;
+				background: transparent;
+				font-size: 11px;
+				font-weight: 800;
+			}
+			.sheet-tabs button:hover {
+				background: var(--accent);
+			}
+			.sheet-tabs button[aria-pressed='true'] {
+				outline: 2px solid var(--ink);
+				outline-offset: -2px;
+				background: var(--accent);
+			}
+			.sheet-section-title {
+				padding: 9px 10px 3px;
+				color: var(--muted-foreground);
+				font-size: 10px;
+				font-weight: 850;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.sheet-level-nav {
+				min-height: 48px;
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				padding: 4px 6px;
+				border-bottom: 1px solid var(--border);
+			}
+			.sheet-level-nav strong {
+				font: 650 13px var(--font-head);
+			}
+			.sheet-level-nav .back {
+				min-width: 82px;
+				justify-content: flex-start;
+			}
+			.sheet-status {
+				padding: 8px 10px;
+				border-bottom: 1px solid var(--border);
+				background: color-mix(in oklab, var(--status-warning) 18%, var(--card));
+				font-size: 11px;
+				font-weight: 700;
+			}
+			.copy-panel {
+				padding: 8px;
+			}
+			.copy-panel p {
+				margin: 0 0 10px;
+				color: var(--muted-foreground);
+				font-size: 12px;
+				line-height: 1.45;
+			}
+			.copy-actions {
+				display: flex;
+				justify-content: flex-end;
+				gap: 8px;
+				padding: 10px 0 0;
+			}
+			.toast {
+				position: absolute;
+				z-index: 70;
+				right: 20px;
+				bottom: 20px;
+				max-width: 380px;
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				padding: 11px 12px;
+				border: 2.5px solid var(--ink);
+				border-radius: 11px;
+				background: var(--card);
+				box-shadow: 4px 4px 0 var(--hard-shadow);
+				font-size: 12px;
+			}
+			.toast[hidden] {
+				display: none;
+			}
+			.toast.error {
+				border-color: var(--destructive);
+			}
+			.toast strong {
+				display: block;
+				margin-bottom: 2px;
+			}
+			.toast button {
+				margin-left: auto;
+			}
+			.status-live {
+				position: absolute;
+			}
+			/* Refined review emphasis and adjustable reorder target. */
+			:root {
+				--drag-target-size: 32px;
+				--drag-visual-size: 24px;
+				--drag-target-inset: 4px;
+				--drag-visible-inset: calc(
+					2.5px + var(--drag-target-inset) +
+						(var(--drag-target-size) - var(--drag-visual-size)) / 2
+				);
+			}
+			.app-header,
+			.hero-kicker,
+			.hero h2,
+			.hero-meta,
+			.hero-art,
+			.spiral,
+			.gift-image,
+			.gift-body {
+				opacity: 0.46;
+			}
+			.hero-actions,
+			.toolbar,
+			.gift-select,
+			.reorder-handle {
+				opacity: 1;
+			}
+			.select-all input {
+				appearance: none;
+				width: 26px;
+				height: 26px;
+				display: grid;
+				place-items: center;
+				border: 2px solid var(--ink);
+				border-radius: 7px;
+				background: var(--card);
+			}
+			.select-all input:checked,
+			.select-all input:indeterminate {
+				background: var(--primary);
+			}
+			.select-all input:checked:after {
+				content: '✓';
+				color: var(--primary-foreground);
+				font-weight: 900;
+			}
+			.select-all input:indeterminate:after {
+				content: '−';
+				color: var(--primary-foreground);
+				font-weight: 900;
+			}
+			.reorder-handle {
+				left: var(--drag-target-inset);
+				top: var(--drag-target-inset);
+				width: var(--drag-target-size);
+				height: var(--drag-target-size);
+				padding: 0;
+				place-items: center;
+				transform: none;
+				border: 0;
+				border-radius: calc(16px - 2.5px - var(--drag-target-inset));
+				background: transparent;
+				cursor: grab;
+			}
+			.reorder-handle:before {
+				content: '';
+				position: absolute;
+				width: var(--drag-visual-size);
+				height: var(--drag-visual-size);
+				border: 2px solid var(--ink);
+				border-radius: max(0px, calc(16px - var(--drag-visible-inset)));
+				background: var(--card);
+			}
+			.reorder-handle:focus-visible {
+				outline: 3px solid var(--ring);
+				outline-offset: -3px;
+			}
+			.reorder-handle:hover:before {
+				background: var(--accent);
+			}
+			.reorder-mode .display-trigger,
+			.reorder-mode [data-open='toolbar-more'],
+			.reorder-mode [data-action='add'],
+			.reorder-mode .active-filters {
+				display: none !important;
+			}
+			.reorder-mode .reorder-handle {
+				display: grid;
+			}
+			.reorder-handle svg {
+				position: relative;
+				width: 16px;
+				height: 16px;
+			}
+			@media (max-width: 639px) {
+				:root {
+					--drag-target-size: 60px;
+					--drag-visual-size: 40px;
+					--drag-target-inset: 0px;
+				}
+				.reorder-handle svg {
+					width: 20px;
+					height: 20px;
+				}
+			}
+			.gifts.list-view {
+				grid-template-columns: 1fr;
+			}
+			.gifts.list-view .gift {
+				display: grid;
+				grid-template-columns: 170px 1fr;
+				min-height: 126px;
+			}
+			.gifts.list-view .gift-image {
+				height: 100%;
+				border-right: 2.5px solid var(--ink);
+				border-bottom: 0;
+			}
+			.submenu-portal {
+				position: fixed;
+				z-index: 90;
+				inset: 0;
+				pointer-events: none;
+			}
+			.submenu-portal > .popup {
+				position: fixed;
+				pointer-events: auto;
+				overflow: auto;
+			}
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+			@media (max-width: 980px) {
+				.prototype {
+					grid-template-columns: 1fr;
+					grid-template-rows: auto minmax(0, 1fr);
+				}
+				.review {
+					max-height: 150px;
+					flex-direction: row;
+					flex-wrap: wrap;
+					align-items: center;
+					gap: 8px;
+					padding: 7px 10px;
+					border-right: 0;
+					border-bottom: 2.5px solid var(--ink);
+					overflow-y: auto;
+					overflow-x: hidden;
+				}
+				.review header {
+					min-width: 130px;
+				}
+				.review h1 {
+					font-size: 12px;
+				}
+				.review header p,
+				.review-note {
+					display: none;
+				}
+				.review fieldset {
+					display: flex;
+					align-items: center;
+					gap: 4px;
+					flex: 0 1 auto;
+				}
+				.review legend {
+					display: none;
+				}
+				.review-row {
+					display: flex;
+				}
+				.review-btn {
+					min-height: 38px;
+					white-space: nowrap;
+				}
+				.navlinks {
+					display: none;
+				}
+				.gifts {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
+				.active-filters {
+					display: none;
+				}
+			}
+			@media (max-width: 639px) {
+				.app-header {
+					height: 52px;
+					padding: 0 12px;
+					gap: 7px;
+				}
+				.brand {
+					font-size: 14px;
+				}
+				.brand-mark {
+					width: 30px;
+					height: 30px;
+				}
+				.nav-actions .create-label,
+				.nav-actions .lang {
+					display: none;
+				}
+				.scroll {
+					height: calc(100% - 52px);
+				}
+				.page {
+					padding: 12px 12px 64px;
+				}
+				.hero {
+					min-height: 136px;
+					padding: 18px 102px 16px 45px;
+					border-radius: 14px;
+				}
+				.spiral {
+					left: 10px;
+					width: 24px;
+				}
+				.hero-kicker {
+					font-size: 11px;
+				}
+				.hero h2 {
+					font-size: 22px;
+					margin: 5px 0 7px;
+				}
+				.hero-meta .chip:nth-child(n + 2) {
+					display: none;
+				}
+				.hero-actions {
+					right: 10px;
+					top: 10px;
+					gap: 5px;
+				}
+				.hero-actions .settings-label {
+					display: none;
+				}
+				.hero-art {
+					right: 17px;
+					bottom: 15px;
+					width: 75px;
+					height: 57px;
+				}
+				.hero-art:after {
+					inset: auto 4px 4px;
+					padding: 3px;
+					font-size: 8px;
+				}
+				.toolbar-wrap {
+					top: 8px;
+					margin-top: 12px;
+				}
+				.toolbar-mask {
+					inset: -8px -12px 0;
+				}
+				.toolbar {
+					min-height: 56px;
+					gap: 5px;
+					padding: 7px 8px;
+				}
+				.desktop-only {
+					display: none !important;
+				}
+				.view {
+					height: 40px;
+				}
+				.view button {
+					width: 29px;
+				}
+				.control {
+					min-height: 40px;
+					padding-inline: 9px;
+				}
+				.control.icon {
+					width: 40px;
+				}
+				.display-trigger {
+					padding-inline: 8px;
+				}
+				.display-trigger .display-word {
+					display: inline;
+				}
+				.toolbar-spacer {
+					flex: 1;
+				}
+				.selection-bar {
+					gap: 5px;
+				}
+				.selection-label {
+					font-size: 11px;
+				}
+				.select-all span {
+					display: none;
+				}
+				.selection-bar .actions-text {
+					display: inline;
+				}
+				.gifts {
+					grid-template-columns: 1fr;
+					gap: 14px;
+					margin-top: 16px;
+				}
+				.gift {
+					display: grid;
+					grid-template-columns: 105px 1fr;
+					min-height: 112px;
+				}
+				.gift-image {
+					height: 100%;
+					border-right: 2.5px solid var(--ink);
+					border-bottom: 0;
+				}
+				.product-shape {
+					transform: scale(0.72) rotate(-5deg);
+				}
+				.gift:nth-child(2) .product-shape {
+					transform: scale(0.72) rotate(5deg);
+				}
+				.gift h3 {
+					font-size: 13px;
+				}
+				.gift-body {
+					padding: 12px;
+				}
+				.popup {
+					display: none !important;
+				}
+				.sheet {
+					display: flex;
+				}
+				.toast {
+					left: 12px;
+					right: 12px;
+					bottom: 14px;
+					max-width: none;
+				}
+				.reorder-note {
+					line-height: 1.4;
+				}
+				.empty-message {
+					padding: 24px 12px;
+				}
+			}
+			@media (min-width: 640px) {
+				.mobile-only,
+				.sheet,
+				.overlay {
+					display: none !important;
+				}
+			}
+			@media (max-width: 360px) {
+				.review header {
+					display: none;
+				}
+				.page {
+					padding-inline: 10px;
+				}
+				.display-trigger .display-word {
+					display: none;
+				}
+				.toolbar {
+					gap: 4px;
+					padding-inline: 6px;
+				}
+				.selection-label {
+					max-width: 66px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+				.gift {
+					grid-template-columns: 94px 1fr;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				*,
+				*:before,
+				*:after {
+					animation-duration: 0.01ms !important;
+					transition-duration: 0.01ms !important;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<svg width="0" height="0" aria-hidden="true" style="position: absolute">
+			<defs>
+				<symbol id="gift" viewBox="0 0 24 24">
+					<rect x="3" y="8" width="18" height="13" rx="2" />
+					<path
+						d="M12 8v13M3 12h18M7.5 8C5.5 8 4 7 4 5.5S5.2 3 6.7 3C9 3 12 8 12 8s3-5 5.3-5C18.8 3 20 4 20 5.5S18.5 8 16.5 8"
+					/>
+				</symbol>
+				<symbol id="grid" viewBox="0 0 24 24">
+					<rect x="3" y="3" width="7" height="7" />
+					<rect x="14" y="3" width="7" height="7" />
+					<rect x="3" y="14" width="7" height="7" />
+					<rect x="14" y="14" width="7" height="7" />
+				</symbol>
+				<symbol id="list" viewBox="0 0 24 24">
+					<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+				</symbol>
+				<symbol id="compact" viewBox="0 0 24 24">
+					<path d="M4 6h16M4 12h16M4 18h16" />
+				</symbol>
+				<symbol id="sliders" viewBox="0 0 24 24">
+					<path
+						d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"
+					/>
+				</symbol>
+				<symbol id="down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+				<symbol id="more" viewBox="0 0 24 24">
+					<circle cx="5" cy="12" r="1" fill="currentColor" />
+					<circle cx="12" cy="12" r="1" fill="currentColor" />
+					<circle cx="19" cy="12" r="1" fill="currentColor" />
+				</symbol>
+				<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+				<symbol id="settings" viewBox="0 0 24 24">
+					<circle cx="12" cy="12" r="3" />
+					<path
+						d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.5 1A7 7 0 0 0 14.7 6L14.3 3h-4.1L9.8 6a7 7 0 0 0-1.7 1.1l-2.5-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.5-1A7 7 0 0 0 9.8 18l.4 3h4.1l.4-3a7 7 0 0 0 1.7-1.1l2.5 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"
+					/>
+				</symbol>
+				<symbol id="x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+				<symbol id="back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+				<symbol id="chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+				<symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+				<symbol id="drag" viewBox="0 0 24 24">
+					<circle cx="9" cy="6" r="1" fill="currentColor" />
+					<circle cx="15" cy="6" r="1" fill="currentColor" />
+					<circle cx="9" cy="12" r="1" fill="currentColor" />
+					<circle cx="15" cy="12" r="1" fill="currentColor" />
+					<circle cx="9" cy="18" r="1" fill="currentColor" />
+					<circle cx="15" cy="18" r="1" fill="currentColor" />
+				</symbol>
+			</defs>
+		</svg>
+		<div class="prototype">
+			<aside class="review" aria-label="Ovládání prototypu">
+				<header>
+					<h1>REFINED — Variant A + cascading desktop menus</h1>
+					<p>Lokální kontrolní stav. Nemění data ani preference.</p>
+				</header>
+				<fieldset>
+					<legend>Role</legend>
+					<div class="review-row">
+						<button class="review-btn" data-role="manager" aria-pressed="true">
+							Správce</button
+						><button class="review-btn" data-role="visitor" aria-pressed="false">
+							Návštěvník</button
+						><button class="review-btn" data-role="recipient" aria-pressed="false">
+							Obdarovaný
+						</button>
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend>Režim</legend>
+					<div class="review-row">
+						<button class="review-btn" data-mode="browse" aria-pressed="true">
+							Procházení</button
+						><button class="review-btn" data-mode="selection" aria-pressed="false">
+							Výběr</button
+						><button class="review-btn" data-mode="reorder" aria-pressed="false">
+							Pořadí</button
+						><button class="review-btn" data-mode="empty" aria-pressed="false">
+							Prázdné
+						</button>
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend>Stav změny</legend>
+					<div class="review-row">
+						<button class="review-btn" data-fixture="pending" aria-pressed="false">
+							Čekání</button
+						><button class="review-btn" data-fixture="error" aria-pressed="false">
+							Chyba příště</button
+						><button class="review-btn" data-count="120" aria-pressed="false">
+							Počet 120
+						</button>
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend>Vzhled</legend>
+					<div class="review-row">
+						<button class="review-btn" data-theme="light" aria-pressed="true">
+							Světlý</button
+						><button class="review-btn" data-theme="dark" aria-pressed="false">
+							Tmavý
+						</button>
+					</div>
+				</fieldset>
+				<p class="review-note">
+					Kontrolujte pouze příkazy, kaskádová menu, výběr a úchyt pořadí. Okolní vzhled
+					ani přepínač rozložení nejsou schváleny. Úchyt zůstává vlevo nahoře: menší
+					viditelný prvek, větší aktivní plocha. Přetažení a persistence jsou pouze
+					ilustrativní.
+				</p>
+			</aside>
+			<section class="app" id="app">
+				<header class="app-header">
+					<div class="brand">
+						<span class="brand-mark"
+							><svg><use href="#gift" /></svg></span
+						>Přejeme si
+					</div>
+					<nav class="navlinks" aria-label="Hlavní navigace">
+						<span>Moje seznamy</span><span class="active">Spravované</span
+						><span>Sledované</span>
+					</nav>
+					<div class="nav-actions">
+						<button class="control primary">
+							<svg><use href="#plus" /></svg
+							><span class="create-label">Vytvořit</span></button
+						><button class="control ghost icon lang" aria-label="Jazyk">CS</button
+						><span class="avatar" aria-label="Profil Marie Novotné">MN</span>
+					</div>
+				</header>
+				<main class="scroll" id="scroll">
+					<div class="page">
+						<section class="hero" aria-labelledby="wishlist-title">
+							<span class="spiral" aria-hidden="true"></span>
+							<p class="hero-kicker">Pro Terezu</p>
+							<h2 id="wishlist-title">Narozeniny 2026</h2>
+							<div class="hero-meta">
+								<span class="chip">18 dárků</span
+								><span class="chip">Sdílený seznam</span
+								><span class="chip">12. června 2026</span>
+							</div>
+							<div class="hero-actions">
+								<button
+									class="control icon manager-only"
+									data-hero-settings
+									aria-label="Nastavení seznamu"
+									title="Nastavení seznamu"
+								>
+									<svg><use href="#settings" /></svg></button
+								><button
+									class="control icon"
+									data-open="hero-more"
+									aria-label="Další možnosti seznamu"
+									title="Další možnosti seznamu"
+									aria-haspopup="menu"
+									aria-expanded="false"
+								>
+									<svg><use href="#more" /></svg>
+								</button>
+							</div>
+							<div class="hero-art" aria-hidden="true"></div>
+							<div class="popup hero-menu" data-popup="hero-more" role="menu" hidden>
+								<div class="menu-head">
+									<strong>Další možnosti</strong
+									><span>Správa a sdílení seznamu</span>
+								</div>
+								<button class="menu-row">Sdílet seznam</button
+								><button class="menu-row manager-only">Správci seznamu</button
+								><button class="menu-row manager-only">Upravit obrázek</button
+								><button class="menu-row manager-only">Upravit obdarovaného</button>
+								<div class="menu-sep manager-only"></div>
+								<button class="menu-row danger manager-only">
+									Archivovat seznam
+								</button>
+							</div>
+						</section>
+
+						<div class="toolbar-wrap">
+							<div class="toolbar-mask" aria-hidden="true"></div>
+							<nav class="toolbar" aria-label="Nástroje seznamu přání">
+								<div
+									class="browse-bar"
+									style="
+										display: flex;
+										align-items: center;
+										gap: 9px;
+										width: 100%;
+									"
+								>
+									<div class="view" role="group" aria-label="Způsob zobrazení">
+										<button
+											data-view="card"
+											aria-label="Karty"
+											aria-pressed="true"
+										>
+											<svg><use href="#grid" /></svg></button
+										><button
+											data-view="list"
+											aria-label="Seznam"
+											aria-pressed="false"
+										>
+											<svg><use href="#list" /></svg></button
+										><button
+											data-view="compact"
+											aria-label="Kompaktní"
+											aria-pressed="false"
+										>
+											<svg><use href="#compact" /></svg>
+										</button>
+									</div>
+									<button
+										class="control display-trigger"
+										data-open="display"
+										aria-haspopup="menu"
+										aria-expanded="false"
+									>
+										<svg><use href="#sliders" /></svg
+										><span class="display-word">Zobrazení</span
+										><span class="count" hidden>0</span
+										><svg class="desktop-only"><use href="#down" /></svg>
+									</button>
+									<div
+										class="active-filters desktop-only"
+										aria-label="Aktivní filtry"
+									></div>
+									<span class="toolbar-spacer"></span
+									><button
+										class="control icon desktop-only"
+										data-open="toolbar-more"
+										aria-label="Více akcí nástrojové lišty"
+										title="Více akcí nástrojové lišty"
+										aria-haspopup="menu"
+										aria-expanded="false"
+									>
+										<svg><use href="#more" /></svg></button
+									><button
+										class="control icon mobile-only"
+										data-open="toolbar-more"
+										aria-label="Více akcí nástrojové lišty"
+										title="Více akcí nástrojové lišty"
+										aria-haspopup="dialog"
+										aria-expanded="false"
+									>
+										<svg><use href="#more" /></svg></button
+									><button class="control primary manager-only" data-action="add">
+										<svg><use href="#plus" /></svg
+										><span class="desktop-only">Přidat dárek</span></button
+									><button class="control primary" data-reorder-done hidden>
+										Hotovo
+									</button>
+								</div>
+								<div class="selection-bar">
+									<label class="select-all"
+										><input type="checkbox" data-select-all /><span
+											>Vybrat vše</span
+										></label
+									><strong class="selection-label"
+										>Vybráno <span data-selected-count>3</span></strong
+									><span class="pending-text"
+										><i class="spinner"></i
+										><span
+											>Upravuji <span data-pending-count>3</span> dárků…</span
+										></span
+									><span class="toolbar-spacer"></span
+									><button
+										class="control"
+										data-open="bulk"
+										aria-haspopup="menu"
+										aria-expanded="false"
+									>
+										<svg><use href="#sliders" /></svg
+										><span class="actions-text">Akce</span
+										><svg class="desktop-only">
+											<use href="#down" />
+										</svg></button
+									><button
+										class="control primary"
+										data-cancel
+										aria-label="Zrušit výběr"
+									>
+										Zrušit výběr
+									</button>
+								</div>
+								<div
+									class="popup display-menu"
+									data-popup="display"
+									role="menu"
+									hidden
+								></div>
+								<div
+									class="popup more-menu"
+									data-popup="toolbar-more"
+									role="menu"
+									hidden
+								></div>
+								<div
+									class="popup actions-menu"
+									data-popup="bulk"
+									role="menu"
+									hidden
+								></div>
+							</nav>
+						</div>
+						<p class="reorder-note">
+							<strong>Náhled změny pořadí:</strong> přepnutí Karty/Seznam režim
+							neukončí ani neuloží. Kompaktní zobrazení zde není dostupné. Tento
+							statický prototyp neprokazuje produkční perzistenci pořadí.
+						</p>
+						<section class="gifts" aria-label="Dárky">
+							<article class="gift selected">
+								<button
+									class="gift-select"
+									aria-label="Odebrat Sluchátka Sony z výběru"
+								>
+									✓</button
+								><button
+									class="reorder-handle"
+									aria-label="Změnit pořadí dárku"
+									title="Změnit pořadí dárku"
+								>
+									<svg><use href="#drag" /></svg>
+								</button>
+								<div class="gift-image"><span class="product-shape"></span></div>
+								<div class="gift-body">
+									<h3>Sluchátka Sony WH-1000XM5</h3>
+									<span class="price">8 490 Kč</span>
+									<p class="meta">Elektronika · Nejvíc si přeji</p>
+								</div>
+							</article>
+							<article class="gift selected">
+								<button
+									class="gift-select"
+									aria-label="Odebrat Knihu Umění klidu z výběru"
+								>
+									✓</button
+								><button
+									class="reorder-handle"
+									aria-label="Změnit pořadí dárku"
+									title="Změnit pořadí dárku"
+								>
+									<svg><use href="#drag" /></svg>
+								</button>
+								<div class="gift-image"><span class="product-shape"></span></div>
+								<div class="gift-body">
+									<h3>Umění klidu, ilustrované vydání</h3>
+									<span class="price">429 Kč</span>
+									<p class="meta">Knihy · Střední</p>
+								</div>
+							</article>
+							<article class="gift selected">
+								<button
+									class="gift-select"
+									aria-label="Odebrat Kufr Samsonite z výběru"
+								>
+									✓</button
+								><button
+									class="reorder-handle"
+									aria-label="Změnit pořadí dárku"
+									title="Změnit pořadí dárku"
+								>
+									<svg><use href="#drag" /></svg>
+								</button>
+								<div class="gift-image"><span class="product-shape"></span></div>
+								<div class="gift-body">
+									<h3>Kabinový kufr Samsonite StackD</h3>
+									<span class="price">3 290 Kč</span>
+									<p class="meta">Cestování · Bez priority</p>
+								</div>
+							</article>
+						</section>
+						<section class="empty-message">
+							<strong>Žádné dostupné možnosti</strong>
+							<p>
+								Pro tento seznam nyní nelze seskupovat podle priority ani kategorie.
+							</p>
+						</section>
+					</div>
+				</main>
+				<div class="submenu-portal" data-submenu-portal></div>
+				<div class="overlay mobile-only" data-overlay hidden></div>
+				<section
+					class="sheet mobile-only"
+					data-sheet
+					hidden
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="sheet-title"
+				>
+					<header class="sheet-header">
+						<div>
+							<div class="sheet-title-line">
+								<div class="sheet-title" id="sheet-title">Zobrazení</div>
+								<span class="sheet-count" data-sheet-count></span>
+							</div>
+							<div class="sheet-desc">Výchozí pořadí · Bez seskupení</div>
+						</div>
+						<button
+							class="control ghost icon sheet-close"
+							data-close
+							aria-label="Zavřít"
+						>
+							<svg><use href="#x" /></svg>
+						</button>
+					</header>
+					<div class="sheet-body"></div>
+				</section>
+				<div class="toast" role="status" aria-live="polite" hidden>
+					<div><strong></strong><span></span></div>
+					<button class="control ghost icon" aria-label="Zavřít oznámení">
+						<svg><use href="#x" /></svg>
+					</button>
+				</div>
+				<div class="sr-only status-live" aria-live="polite"></div>
+			</section>
+		</div>
+		<script>
+			(() => {
+				const app = document.querySelector('#app'),
+					scroll = document.querySelector('#scroll'),
+					q = (s, r = document) => r.querySelector(s),
+					qa = (s, r = document) => [...r.querySelectorAll(s)];
+				const state = {
+					role: 'manager',
+					mode: 'browse',
+					theme: 'light',
+					view: 'card',
+					sort: 'ownerOrder',
+					group: 'priority',
+					filters: new Set(),
+					pending: false,
+					failNext: false,
+					displaySection: 'sort',
+					bulkLevel: null,
+					displayLevel: null,
+					bulkSummary: {},
+					selected: 3,
+					selectedItems: new Set([0, 1, 2]),
+					lastTrigger: null,
+				};
+				const labels = {
+					sort: {
+						ownerOrder: 'Výchozí pořadí',
+						priority: 'Priorita',
+						priceAsc: 'Cena (vzestupně)',
+						priceDesc: 'Cena (sestupně)',
+						name: 'Název',
+						dateAdded: 'Datum přidání',
+					},
+					group: {
+						none: 'Bez seskupení',
+						priority: 'Podle priority',
+						category: 'Podle kategorie',
+					},
+				};
+				const filterDefs = [
+					['available', 'Pouze dostupné', 'base'],
+					['link', 'S odkazem', 'base'],
+					['liked', 'Oblíbené', 'base'],
+					['cat-none', 'Bez kategorie', 'Kategorie'],
+					['received', 'Zobrazit obdržené', 'base'],
+					['cat-books', 'Knihy', 'Kategorie'],
+					['cat-electronics', 'Elektronika', 'Kategorie'],
+					['cat-travel', 'Cestování', 'Kategorie'],
+					['prio-high', 'Nejvíc si přeji', 'Priorita'],
+					['prio-medium', 'Střední', 'Priorita'],
+					['prio-low', 'Nízká', 'Priorita'],
+					['prio-none', 'Bez priority', 'Priorita'],
+				];
+				const bulkDefs = [
+					['priority', 'Priorita', 'Různé hodnoty'],
+					['category', 'Kategorie', 'Různé hodnoty'],
+					['imageFit', 'Zobrazení obrázku', 'Různé hodnoty'],
+					['imageBackground', 'Pozadí obrázku', 'Bílé'],
+					['copy', 'Kopírovat do seznamu', 'Vyžaduje cíl'],
+					['received', 'Stav obdržení', 'Různé hodnoty'],
+				];
+				const icons = {
+					chev: '<svg><use href="#chev"/></svg>',
+					back: '<svg><use href="#back"/></svg>',
+				};
+				function isMobile() {
+					return matchMedia('(max-width:639px)').matches;
+				}
+				function toast(title, detail = '', error = false) {
+					const t = q('.toast');
+					q('strong', t).textContent = title;
+					q('span', t).textContent = detail;
+					t.classList.toggle('error', error);
+					t.hidden = false;
+					clearTimeout(toast.timer);
+					toast.timer = setTimeout(() => (t.hidden = true), 3200);
+				}
+				q('.toast button').onclick = () => (q('.toast').hidden = true);
+				function closeAll(restore = true) {
+					qa('[data-popup]').forEach((p) => (p.hidden = true));
+					q('[data-submenu-portal]').replaceChildren();
+					state.displayLevel = null;
+					state.bulkLevel = null;
+					qa('[data-open]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+					q('[data-overlay]').hidden = true;
+					q('[data-sheet]').hidden = true;
+					if (restore && state.lastTrigger) {
+						const t = state.lastTrigger;
+						state.lastTrigger = null;
+						requestAnimationFrame(() => t.focus({ preventScroll: true }));
+					}
+				}
+				function openPopup(name, trigger) {
+					closeAll(false);
+					state.lastTrigger = trigger;
+					trigger.setAttribute('aria-expanded', 'true');
+					const p = q(`[data-popup="${name}"]`);
+					p.hidden = false;
+					positionRoot(p, trigger);
+					requestAnimationFrame(() =>
+						q('button:not(:disabled)', p)?.focus({ preventScroll: true }),
+					);
+				}
+				function openSheet(kind, trigger) {
+					closeAll(false);
+					state.lastTrigger = trigger;
+					const sheet = q('[data-sheet]');
+					sheet.dataset.kind = kind;
+					q('[data-overlay]').hidden = false;
+					sheet.hidden = false;
+					trigger.setAttribute('aria-expanded', 'true');
+					renderSheet(kind);
+					requestAnimationFrame(() =>
+						q('button:not(:disabled),input:not(:disabled)', sheet)?.focus({
+							preventScroll: true,
+						}),
+					);
+				}
+				function menuRow(label, attrs = '', summary = '') {
+					return `<button class="menu-row" ${attrs}><span>${label}</span>${summary ? `<span class="summary">${summary}</span>` : ''}</button>`;
+				}
+				function renderDisplayPopup() {
+					const p = q('[data-popup="display"]');
+					p.innerHTML =
+						'<div class="menu-head"><strong>Zobrazení</strong><span>Vyberte kategorii nastavení</span></div>' +
+						menuRow(
+							'Řazení',
+							'data-display-level="sort" aria-haspopup="menu"',
+							labels.sort[state.sort] + ' ›',
+						) +
+						menuRow(
+							'Seskupení',
+							'data-display-level="group" aria-haspopup="menu"',
+							labels.group[state.group] + ' ›',
+						) +
+						menuRow(
+							'Filtry',
+							'data-display-level="filter" aria-haspopup="menu"',
+							(state.filters.size ? state.filters.size + ' aktivní' : 'Žádné') + ' ›',
+						);
+					qa('[data-display-level]', p).forEach((b) => {
+						b.onmouseenter = () => openDisplaySubmenu(b.dataset.displayLevel, b, false);
+						b.onclick = () => openDisplaySubmenu(b.dataset.displayLevel, b, true);
+					});
+				}
+				function openDisplaySubmenu(level, trigger, focusChild) {
+					state.displayLevel = level;
+					let html =
+						'<div class="menu-head"><strong>' +
+						{ sort: 'Řazení', group: 'Seskupení', filter: 'Filtry' }[level] +
+						'</strong></div>';
+					if (level === 'sort')
+						Object.entries(labels.sort).forEach(
+							([v, l]) =>
+								(html += menuRow(
+									l,
+									`data-sort="${v}" ${state.sort === v ? 'aria-current="true"' : ''}`,
+									state.sort === v ? '✓' : '',
+								)),
+						);
+					if (level === 'group')
+						Object.entries(labels.group).forEach(
+							([v, l]) =>
+								(html += menuRow(
+									l,
+									`data-group="${v}" ${state.group === v ? 'aria-current="true"' : ''} ${state.mode === 'empty' && v !== 'none' ? 'disabled' : ''}`,
+									state.group === v ? '✓' : '',
+								)),
+						);
+					if (level === 'filter') {
+						filterDefs
+							.filter(filterVisible)
+							.forEach(
+								([id, l]) =>
+									(html += `<button class="menu-row check-row" role="menuitemcheckbox" data-filter="${id}" aria-checked="${state.filters.has(id)}"><span class="fake-check">${state.filters.has(id) ? '✓' : ''}</span>${l}</button>`),
+							);
+						if (state.filters.size)
+							html +=
+								'<div class="menu-sep"></div>' +
+								menuRow('Zrušit všechny filtry', 'data-clear class="reset-row"');
+					}
+					openSubmenu(trigger, html, focusChild);
+					bindChoices(q('[data-submenu-portal]'));
+				}
+				function positionRoot(menu, trigger) {
+					const r = trigger.getBoundingClientRect(),
+						gap = 7,
+						w = menu.offsetWidth || 336;
+					menu.style.position = 'fixed';
+					menu.style.top =
+						Math.max(8, Math.min(r.bottom + gap, innerHeight - menu.offsetHeight - 8)) +
+						'px';
+					menu.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+				}
+				function openSubmenu(trigger, html, focusChild = true) {
+					const portal = q('[data-submenu-portal]');
+					portal.replaceChildren();
+					const box = document.createElement('div');
+					box.className = 'popup submenu';
+					box.setAttribute('role', 'menu');
+					box.innerHTML = html;
+					portal.append(box);
+					const r = trigger.getBoundingClientRect(),
+						parentBounds = trigger.closest('[data-popup]').getBoundingClientRect(),
+						w = box.offsetWidth || 224,
+						gap = 4;
+					let left = parentBounds.right + gap;
+					if (left + w > innerWidth - 8) left = parentBounds.left - w - gap;
+					box.style.left = Math.max(8, Math.min(left, innerWidth - w - 8)) + 'px';
+					box.style.top =
+						Math.max(8, Math.min(r.top, innerHeight - box.offsetHeight - 8)) + 'px';
+					box.dataset.parentLevel = trigger.dataset.displayLevel || trigger.dataset.bulk;
+					box._trigger = trigger;
+					if (focusChild)
+						requestAnimationFrame(() =>
+							q('button:not(:disabled)', box)?.focus({ preventScroll: true }),
+						);
+				}
+				function canManage() {
+					return state.role === 'manager' || state.role === 'recipient';
+				}
+				function filterVisible([id]) {
+					return state.role !== 'recipient' || (id !== 'available' && id !== 'liked');
+				}
+				function renderMorePopup() {
+					const p = q('[data-popup="toolbar-more"]');
+					let rows = '';
+					if (state.filters.size || state.sort !== 'ownerOrder' || state.group !== 'none')
+						rows += menuRow('Obnovit výchozí zobrazení', 'data-reset');
+					if (state.role !== 'recipient')
+						rows += menuRow('Náhled pohledu obdarovaného', 'data-demo="preview"');
+					if (state.role === 'visitor')
+						rows += menuRow('Přestat sledovat', 'data-demo="unfollow"');
+					if (canManage()) {
+						rows += menuRow('Vybrat více dárků', 'data-enter-selection');
+						rows += menuRow('Změnit pořadí', 'data-enter-reorder');
+						rows += menuRow('Přidat více dárků', 'data-demo="batch"');
+					}
+					p.innerHTML =
+						'<div class="menu-head"><strong>Více akcí</strong><span>Dostupné pro aktuální roli</span></div>' +
+						rows;
+					bindGeneral(p);
+				}
+				function renderBulkPopup() {
+					const p = q('[data-popup="bulk"]');
+					p.innerHTML =
+						'<div class="menu-head"><strong>Akce</strong><span>Vybráno ' +
+						state.selected +
+						' · lokální demo</span></div>' +
+						bulkDefs
+							.map(([id, l, s]) =>
+								menuRow(
+									l,
+									`data-bulk="${id}" ${state.pending || !state.selected ? 'disabled' : ''}`,
+									(state.bulkSummary[id] || s) +
+										` <span aria-hidden="true">›</span>`,
+								),
+							)
+							.join('');
+					qa('[data-bulk]', p).forEach((b) => {
+						b.onclick = () => renderDesktopSubmenu(b.dataset.bulk, p, b, true);
+						b.onmouseenter = () => renderDesktopSubmenu(b.dataset.bulk, p, b, false);
+					});
+				}
+				function renderDesktopSubmenu(id, p, trigger, focusChild = true) {
+					openSubmenu(trigger, bulkOptions(id, 'menu'), focusChild);
+					const box = q('[data-submenu-portal]>.popup');
+					qa('button', box).forEach(
+						(b) => (b.onclick = () => runBulk(id, b.dataset.value)),
+					);
+				}
+				function bulkOptions(id, context) {
+					if (id === 'copy')
+						return (
+							'<div class="menu-head"><strong>Cílový seznam</strong><span>Původní dárky zůstanou beze změny</span></div>' +
+							[
+								['vanoce', 'Vánoce u Novotných'],
+								['byt', 'Nový byt · kuchyně'],
+							]
+								.map((x) => menuRow(x[1], `data-value="${x[0]}"`))
+								.join('')
+						);
+					const opts =
+						{
+							priority: ['Bez priority', 'Nejvíc si přeji', 'Střední', 'Nízká'],
+							category: ['Bez kategorie', 'Elektronika', 'Knihy', 'Cestování'],
+							imageFit: ['Vyplnit', 'Přizpůsobit'],
+							imageBackground: ['Bílé', 'Černé', 'Průhledné'],
+							received: ['Označit jako obdržené', 'Označit jako neobdržené'],
+						}[id] || [];
+					return (
+						'<div class="menu-group-title">' +
+						(id === 'priority' ||
+						id === 'category' ||
+						id === 'imageFit' ||
+						id === 'received'
+							? 'Různé hodnoty'
+							: 'Aktuálně: Bílé') +
+						'</div>' +
+						opts.map((l, i) => menuRow(l, `data-value="${i}"`)).join('')
+					);
+				}
+				function renderSheet(kind) {
+					const sheet = q('[data-sheet]'),
+						body = q('.sheet-body', sheet),
+						title = q('.sheet-title', sheet),
+						desc = q('.sheet-desc', sheet),
+						count = q('[data-sheet-count]', sheet);
+					count.textContent = kind === 'bulk' ? 'Vybráno ' + state.selected : '';
+					sheet.classList.toggle('is-pending', state.pending);
+					if (kind === 'display') {
+						title.textContent = 'Zobrazení';
+						desc.textContent =
+							labels.sort[state.sort] + ' · ' + labels.group[state.group];
+						let items = '';
+						if (state.displaySection === 'sort') {
+							items = Object.entries(labels.sort)
+								.map(([v, l]) =>
+									sheetChoice(l, 'radio', state.sort === v, `data-sort="${v}"`),
+								)
+								.join('');
+						} else if (state.displaySection === 'group') {
+							items = Object.entries(labels.group)
+								.map(([v, l]) =>
+									sheetChoice(
+										l,
+										'radio',
+										state.group === v,
+										`data-group="${v}" ${state.mode === 'empty' && v !== 'none' ? 'disabled' : ''}`,
+									),
+								)
+								.join('');
+						} else {
+							let last = '';
+							items = filterDefs
+								.filter(filterVisible)
+								.map(([id, l, g]) => {
+									const h =
+										g !== last
+											? ((last = g),
+												`<div class="sheet-section-title">${g === 'base' ? 'Dostupnost' : g}</div>`)
+											: '';
+									return (
+										h +
+										sheetChoice(
+											l,
+											'checkbox',
+											state.filters.has(id),
+											`data-filter="${id}"`,
+										)
+									);
+								})
+								.join('');
+							if (state.filters.size)
+								items += `<button class="sheet-row reset-row" data-clear>Zrušit všechny filtry</button>`;
+						}
+						body.innerHTML = `<div class="sheet-tabs"><button data-section="sort" aria-pressed="${state.displaySection === 'sort'}">Řazení</button><button data-section="group" aria-pressed="${state.displaySection === 'group'}">Seskupení</button><button data-section="filter" aria-pressed="${state.displaySection === 'filter'}">Filtry${state.filters.size ? ' · ' + state.filters.size : ''}</button></div>${items}`;
+						bindSheetChoices(body);
+					}
+					if (kind === 'more') {
+						title.textContent = 'Více akcí';
+						desc.textContent = 'Dostupné pro aktuální roli';
+						let rows = '';
+						if (
+							state.filters.size ||
+							state.sort !== 'ownerOrder' ||
+							state.group !== 'none'
+						)
+							rows += sheetButton('Obnovit výchozí zobrazení', 'data-reset');
+						if (state.role !== 'recipient')
+							rows += sheetButton(
+								'Náhled pohledu obdarovaného',
+								'data-demo="preview"',
+							);
+						if (state.role === 'visitor')
+							rows += sheetButton('Přestat sledovat', 'data-demo="unfollow"');
+						if (canManage())
+							rows +=
+								sheetButton('Vybrat více dárků', 'data-enter-selection') +
+								sheetButton('Změnit pořadí', 'data-enter-reorder') +
+								sheetButton('Přidat více dárků', 'data-demo="batch"');
+						body.innerHTML = rows;
+						bindGeneral(body);
+					}
+					if (kind === 'hero-more') {
+						title.textContent = 'Další možnosti seznamu';
+						desc.textContent = 'Správa a sdílení seznamu';
+						body.innerHTML =
+							sheetButton('Sdílet seznam', 'data-demo="share"') +
+							(canManage()
+								? sheetButton('Správci seznamu', 'data-demo="managers"') +
+									sheetButton('Upravit obrázek', 'data-demo="image"') +
+									sheetButton('Upravit obdarovaného', 'data-demo="recipient"') +
+									sheetButton('Archivovat seznam', 'data-demo="archive"')
+								: '');
+						bindGeneral(body);
+					}
+					if (kind === 'bulk') {
+						title.textContent = 'Akce';
+						desc.textContent = state.pending
+							? 'Upravuji ' + state.selected + ' dárky…'
+							: '';
+						if (!state.bulkLevel) {
+							body.innerHTML =
+								(state.pending
+									? '<div class="sheet-status"><span class="spinner"></span> Probíhá změna. Opakování akcí je vypnuté.</div>'
+									: '') +
+								bulkDefs
+									.map(
+										([id, l, s]) =>
+											`<button class="sheet-row" data-bulk="${id}" ${state.pending || !state.selected ? 'disabled' : ''}><span class="row-copy"><strong>${l}</strong><small>${s}</small></span><svg class="chev"><use href="#chev"/></svg></button>`,
+									)
+									.join('');
+							qa('[data-bulk]', body).forEach(
+								(b) =>
+									(b.onclick = () => {
+										state.bulkLevel = b.dataset.bulk;
+										renderSheet('bulk');
+										requestAnimationFrame(() => q('.back', body)?.focus());
+									}),
+							);
+						} else {
+							const id = state.bulkLevel;
+							body.innerHTML =
+								`<div class="sheet-level-nav"><button class="control ghost back">${icons.back}Zpět</button><strong>${bulkDefs.find((x) => x[0] === id)[1]}</strong></div>` +
+								(id === 'copy'
+									? `<div class="copy-panel"><p>Vyberte seznam, který spravujete. Původní dárky zůstanou beze změny.</p>${sheetChoice('Vánoce u Novotných', 'radio', false, 'data-value="vanoce"')}${sheetChoice('Nový byt · kuchyně', 'radio', false, 'data-value="byt"')}</div>`
+									: bulkOptions(id, 'sheet').replace(
+											/class="menu-row"/g,
+											'class="sheet-row"',
+										));
+							q('.back', body).onclick = () => {
+								state.bulkLevel = null;
+								renderSheet('bulk');
+								requestAnimationFrame(() =>
+									q(`[data-bulk="${id}"]`, body)?.focus(),
+								);
+							};
+							qa('[data-value]', body).forEach(
+								(b) => (b.onclick = () => runBulk(id, b.dataset.value)),
+							);
+						}
+					}
+				}
+				function sheetChoice(label, type, checked, attrs) {
+					return `<label class="sheet-row"><input type="${type}" ${type === 'radio' ? 'name="sheet-choice"' : ''} ${checked ? 'checked' : ''} ${attrs}>${label}</label>`;
+				}
+				function sheetButton(label, attrs) {
+					return `<button class="sheet-row" ${attrs}>${label}</button>`;
+				}
+				function bindSheetChoices(root) {
+					qa('[data-section]', root).forEach(
+						(b) =>
+							(b.onclick = () => {
+								state.displaySection = b.dataset.section;
+								renderSheet('display');
+							}),
+					);
+					bindChoices(root);
+				}
+				function bindChoices(root) {
+					const bind = (el, fn) => {
+						if (el.matches('input')) el.onchange = fn;
+						else el.onclick = fn;
+					};
+					qa('[data-sort]', root).forEach((el) =>
+						bind(el, () => {
+							state.sort = el.dataset.sort;
+							updated('Řazení změněno');
+							refreshOpen();
+						}),
+					);
+					qa('[data-group]', root).forEach((el) =>
+						bind(el, () => {
+							state.group = el.dataset.group;
+							updated('Seskupení změněno');
+							refreshOpen();
+						}),
+					);
+					qa('[data-filter]', root).forEach((el) =>
+						bind(el, () => {
+							const id = el.dataset.filter;
+							state.filters.has(id)
+								? state.filters.delete(id)
+								: state.filters.add(id);
+							updated('Filtr změněn');
+							refreshOpen();
+						}),
+					);
+					q('[data-clear]', root)?.addEventListener('click', () => {
+						state.filters.clear();
+						updated('Filtry zrušeny');
+						refreshOpen();
+					});
+				}
+				function bindGeneral(root) {
+					q('[data-reset]', root)?.addEventListener('click', () => {
+						state.sort = 'ownerOrder';
+						state.group = 'priority';
+						state.filters.clear();
+						closeAll();
+						render();
+						toast('Výchozí zobrazení obnoveno');
+					});
+					q('[data-enter-selection]', root)?.addEventListener('click', () => {
+						closeAll(false);
+						setMode('selection');
+					});
+					q('[data-enter-reorder]', root)?.addEventListener('click', () => {
+						closeAll(false);
+						setMode('reorder');
+					});
+					qa('[data-demo]', root).forEach(
+						(b) =>
+							(b.onclick = () => {
+								const text = b.textContent.trim();
+								closeAll();
+								toast('Demo: ' + text, 'Pouze lokální simulace bez persistence.');
+							}),
+					);
+				}
+				function runBulk(id, value) {
+					if (state.pending) {
+						toast('Akce právě probíhá', 'Počkejte na dokončení.', true);
+						return;
+					}
+					if (!state.selected) {
+						toast('Není vybrán žádný dárek', 'Vyberte alespoň jeden dárek.', true);
+						return;
+					}
+					const count = state.selected;
+					if (state.failNext) {
+						state.failNext = false;
+						qa('[data-fixture="error"]').forEach((b) =>
+							b.setAttribute('aria-pressed', 'false'),
+						);
+						closeAll();
+						render();
+						toast(
+							'Změnu se nepodařilo uložit',
+							'Výběr ' + count + ' dárků zůstal zachovaný. Zkuste to znovu.',
+							true,
+						);
+						return;
+					}
+					closeAll(false);
+					state.pending = true;
+					state.bulkLevel = null;
+					render();
+					q('.status-live').textContent = 'Probíhá úprava ' + count + ' dárků';
+					toast('Demo: změna se zpracovává', 'Akce je dočasně vypnutá; nic se neukládá.');
+					setTimeout(() => {
+						state.pending = false;
+						const chosen =
+							id === 'copy'
+								? 'Zvolen cíl'
+								: bulkOptions(id, 'sheet').match(
+										new RegExp('data-value="' + value + '"[^>]*><span>([^<]+)'),
+									)?.[1] || 'Změněno';
+						state.bulkSummary[id] = chosen;
+						render();
+						toast(
+							id === 'copy'
+								? 'Demo: dárky zkopírovány'
+								: 'Demo: ' + count + ' dárků upraveno',
+							'Lokální souhrn: ' +
+								chosen +
+								'. Bez persistence; výběr zůstává aktivní.',
+						);
+						q('.status-live').textContent = 'Demo změna dokončena';
+					}, 1200);
+				}
+				function updated(msg) {
+					render();
+					q('.status-live').textContent = msg;
+				}
+				function refreshOpen() {
+					const level = q('[data-submenu-portal]>.popup')?.dataset.parentLevel;
+					const focused = document.activeElement;
+					const choice = ['sort', 'group', 'filter'].find((key) => focused?.dataset[key]);
+					const value = choice ? focused.dataset[choice] : null;
+					render();
+					if (isMobile()) renderSheet('display');
+					else {
+						const root = q('[data-popup="display"]');
+						root.hidden = false;
+						q('[data-open="display"]').setAttribute('aria-expanded', 'true');
+						positionRoot(root, q('[data-open="display"]'));
+						if (level)
+							openDisplaySubmenu(
+								level,
+								q(`[data-display-level="${level}"]`, root),
+								false,
+							);
+					}
+					if (choice)
+						q(
+							`${isMobile() ? '[data-sheet]' : '[data-submenu-portal]'} [data-${choice}="${value}"]`,
+						)?.focus({ preventScroll: true });
+				}
+				function render() {
+					document.documentElement.classList.toggle('dark', state.theme === 'dark');
+					app.classList.toggle('selection-mode', state.mode === 'selection');
+					app.classList.toggle('reorder-mode', state.mode === 'reorder');
+					q('.browse-bar').style.display = state.mode === 'selection' ? 'none' : 'flex';
+					q('.selection-bar').classList.toggle('show', state.mode === 'selection');
+					q('.selection-bar').classList.toggle('is-pending', state.pending);
+					qa('.selection-bar button,.selection-bar input').forEach((x) => {
+						if (!x.matches('[data-cancel]')) x.disabled = state.pending;
+					});
+					q('[data-selected-count]').textContent = state.selected;
+					q('[data-pending-count]').textContent = state.selected;
+					q('[data-select-all]').checked = state.selected >= 3;
+					q('[data-select-all]').indeterminate = state.selected > 0 && state.selected < 3;
+					qa('.gift').forEach((g, i) => {
+						const selected = state.selected === 120 || state.selectedItems.has(i);
+						g.classList.toggle('selected', selected && state.mode === 'selection');
+						const button = q('.gift-select', g);
+						button.textContent = selected ? '✓' : '';
+						button.setAttribute('aria-pressed', String(selected));
+						button.setAttribute(
+							'aria-label',
+							(selected ? 'Odebrat z výběru: ' : 'Vybrat: ') + q('h3', g).textContent,
+						);
+					});
+					q('.gifts').style.display = state.mode === 'empty' ? 'none' : '';
+					q('.gifts').classList.toggle('list-view', state.view === 'list');
+					q('.empty-message').style.display = state.mode === 'empty' ? 'block' : '';
+					qa('[data-view]').forEach((b) => {
+						b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
+						b.disabled = state.mode === 'reorder' && b.dataset.view === 'compact';
+						b.hidden = state.mode === 'reorder' && b.dataset.view === 'compact';
+					});
+					q('.display-trigger').disabled = state.mode === 'reorder';
+					q('[data-reorder-done]').hidden = state.mode !== 'reorder';
+					const visible = [...state.filters].filter((id) => filterVisible([id]));
+					q('.count').hidden = !visible.length;
+					q('.count').textContent = visible.length;
+					const af = q('.active-filters');
+					af.innerHTML =
+						visible
+							.slice(0, 2)
+							.map((id) => {
+								const l = filterDefs.find((x) => x[0] === id)?.[1];
+								return `<span class="pill"><span>${l}</span><button data-remove="${id}" aria-label="Odebrat filtr ${l}">×</button></span>`;
+							})
+							.join('') +
+						(visible.length > 2
+							? `<span class="chip">+${visible.length - 2}</span>`
+							: '');
+					qa('[data-remove]', af).forEach(
+						(b) =>
+							(b.onclick = () => {
+								state.filters.delete(b.dataset.remove);
+								updated('Filtr odebrán');
+							}),
+					);
+					qa('.manager-only').forEach(
+						(el) => (el.style.display = canManage() ? 'flex' : 'none'),
+					);
+					renderDisplayPopup();
+					renderMorePopup();
+					renderBulkPopup();
+					qa('[data-role]').forEach((b) =>
+						b.setAttribute('aria-pressed', String(b.dataset.role === state.role)),
+					);
+					qa('[data-mode]').forEach((b) => {
+						b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode));
+						b.disabled =
+							!canManage() &&
+							(b.dataset.mode === 'selection' || b.dataset.mode === 'reorder');
+					});
+					qa('[data-theme]').forEach((b) =>
+						b.setAttribute('aria-pressed', String(b.dataset.theme === state.theme)),
+					);
+					qa('[data-fixture="pending"]').forEach((b) =>
+						b.setAttribute('aria-pressed', String(state.pending)),
+					);
+					qa('[data-fixture="error"]').forEach((b) =>
+						b.setAttribute('aria-pressed', String(state.failNext)),
+					);
+				}
+				function setMode(mode) {
+					state.mode = mode;
+					if (mode === 'selection') {
+						state.selectedItems = new Set([0, 1, 2]);
+						state.selected = 3;
+					}
+					if (mode === 'reorder') {
+						state.group = 'none';
+						if (state.view === 'compact') state.view = 'card';
+						toast(
+							'Režim změny pořadí',
+							'Seskupení bylo pro tuto lokální relaci záměrně vypnuto. Karty a Seznam zůstávají dostupné; bez persistence.',
+						);
+					}
+					closeAll(false);
+					render();
+				}
+				qa('[data-open]').forEach(
+					(b) =>
+						(b.onclick = (e) => {
+							e.stopPropagation();
+							const name = b.dataset.open;
+							if (name === 'display') state.displayLevel = null;
+							if (b.getAttribute('aria-expanded') === 'true') {
+								closeAll();
+								return;
+							}
+							if (isMobile())
+								openSheet(
+									name === 'display'
+										? 'display'
+										: name === 'bulk'
+											? 'bulk'
+											: name === 'hero-more'
+												? 'hero-more'
+												: 'more',
+									b,
+								);
+							else openPopup(name, b);
+						}),
+				);
+				qa('[data-role]').forEach(
+					(b) =>
+						(b.onclick = () => {
+							state.role = b.dataset.role;
+							if (state.role === 'recipient') {
+								state.filters.delete('available');
+								state.filters.delete('liked');
+							}
+							if (
+								!canManage() &&
+								(state.mode === 'selection' || state.mode === 'reorder')
+							)
+								state.mode = 'browse';
+							closeAll(false);
+							render();
+							toast('Role změněna', b.textContent + ' · lokální kontrolní stav');
+						}),
+				);
+				qa('[data-mode]').forEach(
+					(b) =>
+						(b.onclick = () => {
+							if (canManage() || !['selection', 'reorder'].includes(b.dataset.mode))
+								setMode(b.dataset.mode);
+						}),
+				);
+				qa('[data-theme]').forEach(
+					(b) =>
+						(b.onclick = () => {
+							state.theme = b.dataset.theme;
+							render();
+						}),
+				);
+				q('[data-fixture="pending"]').onclick = () => {
+					state.pending = !state.pending;
+					render();
+					toast(
+						state.pending ? 'Čekající stav zapnut' : 'Čekající stav vypnut',
+						'Lokální fixture',
+					);
+				};
+				q('[data-count]').onclick = () => {
+					state.selected = state.selected === 120 ? state.selectedItems.size : 120;
+					render();
+					q('[data-count]').setAttribute('aria-pressed', String(state.selected === 120));
+				};
+				q('[data-fixture="error"]').onclick = () => {
+					state.failNext = !state.failNext;
+					render();
+					toast(
+						state.failNext ? 'Příští hromadná změna selže' : 'Chybový fixture vypnut',
+						'Výběr bude při chybě zachován.',
+					);
+				};
+				qa('[data-view]').forEach(
+					(b) =>
+						(b.onclick = () => {
+							state.view = b.dataset.view;
+							render();
+							toast(
+								'Zobrazení změněno',
+								b.getAttribute('aria-label') +
+									(state.mode === 'reorder' ? ' · režim pořadí pokračuje' : ''),
+							);
+						}),
+				);
+				q('[data-cancel]').onclick = () => setMode('browse');
+				q('[data-reorder-done]').onclick = () => {
+					setMode('browse');
+					toast('Demo: režim pořadí ukončen', 'Změny se nikam neuložily.');
+				};
+				q('[data-select-all]').onchange = (e) => {
+					state.selectedItems = e.target.checked ? new Set([0, 1, 2]) : new Set();
+					state.selected = state.selectedItems.size;
+					render();
+				};
+				qa('.gift-select').forEach(
+					(b, i) =>
+						(b.onclick = () => {
+							state.selectedItems.has(i)
+								? state.selectedItems.delete(i)
+								: state.selectedItems.add(i);
+							state.selected = state.selectedItems.size;
+							render();
+						}),
+				);
+				q('[data-hero-settings]').onclick = () =>
+					toast('Nastavení seznamu', 'Samostatná hero akce; není součástí nabídek Více.');
+				q('[data-action="add"]').onclick = () =>
+					toast('Demo: Přidat dárek', 'Bez persistence — formulář se neotevírá.');
+				q('[data-close]').onclick = () => closeAll();
+				q('[data-overlay]').onclick = () => closeAll();
+				document.addEventListener('click', (e) => {
+					if (
+						!e
+							.composedPath()
+							.some(
+								(node) =>
+									node instanceof Element &&
+									node.matches('.popup,[data-open],.sheet'),
+							)
+					)
+						closeAll();
+				});
+				document.addEventListener('keydown', (e) => {
+					const child = q('[data-submenu-portal]>.popup');
+					if (
+						e.key === 'ArrowRight' &&
+						e.target.matches('[data-display-level],[data-bulk]')
+					) {
+						e.preventDefault();
+						e.target.matches('[data-display-level]')
+							? openDisplaySubmenu(e.target.dataset.displayLevel, e.target, true)
+							: renderDesktopSubmenu(
+									e.target.dataset.bulk,
+									e.target.closest('.popup'),
+									e.target,
+									true,
+								);
+						return;
+					}
+					if ((e.key === 'ArrowLeft' || e.key === 'Escape') && child) {
+						e.preventDefault();
+						const trigger = child._trigger;
+						q('[data-submenu-portal]').replaceChildren();
+						state.displayLevel = null;
+						state.bulkLevel = null;
+						trigger?.focus({ preventScroll: true });
+						return;
+					}
+					if (
+						e.key === 'Escape' &&
+						(!q('[data-sheet]').hidden || qa('[data-popup]').some((p) => !p.hidden))
+					) {
+						e.preventDefault();
+						closeAll();
+					}
+				});
+				window.addEventListener('resize', () => closeAll(false));
+				render();
+			})();
+		</script>
+	</body>
+</html>

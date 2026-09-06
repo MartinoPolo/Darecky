@@ -10,6 +10,7 @@ export default defineConfig({
 	fullyParallel: true,
 	retries: 1,
 	timeout: 60_000,
+	preserveOutput: process.env.UPDATE_HOVER_EVIDENCE === '1' ? 'always' : 'failures-only',
 	expect: { timeout: 10_000 },
 	// Keep the shared Vite dev server and PostgreSQL fixture below saturation. On high-core
 	// developer machines Playwright's default worker count overloads first-hit SSR/remote
