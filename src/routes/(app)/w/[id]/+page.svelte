@@ -434,8 +434,8 @@
 	const viewMode = $derived(giftsContext.viewMode.current);
 	const reorderModeGifts = $derived(
 		reorderActiveIds === null
-			? activeGiftsInOwnerOrder(gifts)
-			: resolveActiveGiftOrder(gifts, reorderActiveIds),
+			? activeGiftsInOwnerOrder(giftsContext.effectiveGifts.current)
+			: resolveActiveGiftOrder(giftsContext.effectiveGifts.current, reorderActiveIds),
 	);
 	const reorderPresentationGifts = $derived(
 		recipientViewPreview ? projectGiftsForRecipient(reorderModeGifts) : reorderModeGifts,
@@ -931,7 +931,9 @@
 			) {
 				return;
 			}
-			reorderActiveIds = activeGiftsInOwnerOrder(gifts).map((giftItem) => giftItem.id);
+			reorderActiveIds = activeGiftsInOwnerOrder(giftsContext.effectiveGifts.current).map(
+				(giftItem) => giftItem.id,
+			);
 			reorderMode = true;
 			return;
 		}
@@ -1227,7 +1229,9 @@
 	// ── Reorder handler (pointer + keyboard, mouse/touch/pen) ─────────────────
 
 	function isExactActiveGiftOrder(orderedIds: readonly string[]): boolean {
-		const activeIds = activeGiftsInOwnerOrder(gifts).map((giftItem) => giftItem.id);
+		const activeIds = activeGiftsInOwnerOrder(giftsContext.effectiveGifts.current).map(
+			(giftItem) => giftItem.id,
+		);
 		return (
 			orderedIds.length === activeIds.length &&
 			new Set(orderedIds).size === activeIds.length &&

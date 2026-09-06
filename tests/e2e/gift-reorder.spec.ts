@@ -183,3 +183,71 @@ test('gift order persists after card drag and rapid list keyboard moves', async 
 	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(listOrder);
 	await expect(page.locator('[data-gift-item]')).toHaveCount(3);
 });
+
+test('latest gift order survives immediate reopen, no-op entry, a second reorder, and reload', async ({
+	browser,
+	request,
+	baseURL,
+}) => {
+	const user = createTestUser('gift-reorder-reopen');
+	const page = await registerAndGetPage(browser, request, baseURL!, user);
+	await createWishlistAndNavigate(page, 'Gift Reorder Reopen Persistence');
+
+	const names = {
+		A: 'Reopen Reorder Gift A',
+		B: 'Reopen Reorder Gift B',
+		C: 'Reopen Reorder Gift C',
+	};
+	await addGift(page, names.A);
+	await addGift(page, names.B);
+	await addGift(page, names.C);
+
+	await expect(page.locator('[data-gift-item]')).toHaveCount(3, { timeout: 10_000 });
+	await page.getByRole('radio', { name: 'Seznam', exact: true }).click();
+	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeChecked();
+	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+
+	const firstMutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
+	const aHandle = giftItem(page, names.A).getByRole('button', {
+		name: REORDER_HANDLE,
+		exact: true,
+	});
+	await aHandle.focus();
+	await aHandle.press('ArrowDown');
+	await firstMutation;
+	const firstOrder = [names.B, names.A, names.C];
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+
+	await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+
+	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+	await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+
+	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeChecked();
+	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+
+	const secondMutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
+	const cHandle = giftItem(page, names.C).getByRole('button', {
+		name: REORDER_HANDLE,
+		exact: true,
+	});
+	await cHandle.focus();
+	await expect(cHandle).toBeFocused();
+	await cHandle.press('ArrowUp');
+	await secondMutation;
+	const secondOrder = [names.B, names.C, names.A];
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(secondOrder);
+
+	await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(secondOrder);
+	await page.reload({ waitUntil: 'load' });
+	const listRadio = page.getByRole('radio', { name: 'Seznam', exact: true });
+	if (!(await listRadio.isChecked())) {
+		await listRadio.click();
+	}
+	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(secondOrder);
+	await expect(page.locator('[data-gift-item]')).toHaveCount(3);
+});
