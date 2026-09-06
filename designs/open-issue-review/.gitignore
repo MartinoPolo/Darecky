@@ -1,0 +1,5 @@
+screenshots/
+assets/styles.js
+*-results.json
+export-location.json
+issue-bodies-before-finalization.json

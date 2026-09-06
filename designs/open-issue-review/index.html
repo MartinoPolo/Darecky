@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en" data-palette="sky">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Přejeme si · Scoped design review</title>
+		<link rel="stylesheet" href="../tokens.css" />
+		<link rel="stylesheet" href="./assets/app.css" />
+		<style>
+			body {
+				margin: 0;
+				background: var(--background);
+				color: var(--foreground);
+				font: 16px/1.6 var(--font-body);
+			}
+			main {
+				max-width: 980px;
+				margin: auto;
+				padding: 36px 20px;
+			}
+			h1,
+			h2 {
+				font-family: var(--font-head);
+				line-height: 1.25;
+			}
+			h1 {
+				font-size: clamp(26px, 5vw, 38px);
+			}
+			h2 {
+				font-size: 24px;
+				margin: 10px 0;
+			}
+			.panel {
+				margin: 24px 0;
+				padding: 24px;
+				border: 2.5px solid var(--ink);
+				border-radius: var(--radius-panel);
+				background: var(--card);
+				box-shadow: var(--elevation-ordinary);
+			}
+			.status {
+				font-size: 13px;
+				font-weight: 750;
+				color: var(--primary);
+			}
+			.button {
+				display: inline-block;
+				margin: 12px 0;
+				padding: 10px 16px;
+				border: 2.5px solid var(--ink);
+				border-radius: var(--radius-btn);
+				background: var(--primary);
+				color: var(--primary-foreground);
+				text-decoration: none;
+				font-weight: 700;
+			}
+			.muted {
+				color: var(--muted-foreground);
+				font-size: 14px;
+			}
+			a {
+				color: var(--primary);
+				text-underline-offset: 3px;
+			}
+			a:focus-visible,
+			summary:focus-visible {
+				outline: 3px solid var(--ring);
+				outline-offset: 3px;
+			}
+			li {
+				margin: 6px 0;
+			}
+			.boundary {
+				border-left: 4px solid var(--primary);
+				padding-left: 16px;
+			}
+			summary {
+				cursor: pointer;
+				font-weight: 650;
+			}
+			footer {
+				font-size: 13px;
+				color: var(--muted-foreground);
+			}
+			@media (max-width: 640px) {
+				main {
+					padding: 20px 12px;
+				}
+				.panel {
+					padding: 16px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<p class="status">Přejeme si · Design-only review</p>
+			<h1>Approved design handoff</h1>
+			<p class="boundary">
+				Only the controls named below. Dimmed surroundings and simplified components provide
+				context; they are <strong>not a proposed app redesign</strong>. All data changes are
+				simulated locally.
+			</p>
+			<section class="panel">
+				<div class="status">Accepted · Refined Variant A · #348 / #349</div>
+				<h2>Settings controls</h2>
+				<p>
+					Explicit color-picker confirmation and compact palette choices. The existing
+					global settings save model stays intact.
+				</p>
+				<a class="button" href="../settings-control-review/refined.html"
+					>Open refined settings →</a
+				>
+				<ol>
+					<li>
+						<strong>Categories:</strong> open a color chip. Save starts disabled; a
+						valid change enables it. Cancel must leave the category unchanged.
+					</li>
+					<li>
+						<strong>Save boundaries:</strong> picker Save accepts into the settings
+						draft. Only “Uložit změny” simulates persistence. Tab changes preserve
+						drafts; failures preserve edits.
+					</li>
+					<li>
+						<strong>Appearance:</strong> choices remain compact, centered and clearly
+						selected at phone and desktop widths.
+					</li>
+				</ol>
+				<p class="muted">
+					Not under review: the app background, modal layout, simplified tabs,
+					category-enable controls or unrelated settings. “Rozsah návrhu a stav prototypu”
+					expands the test ledger.
+				</p>
+				<a href="../settings-control-review/SUMMARY.md">Component map</a> ·
+				<a href="../settings-control-review/DESIGN_BRIEF_SETTINGS_CONTROL_REVIEW.md"
+					>Authoritative brief</a
+				>
+			</section>
+			<section class="panel">
+				<div class="status">Approved · Refined Variant A · Design phase complete</div>
+				<h2>Wishlist commands</h2>
+				<a class="button" href="../wishlist-command-review/refined.html"
+					>Open refined commands →</a
+				>
+				<ol>
+					<li>
+						<strong>Desktop Display:</strong> hover Sorting, Grouping or Filters. The
+						root stays visible and a second menu opens beside the row. Try switching
+						categories and selecting filters. Keyboard: Right opens, Left/Escape returns
+						to the parent.
+					</li>
+					<li>
+						<strong>Selection:</strong> select-all matches the gift checkbox style;
+						Actions has desktop cascades and mobile in-sheet categories with Back.
+					</li>
+					<li>
+						<strong>Hero:</strong> gear-only Settings and ellipsis-only More stay in
+						their accepted positions. Toolbar More is a separate workflow.
+					</li>
+					<li>
+						<strong>Reorder:</strong> a small top-left visual has a larger hit area.
+						Grid/List switching stays available. Actual dragging is not implemented
+						here.
+					</li>
+				</ol>
+				<p class="muted">
+					The mobile sheet hierarchy is retained. Layout-switcher styling, unrelated gift
+					artwork and the accepted toolbar mask are not redesign choices. Menu anchoring
+					illustrates the existing component contract, not a production positioning-engine
+					fix.
+				</p>
+				<a href="../wishlist-command-review/SUMMARY.md">Component map</a> ·
+				<a href="../wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+					>Authoritative brief</a
+				>
+			</section>
+			<section class="panel">
+				<div class="status">Approved · Refined Variant C · Design phase complete</div>
+				<h2>Gift geometry: refined Variant C</h2>
+				<a class="button" href="../gift-geometry-review/refined.html"
+					>Open refined gift specimens →</a
+				>
+				<p>
+					The replacement separates List action density, Grid image overlays and top-left
+					grips into focused sections. Start with the default specimens; optional stress
+					controls stay collapsed. All scoped settings, command and gift design decisions
+					are approved.
+				</p>
+				<ul>
+					<li>
+						<strong>Settled:</strong> full-height square List image; clamp description
+						first, then title. Keep price, quantity, a store-link entry and all eligible
+						actions available.
+					</li>
+					<li>
+						<strong>Settled:</strong> Grid Like overlays the image without a blank
+						header strip. Top-left drag grip uses a small visual and larger hit area.
+					</li>
+					<li>
+						<strong>Approved:</strong> contained action rows, hard-shadow clearance,
+						matching button heights and the reviewed text density.
+					</li>
+				</ul>
+				<p class="muted">
+					Historical A/B differed only below 640px in <strong>List + browse</strong>: A
+					had a full-width footer; B kept actions beside the thumbnail. Desktop, Grid and
+					reorder were identical. The new full-height image constraint supersedes that
+					comparison.
+				</p>
+				<p class="muted">
+					The approval includes stacking the complete square image above content at
+					enlarged text sizes and the manager case with a second action over the image.
+					Production must respond to real text/space constraints, not expose a mockup-only
+					switch.
+					<a href="../gift-geometry-review/variants/variant-c-notes.md"
+						>Focused review guide</a
+					>.
+				</p>
+				<details>
+					<summary>Historical variants — not approval candidates</summary>
+					<p>
+						<a href="../gift-geometry-review/variants/variant-a.html">Old A</a> ·
+						<a href="../gift-geometry-review/variants/variant-b.html">Old B</a>
+					</p>
+				</details>
+				<p>
+					<a href="../gift-geometry-review/REVIEW_FEEDBACK.md">Recorded feedback</a> ·
+					<a href="../gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+						>Updated brief</a
+					>
+					·
+					<a href="https://github.com/MartinoPolo/prejemesi/issues/350"
+						>Implementation issue #350</a
+					>
+				</p>
+			</section>
+			<footer>
+				No production code, data or deployment changes. No implementation issue is closed by
+				these mockups. <a href="./REVIEW_NOTES.md">Issue inventory and review history</a> ·
+				<a href="./DESIGN_STATUS.md">Final design-gate audit</a>
+			</footer>
+		</main>
+	</body>
+</html>

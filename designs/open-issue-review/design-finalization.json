@@ -1,0 +1,51 @@
+[
+  {
+    "number": 348,
+    "title": "Add explicit Save and Cancel to the custom color picker",
+    "coverage": "Explicit picker Save/Cancel, unchanged/invalid disabled state, local picker draft accepted into the existing staged settings draft; global Save remains the persistence boundary.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/348#issuecomment-5554355607",
+    "removedLabels": []
+  },
+  {
+    "number": 349,
+    "title": "Use compact widths for wishlist theme choices",
+    "coverage": "Compact centered palette choices with current/selected state; existing staged preview/global-save model retained.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/349#issuecomment-5554355753",
+    "removedLabels": []
+  },
+  {
+    "number": 353,
+    "title": "Consolidate bulk actions into one categorized entry point",
+    "coverage": "Categorized desktop cascading bulk actions and mobile overview → options → Back; all action categories, mixed/current/disabled/pending/error treatments and explicit copy destination are covered.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/353#issuecomment-5554355913",
+    "removedLabels": []
+  },
+  {
+    "number": 355,
+    "title": "Reduce excessive spacing between filter checkbox options",
+    "coverage": "Display → Filters: compact checkbox-option spacing, reachable final rows, fixed navigation clearance and scrolling only when content genuinely overflows. This issue is filter spacing, not the bulk-sheet header.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/355#issuecomment-5554356062",
+    "removedLabels": []
+  },
+  {
+    "number": 358,
+    "title": "Align the bulk action sheet title count and close button",
+    "coverage": "Mobile bulk-sheet header: selected count once beside Actions, close at right, aligned targets with adequate top/separator clearance; each current/mixed summary appears once. Hero Settings belongs to #359, not this issue.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/358#issuecomment-5554356189",
+    "removedLabels": []
+  },
+  {
+    "number": 359,
+    "title": "Simplify wishlist display controls and move Settings into the hero",
+    "coverage": "Single Display entry with persistent desktop parent and adjacent Sort/Group/Filter children; mobile in-sheet navigation retained. Existing options, role gates and accepted toolbar mask are preserved.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/359#issuecomment-5554356339",
+    "removedLabels": []
+  },
+  {
+    "number": 361,
+    "title": "Allow Grid and List switching during manual reorder",
+    "coverage": "Grid/List switching remains available in reorder with explicit Done; switching is not a save/exit action. Real dragging and persistence remain implementation verification.",
+    "commentUrl": "https://github.com/MartinoPolo/prejemesi/issues/361#issuecomment-5554356520",
+    "removedLabels": []
+  }
+]
