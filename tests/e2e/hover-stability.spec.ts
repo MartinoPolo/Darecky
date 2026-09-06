@@ -401,6 +401,11 @@ test.describe('Issue #346 stable hover hit regions', () => {
 			expectStableLift(stationary);
 			const sweep = await bottomToTopSweep(page, card, 'Gift card');
 			expect(sweep.interveningUnhovered).toEqual([]);
+			await page.getByRole('button', { name: /^Seskupení:/ }).click();
+			await page.getByRole('option', { name: 'Bez seskupení', exact: true }).click();
+			await expect(
+				page.getByRole('button', { name: 'Seskupení: Bez seskupení', exact: true }),
+			).toBeVisible();
 			// Reorder grips only exist while the explicit reorder mode is active.
 			// The former selector assumed that setup and intermittently tested no grip.
 			await page.getByRole('button', { name: 'Změnit pořadí', exact: true }).click();

@@ -340,7 +340,7 @@ test.describe('issue #269 integrated motion strategy', () => {
 			page.getByTestId('gift-view-list'),
 		]) {
 			await expect(control).toBeVisible();
-			await expect(control).toBeDisabled();
+			await expect(control).toBeEnabled();
 		}
 		for (const control of await page
 			.getByTestId('wishlist-toolbar-display-controls')
