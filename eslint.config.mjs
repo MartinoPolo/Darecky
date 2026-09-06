@@ -138,4 +138,8 @@ export default [
 			],
 		},
 	},
+	{
+		...tseslint.configs.disableTypeChecked,
+		files: ['designs/**/*.{js,mjs}'],
+	},
 ];

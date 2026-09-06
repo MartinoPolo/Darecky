@@ -1,0 +1,222 @@
+{
+  "changes": [
+    {
+      "number": 347,
+      "title": "Preserve the latest gift order when reopening manual reorder",
+      "kind": "implementation-context",
+      "scope": "Context only: reorder entry/Done and layout controls. Fix authoritative order snapshots and real persistence; the static mockup proves neither.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 348,
+      "title": "Add explicit Save and Cancel to the custom color picker",
+      "kind": "approved-design",
+      "scope": "Picker Save/Cancel and picker-local draft → parent draft → existing global Save.",
+      "paths": [
+        "designs/settings-control-review/refined.html",
+        "designs/settings-control-review/SUMMARY.md",
+        "designs/settings-control-review/DESIGN_BRIEF_SETTINGS_CONTROL_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 349,
+      "title": "Use compact widths for wishlist theme choices",
+      "kind": "approved-design",
+      "scope": "Compact centered palette choices and their selected/draft states.",
+      "paths": [
+        "designs/settings-control-review/refined.html",
+        "designs/settings-control-review/SUMMARY.md",
+        "designs/settings-control-review/DESIGN_BRIEF_SETTINGS_CONTROL_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 350,
+      "title": "Fix gift action sizing and containment across wishlist roles",
+      "kind": "approved-design",
+      "scope": "Equal neighboring action heights, full hard-shadow containment, full-height square normal List images and text density, role-safe actions; includes the labelled enlarged-text stacking alternative and manager secondary-action placement.",
+      "paths": [
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+      ],
+      "removedLabels": [
+        "HITL",
+        "design needed"
+      ]
+    },
+    {
+      "number": 352,
+      "title": "Fix bulk gift mutation failures remaining after the batch implementation",
+      "kind": "implementation-context",
+      "scope": "Context only: approved bulk hierarchy and failure/selection presentation. Diagnose and test actual mutations and persistence separately.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 353,
+      "title": "Consolidate bulk actions into one categorized entry point",
+      "kind": "approved-design",
+      "scope": "One categorized desktop Actions menu with persistent parent/cascading children; mobile category overview → options → Back with all bulk actions and current/mixed/pending/disabled states.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 354,
+      "title": "Fix detached selection outlines at gift card corners",
+      "kind": "approved-design",
+      "scope": "Continuous selected Card/List perimeter and separate keyboard focus; use the selection preview control.",
+      "paths": [
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 355,
+      "title": "Reduce excessive spacing between filter checkbox options",
+      "kind": "approved-design",
+      "scope": "Display → Filters: compact checkbox spacing, reachable final rows, fixed navigation clearance and scrolling only when content genuinely overflows. This is filter spacing, not the bulk-sheet header.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 356,
+      "title": "Show high and low priority badges outside priority grouping",
+      "kind": "approved-design",
+      "scope": "High/low textual priority badges outside priority grouping; use varied-content and theme controls. Keep all required badges visible in real components, including manager action combinations; fixture omissions do not override production requirements.",
+      "paths": [
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 357,
+      "title": "Place a ghost Like heart and count beside each other without badge collisions",
+      "kind": "approved-design",
+      "scope": "Ghost Like over the image top-right in Grid and thumbnail top-right in List, count beside the heart, no circular background/extra image strip; independently centered readable status stickers and recipient privacy.",
+      "paths": [
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 358,
+      "title": "Align the bulk action sheet title count and close button",
+      "kind": "approved-design",
+      "scope": "Mobile bulk-sheet header: selected count once beside Actions, close at right, aligned targets with adequate top/separator clearance. Each current/mixed summary appears once. Hero Settings belongs to #359.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 359,
+      "title": "Simplify wishlist display controls and move Settings into the hero",
+      "kind": "approved-design",
+      "scope": "Single Display beside the layout switcher, persistent desktop cascades/mobile sections, gear-only hero Settings beside separate icon-only More; preserve the accepted toolbar mask.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 360,
+      "title": "Render desktop wishlist List items as bordered cards",
+      "kind": "approved-design",
+      "scope": "Bordered horizontal desktop List cards with existing information hierarchy, square thumbnails and contained actions; do not turn ordinary List into Grid.",
+      "paths": [
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 361,
+      "title": "Allow Grid and List switching during manual reorder",
+      "kind": "approved-design",
+      "scope": "Grid/List remains switchable inside reorder; switching is not save/exit, Done stays explicit.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md",
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 362,
+      "title": "Enlarge gift drag targets and document nested-corner styling",
+      "kind": "approved-design",
+      "scope": "Top-left compact grip within a larger hit area in List/Grid; coherent corner inset, distinct focus and safe separation from other controls. Real drag/scroll verification and the sourced auto-loaded styling rule remain implementation work.",
+      "paths": [
+        "designs/gift-geometry-review/refined.html",
+        "designs/gift-geometry-review/SUMMARY.md",
+        "designs/gift-geometry-review/DESIGN_BRIEF_GIFT_GEOMETRY_REVIEW.md",
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 363,
+      "title": "Default to priority grouping when no wishlist preference is saved",
+      "kind": "implementation-context",
+      "scope": "Context only: Display grouping state. Preserve saved preferences and the settled priority fallback; no new visual choice is required.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md"
+      ],
+      "removedLabels": []
+    },
+    {
+      "number": 364,
+      "title": "Prevent dropdown placement oscillation and viewport clipping",
+      "kind": "implementation-context",
+      "scope": "Context only: menu anchoring/cascades and settings popovers. Fix the actual positioning engine; do not copy prototype positioning code.",
+      "paths": [
+        "designs/wishlist-command-review/refined.html",
+        "designs/wishlist-command-review/SUMMARY.md",
+        "designs/wishlist-command-review/DESIGN_BRIEF_WISHLIST_COMMAND_REVIEW.md",
+        "designs/settings-control-review/refined.html",
+        "designs/settings-control-review/SUMMARY.md",
+        "designs/settings-control-review/DESIGN_BRIEF_SETTINGS_CONTROL_REVIEW.md"
+      ],
+      "removedLabels": []
+    }
+  ],
+  "approvalComment": "https://github.com/MartinoPolo/prejemesi/issues/350#issuecomment-5557625602",
+  "remainingGates": []
+}
