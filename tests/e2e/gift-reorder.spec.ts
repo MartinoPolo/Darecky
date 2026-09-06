@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Response } from '@playwright/test';
+import { test, expect, type Page, type Request, type Response } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
 import { createWishlistAndNavigate, addGift } from './fixtures/wishlist-helpers.js';
@@ -225,11 +225,13 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 	expect(draggedOrder).not.toEqual(names);
 	await page.screenshot({ path: testInfo.outputPath('reorder-grid.png'), fullPage: true });
 
-	const switchMutations: Response[] = [];
-	const recordSwitchMutation = (response: Response) => {
-		if (isSuccessfulRemoteMutation(response)) switchMutations.push(response);
+	const switchMutationRequests: Request[] = [];
+	const recordSwitchMutation = (request: Request) => {
+		if (request.method() === 'POST' && request.url().includes('/_app/remote/')) {
+			switchMutationRequests.push(request);
+		}
 	};
-	page.on('response', recordSwitchMutation);
+	page.on('request', recordSwitchMutation);
 	await listMode.click();
 	await expect(listMode).toBeChecked();
 	await expect.poll(() => visibleGiftNames(page)).toEqual(draggedOrder);
@@ -238,19 +240,39 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 	await expect(gridMode).toBeChecked();
 	await expect.poll(() => visibleGiftNames(page)).toEqual(draggedOrder);
 	await page.waitForTimeout(250);
-	page.off('response', recordSwitchMutation);
-	expect(switchMutations).toHaveLength(0);
+	page.off('request', recordSwitchMutation);
+	expect(switchMutationRequests).toHaveLength(0);
 
-	const firstHandle = giftItem(page, draggedOrder[0]!).getByRole('button', {
+	await listMode.click();
+	await expect(listMode).toBeChecked();
+	const listHandle = giftItem(page, draggedOrder[0]!).getByRole('button', {
 		name: REORDER_HANDLE,
 		exact: true,
 	});
-	const keyboardMutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
-	await firstHandle.focus();
-	await firstHandle.press('ArrowDown');
-	await keyboardMutation;
-	const finalOrder = await visibleGiftNames(page);
-	expect(finalOrder).not.toEqual(draggedOrder);
+	const listKeyboardMutation = page.waitForResponse(isSuccessfulRemoteMutation, {
+		timeout: 15_000,
+	});
+	await listHandle.focus();
+	await listHandle.press('ArrowDown');
+	await listKeyboardMutation;
+	const listKeyboardOrder = [draggedOrder[1]!, draggedOrder[0]!, draggedOrder[2]!];
+	await expect.poll(() => visibleGiftNames(page)).toEqual(listKeyboardOrder);
+
+	await gridMode.click();
+	await expect(gridMode).toBeChecked();
+	await expect.poll(() => visibleGiftNames(page)).toEqual(listKeyboardOrder);
+	const gridHandle = giftItem(page, listKeyboardOrder[0]!).getByRole('button', {
+		name: REORDER_HANDLE,
+		exact: true,
+	});
+	const gridKeyboardMutation = page.waitForResponse(isSuccessfulRemoteMutation, {
+		timeout: 15_000,
+	});
+	await gridHandle.focus();
+	await gridHandle.press('ArrowDown');
+	await gridKeyboardMutation;
+	const finalOrder = [listKeyboardOrder[1]!, listKeyboardOrder[0]!, listKeyboardOrder[2]!];
+	await expect.poll(() => visibleGiftNames(page)).toEqual(finalOrder);
 
 	const toolbar = page.getByTestId('wishlist-toolbar');
 	const desktopBox = await toolbar.boundingBox();
@@ -305,10 +327,12 @@ test('latest gift order survives immediate reopen, no-op entry, a second reorder
 	await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
 	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
 
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
-	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
-	await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
-	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+	for (let repetition = 0; repetition < 2; repetition += 1) {
+		await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+		await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+		await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
+		await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
+	}
 
 	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeChecked();
 	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();

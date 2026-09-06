@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { WISHLIST_ROLES, type WishlistRole } from '$lib/modules/wishlists/types.js';
 import { wishlistGiftGroupingStorageKey } from './gifts.context.svelte.js';
 import { GIFT_GROUPING_OPTIONS, type GiftForVisitor } from './types.js';
-import GiftsContextTestHost from './gifts_context_test_host.svelte';
+import GiftsContextTestHost from './GiftsContextTestHost.svelte';
 
 function makeGift(options: { priority?: boolean; category?: boolean } = {}): GiftForVisitor {
 	return {
@@ -24,19 +24,20 @@ function makeGift(options: { priority?: boolean; category?: boolean } = {}): Gif
 		sortOrder: 0,
 		received: false,
 		createdAt: new Date('2026-01-01T00:00:00Z'),
-		priorityLevelId: options.priority ? 'priority-high' : null,
-		priorityLabel: options.priority ? 'High' : null,
-		prioritySortOrder: options.priority ? 0 : null,
-		categoryId: options.category ? 'category-books' : null,
-		category: options.category
-			? {
-					id: 'category-books',
-					presetKey: null,
-					customLabel: 'Books',
-					color: '#000000',
-					sortOrder: 0,
-				}
-			: null,
+		priorityLevelId: options.priority === true ? 'priority-high' : null,
+		priorityLabel: options.priority === true ? 'High' : null,
+		prioritySortOrder: options.priority === true ? 0 : null,
+		categoryId: options.category === true ? 'category-books' : null,
+		category:
+			options.category === true
+				? {
+						id: 'category-books',
+						presetKey: null,
+						customLabel: 'Books',
+						color: '#000000',
+						sortOrder: 0,
+					}
+				: null,
 		likeCount: 0,
 		reservedCount: 0,
 		isFullyReserved: false,
@@ -78,11 +79,25 @@ describe('wishlist grouping preference default (#363)', () => {
 		[GIFT_GROUPING_OPTIONS.none, { priority: true }],
 		[GIFT_GROUPING_OPTIONS.priority, { priority: true }],
 		[GIFT_GROUPING_OPTIONS.category, { category: true }],
-	] as const)('preserves an explicit saved %s choice', async (saved, giftOptions) => {
-		localStorage.setItem(wishlistGiftGroupingStorageKey('wishlist-a'), JSON.stringify(saved));
-		const screen = render(GiftsContextTestHost, { initialGifts: [makeGift(giftOptions)] });
-		await expectGrouping(screen, saved);
-	});
+	] as const)(
+		'preserves an explicit saved %s choice across remounts',
+		async (saved, giftOptions) => {
+			const storageKey = wishlistGiftGroupingStorageKey('wishlist-a');
+			localStorage.setItem(storageKey, JSON.stringify(saved));
+			const firstScreen = render(GiftsContextTestHost, {
+				initialGifts: [makeGift(giftOptions)],
+			});
+			await expectGrouping(firstScreen, saved);
+			expect(localStorage.getItem(storageKey)).toBe(JSON.stringify(saved));
+			await firstScreen.unmount();
+
+			const remountedScreen = render(GiftsContextTestHost, {
+				initialGifts: [makeGift(giftOptions)],
+			});
+			await expectGrouping(remountedScreen, saved);
+			expect(localStorage.getItem(storageKey)).toBe(JSON.stringify(saved));
+		},
+	);
 
 	it('keeps saved and unsaved wishlist scopes independent while navigating', async () => {
 		localStorage.setItem(
