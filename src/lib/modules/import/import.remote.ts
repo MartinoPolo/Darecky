@@ -25,6 +25,7 @@ import { canonicalGiftLinkKey } from '$lib/modules/gifts/gift_url.js';
 import { SERVER_ERROR } from '$lib/modules/errors/server_error_codes.js';
 import { mapGiftCreationError } from '$lib/modules/gifts/gift_creation_transport.js';
 import { resolveImportGiftCategoryAssignments } from '$lib/modules/gift-categories/gift_categories_service.js';
+import { getGiftCategorySettingsRows } from '$lib/modules/gift-categories/gift_category_queries.remote.js';
 import {
 	buildSheetsCsvExportUrl,
 	classifySheetCsvResponse,
@@ -247,6 +248,7 @@ export const importGifts = guardedCommand(ImportGiftsInputSchema, async ({ user 
 
 	if (result.status === 'created') {
 		singleFlightRefresh(getGiftsByWishlistShortId, wishlistRow.shortId);
+		singleFlightRefresh(getGiftCategorySettingsRows, input.wishlistId);
 	}
 	return result;
 });

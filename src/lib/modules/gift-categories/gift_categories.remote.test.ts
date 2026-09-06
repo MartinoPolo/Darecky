@@ -41,8 +41,9 @@ const getGiftsByWishlistShortId = vi.fn();
 Object.assign(getGiftsByWishlistShortId, { __: {} });
 vi.mock('$lib/modules/gifts/gifts.remote.js', () => ({ getGiftsByWishlistShortId }));
 
-const { getGiftCategories, getGiftCategorySettingsRows, saveGiftCategorySettingsCommand } =
-	await import('./gift_categories.remote.js');
+const { getGiftCategories, getGiftCategorySettingsRows } =
+	await import('./gift_category_queries.remote.js');
+const { saveGiftCategorySettingsCommand } = await import('./gift_categories.remote.js');
 
 function deferred() {
 	let resolve!: () => void;

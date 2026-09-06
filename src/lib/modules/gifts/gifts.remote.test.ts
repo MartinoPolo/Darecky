@@ -236,24 +236,41 @@ vi.mock('$lib/server/storage/r2.js', () => ({
 vi.mock('$lib/modules/notifications/notification_dispatcher.js', () => ({
 	dispatchNotification: vi.fn(() => Promise.resolve()),
 }));
+vi.mock('$lib/modules/gift-categories/gift_category_queries.remote.js', () => ({
+	getGiftCategorySettingsRows: vi.fn(),
+}));
+vi.mock('./gift_creation_service.js', () => ({
+	appendGifts: vi.fn(),
+}));
+vi.mock('./gift_bulk_copy.js', () => ({
+	BulkCopyGiftsInputSchema: {},
+	copyGifts: vi.fn(),
+}));
 
 // ── Import the module under test (after all mocks are set up) ────────────────
 
 import {
 	getGiftsByWishlistShortId,
+	createGift,
 	updateGift,
 	deleteGift,
 	reorderGifts,
 	markGiftReceived,
 	bulkUpdateGifts,
+	bulkCopyGifts,
 } from './gifts.remote.js';
 import type { GiftForRecipient, GiftForVisitor } from './types.js';
 import { deleteObjectsBestEffort } from '$lib/server/storage/r2.js';
 import { dispatchNotification } from '$lib/modules/notifications/notification_dispatcher.js';
 import { singleFlightRefresh } from '$lib/server/remote.js';
+import { getGiftCategorySettingsRows } from '$lib/modules/gift-categories/gift_category_queries.remote.js';
+import { appendGifts } from './gift_creation_service.js';
+import { copyGifts } from './gift_bulk_copy.js';
 import { toPreShareGiftSnapshot, type PreShareGiftSnapshot } from './gift_post_share.js';
 
 const mockDeleteObjects = vi.mocked(deleteObjectsBestEffort);
+const mockAppendGifts = vi.mocked(appendGifts);
+const mockCopyGifts = vi.mocked(copyGifts);
 
 // ── Test data factories ───────────────────────────────────────────────────────
 
@@ -341,7 +358,7 @@ type GetGiftsHandler = (
 	shortId: string,
 ) => Promise<{ role: string; gifts: unknown[] }>;
 
-type UpdateGiftHandler = (
+type GiftCommandHandler = (
 	authContext: { user: { id: string } },
 	input: Record<string, unknown>,
 ) => Promise<unknown>;
@@ -362,11 +379,13 @@ type BulkUpdateHandler = (
 ) => Promise<unknown>;
 
 const callGetGifts = getGiftsByWishlistShortId as unknown as GetGiftsHandler;
-const callUpdateGift = updateGift as unknown as UpdateGiftHandler;
+const callCreateGift = createGift as unknown as GiftCommandHandler;
+const callUpdateGift = updateGift as unknown as GiftCommandHandler;
 const callDeleteGift = deleteGift as unknown as DeleteGiftHandler;
 const callReorderGifts = reorderGifts as unknown as ReorderGiftsHandler;
 const callMarkReceived = markGiftReceived as unknown as MarkReceivedHandler;
 const callBulkUpdate = bulkUpdateGifts as unknown as BulkUpdateHandler;
+const callBulkCopy = bulkCopyGifts as unknown as GiftCommandHandler;
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -374,6 +393,41 @@ beforeEach(() => {
 	mockDbInstance.reset();
 	vi.clearAllMocks();
 	vi.mocked(dispatchNotification).mockImplementation(() => Promise.resolve());
+});
+
+describe('gift category settings refresh dependencies', () => {
+	it('refreshes category counts after creating a gift', async () => {
+		mockDbInstance.pushResult([makeWishlistRow()]);
+		mockAppendGifts.mockResolvedValueOnce([
+			makeGiftRow({ categoryId: 'category-books' }),
+		] as never);
+
+		await callCreateGift(makeRecipientAuthContext(), {
+			wishlistId: WISHLIST_ID,
+			name: 'Book',
+			categoryId: 'category-books',
+		});
+
+		expect(singleFlightRefresh).toHaveBeenCalledWith(getGiftCategorySettingsRows, WISHLIST_ID);
+	});
+
+	it('refreshes destination category counts after copying gifts', async () => {
+		mockCopyGifts.mockResolvedValueOnce({
+			created: [{ id: 'copied-gift' }],
+			destinationShortId: 'destination-short-id',
+		} as never);
+
+		await callBulkCopy(makeRecipientAuthContext(), {
+			sourceWishlistId: WISHLIST_ID,
+			destinationWishlistId: 'destination-wishlist',
+			giftIds: [GIFT_ID],
+		});
+
+		expect(singleFlightRefresh).toHaveBeenCalledWith(
+			getGiftCategorySettingsRows,
+			'destination-wishlist',
+		);
+	});
 });
 
 describe('bulkUpdateGifts presentation parity', () => {
@@ -409,6 +463,21 @@ describe('bulkUpdateGifts presentation parity', () => {
 		).rejects.toMatchObject({ status: 403, message: SERVER_ERROR.ACCESS_DENIED });
 		expect(mockDbInstance.calls).toContainEqual({ method: 'transaction', args: [] });
 		expect(mockDbInstance.calls.filter((call) => call.method === 'update')).toHaveLength(0);
+	});
+
+	it('refreshes category counts when clearing categories in bulk', async () => {
+		mockDbInstance.pushResult([makeWishlistRow({ status: 'active' })]);
+		mockDbInstance.pushResult([makeGiftRow({ categoryId: 'category-books' })]);
+		mockDbInstance.pushResult([{ id: GIFT_ID }]);
+
+		await callBulkUpdate(makeRecipientAuthContext(), {
+			wishlistId: WISHLIST_ID,
+			giftIds: [GIFT_ID],
+			action: 'category',
+			categoryId: null,
+		});
+
+		expect(singleFlightRefresh).toHaveBeenCalledWith(getGiftCategorySettingsRows, WISHLIST_ID);
 	});
 
 	it('applies post-share edit transparency to every changed presentation gift in one update statement', async () => {
@@ -1023,6 +1092,21 @@ describe('updateGift', () => {
 			expect(result).toMatchObject({ id: GIFT_ID, name: 'Updated Name' });
 		});
 
+		it('refreshes category counts when clearing a category', async () => {
+			mockDbInstance.pushResult([
+				makeGiftRow({ createdAt: AFTER_SHARING, categoryId: 'category-books' }),
+			]);
+			mockDbInstance.pushResult([makeWishlistRow({ sharedAt: null })]);
+			mockDbInstance.pushResult([{ id: GIFT_ID, categoryId: null }]);
+
+			await callUpdateGift(makeRecipientAuthContext(), { id: GIFT_ID, categoryId: null });
+
+			expect(singleFlightRefresh).toHaveBeenCalledWith(
+				getGiftCategorySettingsRows,
+				WISHLIST_ID,
+			);
+		});
+
 		it('persists updated image metadata', async () => {
 			const imageMeta = { fitMode: 'contain-padded', bgColor: '#222222' };
 			mockDbInstance.pushResult([makeGiftRow({ createdAt: AFTER_SHARING })]);
@@ -1206,6 +1290,21 @@ describe('updateGift', () => {
 			await expect(
 				callUpdateGift(makeRecipientAuthContext(), { id: GIFT_ID, name: 'Renamed' }),
 			).rejects.toMatchObject({ status: 403, message: 'CANNOT_EDIT_AFTER_SHARING' });
+		});
+
+		it('refreshes category counts when the pre-share edit path clears a category', async () => {
+			mockDbInstance.pushResult([
+				makeGiftRow({ createdAt: BEFORE_SHARING, categoryId: 'category-books' }),
+			]);
+			mockDbInstance.pushResult([makeWishlistRow({ sharedAt: SHARED_AT })]);
+			mockDbInstance.pushResult([{ id: GIFT_ID, categoryId: null }]);
+
+			await callUpdateGift(makeRecipientAuthContext(), { id: GIFT_ID, categoryId: null });
+
+			expect(singleFlightRefresh).toHaveBeenCalledWith(
+				getGiftCategorySettingsRows,
+				WISHLIST_ID,
+			);
 		});
 
 		it('allows raising quantity (3 -> 5)', async () => {
@@ -1640,6 +1739,10 @@ describe('deleteGift', () => {
 			await expect(
 				callDeleteGift(makeRecipientAuthContext(), GIFT_ID),
 			).resolves.not.toThrow();
+			expect(singleFlightRefresh).toHaveBeenCalledWith(
+				getGiftCategorySettingsRows,
+				WISHLIST_ID,
+			);
 		});
 
 		it('deletes the uploaded image from storage on delete (issue #107 REQ-6)', async () => {

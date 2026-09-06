@@ -7,10 +7,8 @@
 	import { ColorPicker } from '$lib/components/derived/color-picker/index.js';
 	import * as Dialog from '$lib/components/base/dialog/index.js';
 	import { toastError, toastSuccess } from '$lib/components/base/toast/index.js';
-	import {
-		getGiftCategorySettingsRows,
-		saveGiftCategorySettingsCommand,
-	} from '$lib/modules/gift-categories/gift_categories.remote.js';
+	import { getGiftCategorySettingsRows } from '$lib/modules/gift-categories/gift_category_queries.remote.js';
+	import { saveGiftCategorySettingsCommand } from '$lib/modules/gift-categories/gift_categories.remote.js';
 	import {
 		GIFT_CATEGORY_PRESETS,
 		MAX_CUSTOM_GIFT_CATEGORY_LABEL_LENGTH,

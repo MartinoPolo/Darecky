@@ -17,12 +17,14 @@ vi.mock('$env/dynamic/public', () => ({ env: {} }));
 vi.mock('$lib/modules/wishlists/wishlist_settings.remote.js', () => ({
 	saveWishlistSettings: remoteMocks.saveWishlistSettings,
 }));
-vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
+vi.mock('$lib/modules/gift-categories/gift_category_queries.remote.js', () => ({
 	getGiftCategories: vi.fn(() => ({ current: [] })),
 	getGiftCategorySettingsRows: vi.fn(() => ({
 		current: [],
 		refresh: remoteMocks.refreshGiftCategorySettings,
 	})),
+}));
+vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
 	saveGiftCategorySettingsCommand: remoteMocks.saveGiftCategorySettingsCommand,
 }));
 

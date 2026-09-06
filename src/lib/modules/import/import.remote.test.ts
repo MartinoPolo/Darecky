@@ -36,6 +36,9 @@ vi.mock('$lib/server/remote.js', () => ({
 vi.mock('$lib/modules/gifts/gifts.remote.js', () => ({
 	getGiftsByWishlistShortId: vi.fn(),
 }));
+vi.mock('$lib/modules/gift-categories/gift_category_queries.remote.js', () => ({
+	getGiftCategorySettingsRows: vi.fn(),
+}));
 
 vi.mock('@sveltejs/kit', () => ({
 	error: vi.fn((status: number, message: string) => {
@@ -169,6 +172,9 @@ vi.mock('$lib/server/db/index.js', () => ({
 
 const { fetchGoogleSheetCsv, importGifts, createWishlistFromImport } =
 	await import('./import.remote.js');
+const { singleFlightRefresh } = await import('$lib/server/remote.js');
+const { getGiftCategorySettingsRows } =
+	await import('$lib/modules/gift-categories/gift_category_queries.remote.js');
 
 // The mocked guardedCommand returns the raw (authContext, arg) handler; cast to it.
 type FetchHandler = (authContext: { user: { id: string } }, link: string) => Promise<string>;
@@ -396,6 +402,7 @@ describe('importGifts', () => {
 		// draftA = medium → rank 1, draftB = high → rank 0.
 		expect(rows!.map((r) => r.priorityLevelId)).toEqual(['pl-medium', 'pl-high']);
 		expect(result).toMatchObject({ status: 'created', gifts: [{ id: 'g5' }, { id: 'g6' }] });
+		expect(singleFlightRefresh).toHaveBeenCalledWith(getGiftCategorySettingsRows, WISHLIST_ID);
 	});
 
 	it('starts sortOrder at 0 for an empty wishlist (COALESCE -1)', async () => {
@@ -562,6 +569,7 @@ describe('importGifts', () => {
 		expect(warning).toEqual({ status: 'duplicate-warning', duplicateIndexes: [0] });
 		expect(transactionOpened()).toBe(true);
 		expect(giftInsertRows()).toBeUndefined();
+		expect(singleFlightRefresh).not.toHaveBeenCalled();
 		const created = await callImportGifts(AUTH, {
 			wishlistId: WISHLIST_ID,
 			gifts: [inputDraft],
