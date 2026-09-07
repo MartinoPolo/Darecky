@@ -41,7 +41,7 @@
 		translateServerError,
 	} from '$lib/modules/errors/translate_server_error.js';
 	import { SERVER_ERROR } from '$lib/modules/errors/server_error_codes.js';
-	import { getGiftCategorySettingsRows } from '$lib/modules/gift-categories/gift_categories.remote.js';
+	import { getGiftCategorySettingsRows } from '$lib/modules/gift-categories/gift_category_queries.remote.js';
 	import {
 		REVERT_CAPABILITY,
 		type RevertCapability,

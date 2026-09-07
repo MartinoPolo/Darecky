@@ -541,14 +541,29 @@ test.describe('Wishlist settings – non-image editing', () => {
 		const customSection = settingsDialog
 			.getByRole('heading', { name: 'Vlastní kategorie' })
 			.locator('..');
+		await expect(customSection.getByTestId('gift-category-used-count')).toHaveText(
+			'Použito: 1',
+		);
 		await customSection.getByRole('button', { name: 'Smazat' }).click();
-		await page.getByRole('dialog').getByRole('button', { name: 'Potvrdit odebrání' }).click();
+		const confirmationDialog = page.getByRole('dialog').filter({
+			has: page.getByRole('button', { name: 'Potvrdit odebrání', exact: true }),
+		});
+		await expect(confirmationDialog).toBeVisible();
+		await confirmationDialog.getByRole('button', { name: 'Zrušit', exact: true }).click();
+		await expect(confirmationDialog).not.toBeVisible();
+		await expect(settingsDialog).toBeVisible();
+		await expect(customSection.getByTestId('gift-category-used-count')).toHaveText(
+			'Použito: 1',
+		);
+		await customSection.getByRole('button', { name: 'Smazat' }).click();
+		await confirmationDialog.getByRole('button', { name: 'Potvrdit odebrání' }).click();
 		const categoryRemoveSave = settingsDialog
 			.locator('[data-slot="dialog-footer"]')
 			.getByRole('button', { name: 'Uložit' });
 		await expect(categoryRemoveSave).toBeEnabled();
 		await categoryRemoveSave.click();
 		await expect(settingsDialog).not.toBeVisible({ timeout: 10_000 });
+		await page.reload();
 
 		await page.getByText(giftName, { exact: true }).click();
 		giftDialog = page.getByRole('dialog');

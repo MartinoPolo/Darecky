@@ -8,11 +8,13 @@ const remote = vi.hoisted(() => ({
 }));
 
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
-vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
+vi.mock('$lib/modules/gift-categories/gift_category_queries.remote.js', () => ({
 	getGiftCategorySettingsRows: vi.fn(() => ({
 		...remote.query,
 		refresh: () => Promise.resolve(),
 	})),
+}));
+vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
 	saveGiftCategorySettingsCommand: vi.fn(),
 }));
 

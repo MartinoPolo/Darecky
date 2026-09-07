@@ -4,7 +4,7 @@ import { deleteObjectsBestEffort } from '$lib/server/storage/r2.js';
 import {
 	getGiftCategories,
 	getGiftCategorySettingsRows,
-} from '$lib/modules/gift-categories/gift_categories.remote.js';
+} from '$lib/modules/gift-categories/gift_category_queries.remote.js';
 import { getGiftsByWishlistShortId } from '$lib/modules/gifts/gifts.remote.js';
 import { getWishlistByShortId } from './wishlists.remote.js';
 import { saveLockedWishlistSettings } from './wishlist_settings_service.js';

@@ -57,6 +57,7 @@ import {
 	assertActiveGiftCategoryAssignment,
 	publicGiftCategory,
 } from '$lib/modules/gift-categories/gift_categories_service.js';
+import { getGiftCategorySettingsRows } from '$lib/modules/gift-categories/gift_category_queries.remote.js';
 
 export const getGiftsByWishlistShortId = publicQuery(v.string(), async (authContext, shortId) => {
 	const database = getDb();
@@ -325,9 +326,9 @@ export const createGift = guardedCommand(CreateGiftInputSchema, async ({ user },
 		error(500, SERVER_ERROR.FAILED_TO_CREATE_GIFT);
 	}
 
-	// Single-flight refresh (issue #108, REQ-3/4): only the gift list rides back —
-	// wishlist metadata, likes, and dashboards are not invalidated by a new gift.
+	// Gift creation changes both the visible list and category assignment counts.
 	singleFlightRefresh(getGiftsByWishlistShortId, wishlistRow.shortId);
+	singleFlightRefresh(getGiftCategorySettingsRows, input.wishlistId);
 
 	return created;
 });
@@ -481,6 +482,8 @@ export const updateGift = guardedCommand(UpdateGiftInputSchema, async ({ user },
 
 	const { role, wishlistRow } = await verifyManagerAccess(user.id, giftRow.wishlistId);
 	assertWishlistMutable(wishlistRow);
+	const didCategoryChange =
+		input.categoryId !== undefined && input.categoryId !== giftRow.categoryId;
 
 	// Cross-field guard on the MERGED row (issue #155): the wire schema only validates bounds present
 	// in the same payload, so a partial update carrying one bound must not invert the persisted range.
@@ -545,6 +548,9 @@ export const updateGift = guardedCommand(UpdateGiftInputSchema, async ({ user },
 		});
 
 		singleFlightRefresh(getGiftsByWishlistShortId, wishlistRow.shortId);
+		if (didCategoryChange) {
+			singleFlightRefresh(getGiftCategorySettingsRows, giftRow.wishlistId);
+		}
 
 		return updated;
 	}
@@ -612,7 +618,7 @@ export const updateGift = guardedCommand(UpdateGiftInputSchema, async ({ user },
 	}
 
 	const updated = await database.transaction(async (tx) => {
-		if (input.categoryId !== undefined && input.categoryId !== giftRow.categoryId) {
+		if (didCategoryChange) {
 			updateData.categoryId = await assertActiveGiftCategoryAssignment(
 				tx,
 				giftRow.wishlistId,
@@ -654,8 +660,11 @@ export const updateGift = guardedCommand(UpdateGiftInputSchema, async ({ user },
 		});
 	}
 
-	// Single-flight refresh (issue #108, REQ-3/4): only the gift list rides back.
+	// Keep both gift data and category assignment counts current after category moves.
 	singleFlightRefresh(getGiftsByWishlistShortId, wishlistRow.shortId);
+	if (didCategoryChange) {
+		singleFlightRefresh(getGiftCategorySettingsRows, giftRow.wishlistId);
+	}
 
 	return updated;
 });
@@ -714,8 +723,9 @@ export const deleteGift = guardedCommand(v.string(), async ({ user }, giftId) =>
 	// once the gift is deleted (no restore path exists) – drop the object.
 	await deleteObjectsBestEffort([giftRow.imageKey]);
 
-	// Single-flight refresh (issue #108, REQ-3/4): only the gift list rides back.
+	// Deletion changes both the visible list and category assignment counts.
 	singleFlightRefresh(getGiftsByWishlistShortId, wishlistRow.shortId);
+	singleFlightRefresh(getGiftCategorySettingsRows, giftRow.wishlistId);
 });
 
 export const reorderGifts = guardedCommand(
@@ -1017,6 +1027,9 @@ export const bulkUpdateGifts = guardedCommand(
 		}
 
 		await singleFlightRefresh(getGiftsByWishlistShortId, result.wishlistRow.shortId);
+		if (input.action === 'category') {
+			await singleFlightRefresh(getGiftCategorySettingsRows, input.wishlistId);
+		}
 		return { updatedIds: result.updatedIds, priorReceived: result.priorReceived };
 	},
 );
@@ -1097,6 +1110,7 @@ export const bulkCopyGifts = guardedCommand(BulkCopyGiftsInputSchema, async ({ u
 	try {
 		const result = await copyGifts(user.id, input);
 		singleFlightRefresh(getGiftsByWishlistShortId, result.destinationShortId);
+		singleFlightRefresh(getGiftCategorySettingsRows, input.destinationWishlistId);
 		return { createdIds: result.created.map((created) => created.id) };
 	} catch (thrown) {
 		if (isHttpError(thrown)) {

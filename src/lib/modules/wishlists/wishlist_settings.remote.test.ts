@@ -25,7 +25,7 @@ const getWishlistByShortId = Object.assign(vi.fn(), { __: {} });
 vi.mock('./wishlists.remote.js', () => ({ getWishlistByShortId }));
 const getGiftCategories = Object.assign(vi.fn(), { __: {} });
 const getGiftCategorySettingsRows = Object.assign(vi.fn(), { __: {} });
-vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
+vi.mock('$lib/modules/gift-categories/gift_category_queries.remote.js', () => ({
 	getGiftCategories,
 	getGiftCategorySettingsRows,
 }));

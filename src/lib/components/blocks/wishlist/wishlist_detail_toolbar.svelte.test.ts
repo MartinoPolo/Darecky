@@ -458,19 +458,29 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		await screen.unmount();
 	});
 
-	it('shows an explicit reorder label and right-grouped 40px Done action', async () => {
+	it('keeps the mobile layout switcher enabled in reorder without overflowing at 320px', async () => {
 		const onreordermodechange = vi.fn();
-		const screen = await renderToolbar({
-			canManage: true,
-			role: WISHLIST_ROLES.moderator,
-			reorderMode: true,
-			onreordermodechange,
-		});
+		const onviewmodechange = vi.fn();
+		const screen = await renderToolbar(
+			{
+				canManage: true,
+				role: WISHLIST_ROLES.moderator,
+				reorderMode: true,
+				onreordermodechange,
+				onviewmodechange,
+			},
+			320,
+		);
 		const row = screen
 			.getByTestId('wishlist-toolbar-mobile')
 			.element()
 			.querySelector('[data-mobile-toolbar-row]')!;
 		expect(row).toHaveTextContent(m.gift_reorder_mode_label());
+		const listMode = screen.getByRole('radio', { name: m.gift_view_list() });
+		expect(listMode.element()).not.toBeDisabled();
+		await listMode.click();
+		expect(onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
+		expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
 		const done = screen
 			.getByRole('button', { name: m.gift_reorder_done() })
 			.element() as HTMLButtonElement;
@@ -544,6 +554,24 @@ describe('WishlistDetailToolbar desktop preservation (#340)', () => {
 		expect(callbacks.ongroupingchange).toHaveBeenCalledWith(GIFT_GROUPING_OPTIONS.priority);
 		await screen.getByTestId(`gift-view-${GIFT_VIEW_MODES.list}`).click();
 		expect(callbacks.onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
+		await screen.unmount();
+	});
+
+	it('keeps the desktop layout switcher enabled in reorder', async () => {
+		const onviewmodechange = vi.fn();
+		const screen = await renderToolbar(
+			{
+				canManage: true,
+				role: WISHLIST_ROLES.moderator,
+				reorderMode: true,
+				onviewmodechange,
+			},
+			1280,
+		);
+		const listMode = screen.getByRole('radio', { name: m.gift_view_list() });
+		expect(listMode.element()).not.toBeDisabled();
+		await listMode.click();
+		expect(onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
 		await screen.unmount();
 	});
 

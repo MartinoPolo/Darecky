@@ -13,13 +13,15 @@ const remoteMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
-vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
+vi.mock('$lib/modules/gift-categories/gift_category_queries.remote.js', () => ({
 	getGiftCategorySettingsRows: vi.fn(() => ({
 		get current() {
 			return remoteMocks.categories;
 		},
 		refresh: remoteMocks.refresh,
 	})),
+}));
+vi.mock('$lib/modules/gift-categories/gift_categories.remote.js', () => ({
 	saveGiftCategorySettingsCommand: remoteMocks.save,
 }));
 
