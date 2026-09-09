@@ -35,7 +35,6 @@
 		isArchived?: boolean;
 		hideReservationState?: boolean;
 		contextualMode?: boolean;
-		showLikeCount?: boolean;
 		onreserve?: (gift: GiftForVisitor) => void;
 		onunreserve?: (gift: GiftForVisitor) => void;
 		onreceived?: (giftId: string, received: boolean) => void;
@@ -48,7 +47,6 @@
 		isArchived = false,
 		hideReservationState = role === 'recipient',
 		contextualMode = false,
-		showLikeCount = false,
 		onreserve,
 		onunreserve,
 		onreceived,
@@ -136,22 +134,10 @@
 					giftName={gift.name}
 					likeCount={visitorGift.likeCount}
 					size="md"
-					showCount={showLikeCount}
-					class={cn(
-						'absolute right-1 top-1 z-20 h-10 min-h-10 min-w-10 rounded-full sm:right-2 sm:top-2',
-						showLikeCount
-							? 'w-10 max-sm:[&_[data-like-count]]:hidden sm:w-auto'
-							: 'w-10',
-					)}
-					surfaceClass={cn(
-						'justify-center border-2 border-ink bg-card p-0 shadow-sticker',
-						showLikeCount
-							? 'gap-0 max-sm:[&_[data-like-count]]:hidden sm:gap-1 sm:px-1.5'
-							: 'gap-0',
-					)}
+					class="absolute right-1 top-1 z-20 sm:right-2 sm:top-2"
 				/>
 			{/if}
-			<GiftStateOverlay model={presentation.overlay} class="pt-[3.25rem]" />
+			<GiftStateOverlay model={presentation.overlay} />
 		</div>
 
 		<!-- Ordinary rows keep content beside the image; narrow manager rows with multiple actions

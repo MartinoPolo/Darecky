@@ -36,7 +36,7 @@
 
 	function pillClasses(kind: GiftOverlayKind): string {
 		return cn(
-			'max-w-[calc(100%_-_0.5rem)] -rotate-1 rounded-panel border-2 border-ink px-3 py-1.5 text-center text-sm leading-4 font-bold shadow-sticker [overflow-wrap:anywhere]',
+			'max-w-[calc(100%_-_0.5rem)] -rotate-1 rounded-panel border-2 border-ink px-2 py-1 text-center text-xs leading-4 font-bold shadow-sticker [overflow-wrap:anywhere]',
 			kind === 'own-reservation' && 'bg-[var(--gift-overlay-own-reservation)] text-white',
 			kind === 'unavailable' && 'bg-[var(--gift-overlay-unavailable)] text-white',
 			kind === 'partial' && 'bg-card text-foreground',

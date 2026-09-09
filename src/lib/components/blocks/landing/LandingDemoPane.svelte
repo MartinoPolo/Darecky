@@ -95,9 +95,7 @@
 						{m.landing_demo_like_popup()}
 					</p>
 				{/if}
-				<!-- The product hides list-row counts; the demo shows them because the live,
-				     shared counter is the whole point of its like buttons. -->
-				<GiftListItem {gift} {role} showLikeCount={true} {onreserve} {onunreserve} />
+				<GiftListItem {gift} {role} {onreserve} {onunreserve} />
 				{#if isNarrated}
 					<p
 						class="my-3 rounded-lg border-2 border-ink bg-note px-3 py-2 text-(length:--text-base) font-semibold text-note-ink lg:hidden"

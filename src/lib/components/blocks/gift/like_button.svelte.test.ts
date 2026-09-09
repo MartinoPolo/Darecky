@@ -1,3 +1,4 @@
+import '../../../../app.css';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -81,6 +82,47 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.restoreAllMocks();
+});
+
+describe('LikeButton approved image treatment (issue #357)', () => {
+	it.each([0, 7, 123])(
+		'renders count %d beside the heart with an accessible ghost target',
+		async (likeCount) => {
+			likesContext(true);
+			await renderLikeButton(likeCount);
+
+			const button = page.getByRole('button');
+			const buttonElement = button.element() as HTMLButtonElement;
+			const surface = buttonElement.querySelector(
+				':scope > .elevation-surface',
+			) as HTMLElement;
+			const heart = buttonElement.querySelector('[data-like-heart]') as HTMLElement;
+			const icon = heart.querySelector('svg') as SVGElement;
+			const count = buttonElement.querySelector('[data-like-count]') as HTMLElement;
+			const buttonRect = buttonElement.getBoundingClientRect();
+			const heartRect = heart.getBoundingClientRect();
+			const countRect = count.getBoundingClientRect();
+			const surfaceStyle = getComputedStyle(surface);
+
+			expect(count.textContent).toBe(String(likeCount));
+			expect(heartRect.right).toBeLessThanOrEqual(countRect.left);
+			expect(buttonElement.getAttribute('aria-describedby')).toBe(count.id);
+			await expect.element(button).toHaveAttribute('aria-pressed', 'true');
+			expect(buttonRect.width).toBeGreaterThanOrEqual(40);
+			expect(buttonRect.height).toBeGreaterThanOrEqual(40);
+			expect(surfaceStyle.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+			const shadowAlphas = Array.from(
+				surfaceStyle.boxShadow.matchAll(/rgba\([^)]*, ([\d.]+)\)/g),
+				(match) => Number(match[1]),
+			);
+			expect(
+				surfaceStyle.boxShadow === 'none' || shadowAlphas.every((alpha) => alpha === 0),
+			).toBe(true);
+			expect(surfaceStyle.borderTopWidth).toBe('0px');
+			expect(getComputedStyle(icon).fill).not.toBe('none');
+			expect(getComputedStyle(count).filter).not.toBe('none');
+		},
+	);
 });
 
 describe('LikeButton acknowledgement', () => {

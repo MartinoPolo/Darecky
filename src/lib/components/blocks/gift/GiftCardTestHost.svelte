@@ -11,7 +11,7 @@
 	import GiftCard from './GiftCard.svelte';
 
 	/**
-	 * Test/story-only harness: `GiftCard`'s footer (`LikeButton` + `PurchasedToggle`) reads
+	 * Test/story-only harness: `GiftCard`'s actions (`LikeButton` + `PurchasedToggle`) read
 	 * `useLikes()`/`useGifts()`, which only the real wishlist page (`/w/[id]/+page.svelte`)
 	 * provides via `setLikesContext`/`setGiftsContext`. This stands in for that page so
 	 * `GiftCard` can be rendered in isolation.

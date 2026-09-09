@@ -83,6 +83,17 @@ function rectanglesIntersect(first: DOMRect, second: DOMRect): boolean {
 	);
 }
 
+function hasVisibleBoxShadow(element: Element): boolean {
+	const boxShadow = getComputedStyle(element).boxShadow;
+	if (boxShadow === 'none') {
+		return false;
+	}
+	const alphas = Array.from(boxShadow.matchAll(/rgba\([^)]*, ([\d.]+)\)/g), (match) =>
+		Number(match[1]),
+	);
+	return alphas.length === 0 || alphas.some((alpha) => alpha > 0);
+}
+
 function textOutsideOverlay(host: HTMLElement): string {
 	const clone = host.cloneNode(true) as HTMLElement;
 	clone.querySelector('[data-testid="gift-state-overlay"]')?.remove();
@@ -465,17 +476,21 @@ describe('GiftCard unified state presentation (issues #328 and #330)', () => {
 				{ baseElement: host },
 			);
 
-			const like = host.querySelector('[data-like-heart]')?.closest('button') as HTMLElement;
+			const likeParts = host.querySelectorAll<HTMLElement>(
+				'[data-like-heart], [data-like-count]',
+			);
 			const pills = host.querySelectorAll<HTMLElement>(
 				'[data-testid="gift-state-overlay"] > span',
 			);
-			const likeRect = like.getBoundingClientRect();
 			for (const pill of pills) {
 				const pillRect = pill.getBoundingClientRect();
-				expect(
-					rectanglesIntersect(likeRect, pillRect),
-					`like ${JSON.stringify(likeRect.toJSON())}; pill ${JSON.stringify(pillRect.toJSON())}`,
-				).toBe(false);
+				for (const likePart of likeParts) {
+					const likePartRect = likePart.getBoundingClientRect();
+					expect(
+						rectanglesIntersect(likePartRect, pillRect),
+						`state ${index}; like ${JSON.stringify(likePartRect.toJSON())}; pill ${JSON.stringify(pillRect.toJSON())}`,
+					).toBe(false);
+				}
 			}
 		}
 	});
@@ -762,14 +777,18 @@ describe('GiftCard unified state presentation (issues #328 and #330)', () => {
 			for (const requiredLabel of requiredLabels) {
 				expect(overlay.textContent).toContain(requiredLabel);
 			}
-			expect(likeButton.getBoundingClientRect().width).toBeCloseTo(40, 0);
+			expect(likeButton.getBoundingClientRect().width).toBeGreaterThanOrEqual(40);
 			for (const pill of overlay.querySelectorAll<HTMLElement>(':scope > span')) {
-				expect(
-					rectanglesIntersect(
-						pill.getBoundingClientRect(),
-						likeButton.getBoundingClientRect(),
-					),
-				).toBe(false);
+				for (const likePart of likeButton.querySelectorAll<HTMLElement>(
+					'[data-like-heart], [data-like-count]',
+				)) {
+					expect(
+						rectanglesIntersect(
+							pill.getBoundingClientRect(),
+							likePart.getBoundingClientRect(),
+						),
+					).toBe(false);
+				}
 			}
 		},
 	);
@@ -859,69 +878,51 @@ describe('GiftCard unified state presentation (issues #328 and #330)', () => {
 	});
 });
 
-describe('GiftCard Like geometry (issue #330 follow-up)', () => {
-	it('uses the compact desktop footer height without constraining Like count growth', async () => {
-		await page.viewport(800, 720);
-		const withoutCountHost = await renderCardInGridColumn(makeVisitorGift({ likeCount: 0 }));
-		const withoutCount = withoutCountHost
-			.querySelector('[data-like-heart]')
-			?.closest('button') as HTMLElement;
-		const withoutCountFooter = withoutCountHost.querySelector(
-			'[data-testid="gift-card-footer"]',
-		) as HTMLElement;
+describe('GiftCard approved Like geometry (issue #357)', () => {
+	it.each([
+		{ viewport: 390, width: 179, count: 0 },
+		{ viewport: 800, width: 280, count: 7 },
+		{ viewport: 1440, width: 360, count: 123 },
+	])(
+		'overlays count $count beside the ghost heart at $viewport px without changing image geometry',
+		async ({ viewport, width, count }) => {
+			await page.viewport(viewport, 720);
+			const host = document.createElement('div');
+			host.style.width = `${width}px`;
+			document.body.appendChild(host);
+			fixedHosts.add(host);
+			await render(
+				GiftCardTestHost,
+				{
+					gift: makeVisitorGift({ likeCount: count }),
+					role: WISHLIST_ROLES.visitor,
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
 
-		expect(withoutCountFooter.contains(withoutCount)).toBe(true);
-		expect(withoutCount.getBoundingClientRect().width).toBeGreaterThanOrEqual(40);
-		expect(withoutCount.getBoundingClientRect().height).toBeCloseTo(32, 0);
+			const image = host.querySelector(
+				'[data-testid="gift-card-image-frame"]',
+			) as HTMLElement;
+			const footer = host.querySelector('[data-testid="gift-card-footer"]') as HTMLElement;
+			const like = host.querySelector('[data-like-heart]')?.closest('button') as HTMLElement;
+			const heart = like.querySelector('[data-like-heart]') as HTMLElement;
+			const countNode = like.querySelector('[data-like-count]') as HTMLElement;
+			const imageRect = image.getBoundingClientRect();
+			const likeRect = like.getBoundingClientRect();
 
-		const withCountHost = await renderCardInGridColumn(
-			makeVisitorGift({ id: 'gift-with-count', likeCount: 123 }),
-		);
-		const withCount = withCountHost
-			.querySelector('[data-like-heart]')
-			?.closest('button') as HTMLElement;
-		const withCountFooter = withCountHost.querySelector(
-			'[data-testid="gift-card-footer"]',
-		) as HTMLElement;
-
-		expect(withCountFooter.contains(withCount)).toBe(true);
-		expect(withCount.getBoundingClientRect().width).toBeGreaterThan(40);
-		expect(withCount.getBoundingClientRect().height).toBeCloseTo(32, 0);
-	});
-
-	it('keeps the image Like target 40px square on mobile', async () => {
-		await page.viewport(390, 720);
-		const mobileHost = document.createElement('div');
-		mobileHost.style.width = '179px';
-		document.body.appendChild(mobileHost);
-		fixedHosts.add(mobileHost);
-		await render(
-			GiftCardTestHost,
-			{
-				gift: makeVisitorGift({ likeCount: 12 }),
-				role: WISHLIST_ROLES.visitor,
-				onmore: () => {},
-			},
-			{ baseElement: mobileHost },
-		);
-		const mobileLike = mobileHost
-			.querySelector('[data-like-heart]')
-			?.closest('button') as HTMLElement;
-		const mobileLikeRect = mobileLike.getBoundingClientRect();
-		const mobileHeartRect = (
-			mobileLike.querySelector('[data-like-heart]') as HTMLElement
-		).getBoundingClientRect();
-		expect(mobileLikeRect.width).toBeCloseTo(40, 0);
-		expect(mobileLikeRect.height).toBeCloseTo(40, 0);
-		expect(mobileHeartRect.left + mobileHeartRect.width / 2).toBeCloseTo(
-			mobileLikeRect.left + mobileLikeRect.width / 2,
-			1,
-		);
-		expect(mobileHeartRect.top + mobileHeartRect.height / 2).toBeCloseTo(
-			mobileLikeRect.top + mobileLikeRect.height / 2,
-			1,
-		);
-	});
+			expect(image.contains(like)).toBe(true);
+			expect(footer.contains(like)).toBe(false);
+			expect(imageRect.width / imageRect.height).toBeCloseTo(4 / 3, 2);
+			expect(likeRect.top).toBeLessThan(imageRect.top + imageRect.height / 2);
+			expect(likeRect.right).toBeLessThanOrEqual(imageRect.right);
+			expect(countNode.textContent).toBe(String(count));
+			expect(heart.getBoundingClientRect().right).toBeLessThanOrEqual(
+				countNode.getBoundingClientRect().left,
+			);
+			expect(hasVisibleBoxShadow(like.querySelector('.elevation-surface')!)).toBe(false);
+		},
+	);
 });
 
 describe('GiftCard actions (issue #255)', () => {
@@ -970,7 +971,7 @@ describe('GiftCard actions (issue #255)', () => {
 		) as HTMLButtonElement;
 		expect(reserve).toHaveLength(1);
 		expect(footer.contains(reserve[0]!)).toBe(true);
-		expect(image.querySelector('button')).toBeNull();
+		expect(image.querySelector('[data-testid="reserve-button"]')).toBeNull();
 		reserve[0]!.click();
 		received.click();
 		expect(onreserve).toHaveBeenCalledOnce();

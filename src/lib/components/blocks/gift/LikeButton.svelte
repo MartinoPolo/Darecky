@@ -20,7 +20,6 @@
 		size?: LikeButtonSize;
 		appearance?: LikeButtonAppearance;
 		showCount?: boolean;
-		countOverlay?: boolean;
 		class?: string;
 		surfaceClass?: string;
 	}
@@ -32,7 +31,6 @@
 		size = 'md',
 		appearance = 'ghost',
 		showCount = true,
-		countOverlay = false,
 		class: className,
 		surfaceClass,
 	}: LikeButtonProps = $props();
@@ -47,6 +45,8 @@
 	const activeAnimations = new SvelteSet<Animation>();
 
 	const styles = $derived(likeButtonVariants({ liked, size, appearance }));
+	const componentId = $props.id();
+	const countId = $derived(`like-count-${componentId}`);
 
 	// Prop refreshes normally remain authoritative. While a toggle is in flight,
 	// keep the optimistic count stable and reconcile it from that request's result.
@@ -145,25 +145,20 @@
 
 <button
 	type="button"
-	class={cn(styles.root(), size === 'md' && 'min-w-10', countOverlay && 'relative', className)}
+	class={cn(styles.root(), className)}
 	aria-label={liked
 		? m.gift_like_remove_aria({ name: giftName })
 		: m.gift_like_add_aria({ name: giftName })}
+	aria-describedby={showCount ? countId : undefined}
 	aria-pressed={liked}
 	onclick={handleClick}
 >
-	<ElevationSurface
-		class={cn(styles.surface(), countOverlay && 'justify-center gap-0', surfaceClass)}
-	>
-		<span bind:this={heartElement} data-like-heart class="inline-flex">
+	<ElevationSurface class={cn(styles.surface(), surfaceClass)}>
+		<span bind:this={heartElement} data-like-heart class="inline-flex shrink-0">
 			<HeartIcon class={styles.icon()} />
 		</span>
-		{#if showCount && displayCount > 0}
-			<span
-				data-like-count
-				class={cn(styles.count(), countOverlay && 'absolute right-0.5 top-0 text-[10px]')}
-				>{displayCount}</span
-			>
+		{#if showCount}
+			<span id={countId} data-like-count class={styles.count()}>{displayCount}</span>
 		{/if}
 	</ElevationSurface>
 </button>

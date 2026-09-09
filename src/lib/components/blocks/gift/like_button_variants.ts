@@ -12,9 +12,9 @@ export const likeButtonVariants = tv({
 	slots: {
 		root: 'group/like inline-flex cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
 		surface:
-			'elevation-surface inline-flex size-full items-center gap-1.5 rounded-[inherit] border-2 border-transparent font-bold text-foreground transition-[background-color,translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) group-hover/like:bg-like-tint',
-		icon: 'text-heart transition-all duration-200',
-		count: 'tabular-nums',
+			'elevation-surface inline-flex size-full items-center justify-center gap-1 rounded-[inherit] border-0 bg-transparent font-bold text-foreground shadow-none transition-[background-color,translate,scale] duration-(--duration-normal) ease-(--ease-standard) group-hover/like:bg-like-tint',
+		icon: 'text-heart [filter:drop-shadow(0_1px_1px_var(--card))_drop-shadow(0_-1px_1px_var(--card))] transition-all duration-200',
+		count: 'whitespace-nowrap tabular-nums [filter:drop-shadow(0_1px_1px_var(--card))_drop-shadow(0_-1px_1px_var(--card))]',
 	},
 	variants: {
 		liked: {
@@ -22,7 +22,7 @@ export const likeButtonVariants = tv({
 				icon: 'fill-heart',
 			},
 			false: {
-				icon: 'fill-transparent',
+				icon: 'fill-card',
 			},
 		},
 		size: {
@@ -32,8 +32,9 @@ export const likeButtonVariants = tv({
 				count: 'text-[12px]',
 			},
 			md: {
-				surface: 'px-2 py-1 text-sm',
-				icon: 'size-4',
+				root: 'min-h-10 min-w-10',
+				surface: 'px-1 py-1 text-sm',
+				icon: 'size-5',
 				count: 'text-[13px]',
 			},
 			lg: {
@@ -47,7 +48,7 @@ export const likeButtonVariants = tv({
 			ghost: {},
 			sticker: {
 				root: 'elevation-owner elevation-owner-raised elevation-owner-like relative rounded-[7px]',
-				surface: 'border-ink bg-card',
+				surface: 'border-2 border-ink bg-card shadow-sticker',
 			},
 		},
 	},

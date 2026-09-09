@@ -89,6 +89,17 @@ function rectanglesIntersect(first: DOMRect, second: DOMRect): boolean {
 	);
 }
 
+function hasVisibleBoxShadow(element: Element): boolean {
+	const boxShadow = getComputedStyle(element).boxShadow;
+	if (boxShadow === 'none') {
+		return false;
+	}
+	const alphas = Array.from(boxShadow.matchAll(/rgba\([^)]*, ([\d.]+)\)/g), (match) =>
+		Number(match[1]),
+	);
+	return alphas.length === 0 || alphas.some((alpha) => alpha > 0);
+}
+
 function textOutsideOverlay(host: HTMLElement): string {
 	const clone = host.cloneNode(true) as HTMLElement;
 	clone.querySelector('[data-testid="gift-state-overlay"]')?.remove();
@@ -716,130 +727,58 @@ describe('GiftListItem responsive image dimensions (issues #328 and #336)', () =
 	});
 });
 
-describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
-	it('contains a long centered state label beside the 40px Like on the responsive image', async () => {
-		await page.viewport(390, 720);
-		const host = document.createElement('div');
-		host.style.width = '366px';
-		document.body.appendChild(host);
-		await render(
-			GiftListItemTestHost,
-			{
-				gift: makeVisitorGift({
-					likeCount: 12,
+describe('GiftListItem approved Like geometry (issue #357)', () => {
+	it.each([
+		{ viewport: 390, count: 0 },
+		{ viewport: 800, count: 7 },
+		{ viewport: 1440, count: 123 },
+	])(
+		'keeps count $count beside the ghost heart at the thumbnail top-right at $viewport px',
+		async ({ viewport, count }) => {
+			await page.viewport(viewport, 720);
+			const host = await renderItem(
+				makeVisitorGift({
+					likeCount: count,
+					received: true,
 					isFullyReserved: true,
 					myReservationId: 'mine',
 				}),
-				role: WISHLIST_ROLES.visitor,
-				isArchived: false,
-				showLikeCount: false,
-			},
-			{ baseElement: host },
-		);
-		await document.fonts.ready;
+				WISHLIST_ROLES.visitor,
+			);
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const like = host.querySelector('[data-like-heart]')?.closest('button') as HTMLElement;
+			const heart = like.querySelector('[data-like-heart]') as HTMLElement;
+			const countNode = like.querySelector('[data-like-count]') as HTMLElement;
+			const imageRect = image.getBoundingClientRect();
+			const likeRect = like.getBoundingClientRect();
 
-		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
-		const like = host.querySelector('[data-like-heart]')?.closest('button') as HTMLElement;
-		const overlay = host.querySelector('[data-testid="gift-state-overlay"]') as HTMLElement;
-		const sticker = overlay.firstElementChild as HTMLElement;
-		const label = sticker;
-		const imageRect = image.getBoundingClientRect();
-		const likeRect = like.getBoundingClientRect();
-		const overlayRect = overlay.getBoundingClientRect();
-		const stickerRect = sticker.getBoundingClientRect();
-		const labelRange = document.createRange();
-		labelRange.selectNodeContents(label);
-		const labelRect = labelRange.getBoundingClientRect();
-
-		expect(imageRect.width).toBeGreaterThanOrEqual(144);
-		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
-		expect(likeRect.width).toBeCloseTo(40, 0);
-		expect(overlayRect.left).toBeCloseTo(imageRect.left, 0);
-		expect(overlayRect.right).toBeCloseTo(imageRect.right - 2, 0);
-		expect(stickerRect.left + stickerRect.width / 2).toBeCloseTo(
-			overlayRect.left + overlayRect.width / 2,
-			0,
-		);
-		expect(rectanglesIntersect(stickerRect, likeRect)).toBe(false);
-		expect(labelRect.left).toBeGreaterThanOrEqual(stickerRect.left);
-		expect(labelRect.right).toBeLessThanOrEqual(stickerRect.right);
-		expect(labelRect.top).toBeGreaterThanOrEqual(stickerRect.top);
-		expect(labelRect.bottom).toBeLessThanOrEqual(stickerRect.bottom);
-		expect(sticker.scrollWidth).toBeLessThanOrEqual(sticker.clientWidth);
-		host.remove();
-	});
-
-	it('keeps the counted variant 40px square on mobile and allows growth only on desktop', async () => {
-		await page.viewport(390, 720);
-		const mobileHost = document.createElement('div');
-		mobileHost.style.width = '640px';
-		document.body.appendChild(mobileHost);
-		await render(
-			GiftListItemTestHost,
-			{
-				gift: makeVisitorGift({ likeCount: 12 }),
-				role: WISHLIST_ROLES.visitor,
-				isArchived: false,
-				showLikeCount: true,
-			},
-			{ baseElement: mobileHost },
-		);
-		const mobileLike = mobileHost
-			.querySelector('[data-like-heart]')
-			?.closest('button') as HTMLElement;
-		expect(mobileLike.getBoundingClientRect().width).toBeCloseTo(40, 0);
-		expect(mobileLike.getBoundingClientRect().height).toBeCloseTo(40, 0);
-		const mobileCount = mobileHost.querySelector('[data-like-count]') as HTMLElement;
-		expect(mobileCount).toBeTruthy();
-		expect(getComputedStyle(mobileCount).display).toBe('none');
-
-		await page.viewport(800, 720);
-		const desktopHost = document.createElement('div');
-		desktopHost.style.width = '640px';
-		document.body.appendChild(desktopHost);
-		await render(
-			GiftListItemTestHost,
-			{
-				gift: makeVisitorGift({ id: 'desktop-like', likeCount: 12 }),
-				role: WISHLIST_ROLES.visitor,
-				isArchived: false,
-				showLikeCount: true,
-			},
-			{ baseElement: desktopHost },
-		);
-		const desktopLike = desktopHost
-			.querySelector('[data-like-heart]')
-			?.closest('button') as HTMLElement;
-		expect(desktopLike.getBoundingClientRect().width).toBeGreaterThanOrEqual(40);
-		expect(desktopLike.getBoundingClientRect().height).toBeCloseTo(40, 0);
-		const desktopCount = desktopHost.querySelector('[data-like-count]') as HTMLElement;
-		expect(desktopCount).toBeTruthy();
-		expect(getComputedStyle(desktopCount).display).not.toBe('none');
-		mobileHost.remove();
-		desktopHost.remove();
-	});
-
-	it('keeps the centered state label clear of the top-right Like on the 128px image', async () => {
-		await page.viewport(390, 720);
-		const host = await renderItem(
-			makeVisitorGift({
-				likeCount: 12,
-				received: true,
-				isFullyReserved: true,
-				myReservationId: 'mine',
-			}),
-			WISHLIST_ROLES.visitor,
-		);
-		const like = host.querySelector('[data-like-heart]')?.closest('button') as HTMLElement;
-		const pills = host.querySelectorAll<HTMLElement>(
-			'[data-testid="gift-state-overlay"] > span',
-		);
-		const likeRect = like.getBoundingClientRect();
-		for (const pill of pills) {
-			expect(rectanglesIntersect(likeRect, pill.getBoundingClientRect())).toBe(false);
-		}
-		host.remove();
-	});
+			expect(image.contains(like)).toBe(true);
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(likeRect.top).toBeLessThan(imageRect.top + imageRect.height / 2);
+			expect(likeRect.right).toBeLessThanOrEqual(imageRect.right);
+			expect(countNode.textContent).toBe(String(count));
+			expect(getComputedStyle(countNode).display).not.toBe('none');
+			expect(heart.getBoundingClientRect().right).toBeLessThanOrEqual(
+				countNode.getBoundingClientRect().left,
+			);
+			expect(hasVisibleBoxShadow(like.querySelector('.elevation-surface')!)).toBe(false);
+			for (const pill of host.querySelectorAll<HTMLElement>(
+				'[data-testid="gift-state-overlay"] > span',
+			)) {
+				for (const likePart of like.querySelectorAll<HTMLElement>(
+					'[data-like-heart], [data-like-count]',
+				)) {
+					expect(
+						rectanglesIntersect(
+							likePart.getBoundingClientRect(),
+							pill.getBoundingClientRect(),
+						),
+					).toBe(false);
+				}
+			}
+			host.remove();
+		},
+	);
 });
 
 describe('GiftListItem approved action geometry (issue #350)', () => {

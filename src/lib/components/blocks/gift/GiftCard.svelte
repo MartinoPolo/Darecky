@@ -24,7 +24,6 @@
 	} from '$lib/modules/wishlists/wishlist_capabilities.js';
 	import { resolveGiftImageUrl } from '$lib/modules/images/public_url.js';
 	import { hasExplicitFrameFill } from '$lib/components/derived/image-frame/index.js';
-	import { useNarrowViewportState } from '$lib/components/derived/narrow_viewport_state.svelte.js';
 	import { cn } from '$lib/utils.js';
 	import { giftCardVariants } from './gift_card_variants.js';
 	import GiftDescription from './GiftDescription.svelte';
@@ -58,7 +57,6 @@
 		onmore,
 	}: GiftCardProps = $props();
 
-	const narrowViewportState = useNarrowViewportState();
 	const displayState = $derived(
 		deriveGiftDisplayState(
 			gift,
@@ -154,19 +152,15 @@
 			</span>
 		{/if}
 
-		<GiftStateOverlay
-			model={presentation.overlay}
-			class={cn(narrowViewportState.current && presentation.showLike && 'pt-12 pr-12')}
-		/>
-		{#if !contextualMode && narrowViewportState.current && presentation.showLike && visitorGift}
+		<GiftStateOverlay model={presentation.overlay} />
+		{#if !contextualMode && presentation.showLike && visitorGift}
 			<LikeButton
 				giftId={gift.id}
 				giftName={gift.name}
 				likeCount={visitorGift.likeCount}
 				size="md"
-				countOverlay
-				class="absolute top-1 right-1 z-20 size-10 rounded-full"
-				surfaceClass="border-2 border-ink bg-card p-0 shadow-sticker"
+				class="absolute top-0 right-0 z-20"
+				surfaceClass="!items-start !pt-0"
 			/>
 		{/if}
 	</div>
@@ -230,15 +224,6 @@
 
 	{#if !contextualMode && (hasReceivedPrimary || (isVisitorOrModerator && hasReservationAction) || onmore)}
 		<div class={styles.footer()} data-testid="gift-card-footer">
-			{#if !narrowViewportState.current && presentation.showLike && visitorGift}
-				<LikeButton
-					giftId={gift.id}
-					giftName={gift.name}
-					likeCount={visitorGift.likeCount}
-					size="md"
-					class="h-(--size-control-md) shrink-0 self-start"
-				/>
-			{/if}
 			<div
 				data-testid="gift-card-reservation-actions"
 				class={cn(styles.reservationActions(), !hasMultipleActions && 'sm:flex-initial')}
