@@ -41,7 +41,6 @@ const defaultProps: ComponentProps<typeof WishlistDetailToolbar> = {
 	onsortchange: () => {},
 	onfilterchange: () => {},
 	ongroupingchange: () => {},
-	onsettings: () => {},
 	onunfollow: () => {},
 	onaddgift: () => {},
 	onbatchadd: () => {},
@@ -110,7 +109,6 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 			{ isAuthenticated: true },
 			{ canManage: true, role: WISHLIST_ROLES.recipient },
 			{ canManage: true, role: WISHLIST_ROLES.moderator },
-			{ adminSettingsAvailable: true },
 		];
 		for (const width of [320, 360, 390]) {
 			for (const capabilities of capabilitySets) {
@@ -131,30 +129,28 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		}
 	});
 
-	it('renders exactly one Display trigger below sm and keeps View, Settings, and Add gift direct', async () => {
+	it('renders exactly one Display trigger immediately after View with no toolbar Settings', async () => {
 		const screen = await renderToolbar({
 			canManage: true,
 			role: WISHLIST_ROLES.moderator,
 		});
 		const toolbar = screen.getByTestId('wishlist-toolbar').element();
+		const row = toolbar.querySelector('[data-mobile-toolbar-row]')!;
+		const view = row.querySelector('[data-testid="gift-view-switcher"]')!;
+		const display = row.querySelector('[data-testid="mobile-display-trigger"]')!;
 		expect(toolbar.querySelectorAll('[data-testid="mobile-display-trigger"]')).toHaveLength(1);
+		expect(view.nextElementSibling?.contains(display)).toBe(true);
 		expect(toolbar.querySelector('[data-testid="mobile-sort-trigger"]')).toBeNull();
 		expect(toolbar.querySelector('[data-testid="mobile-grouping-trigger"]')).toBeNull();
 		expect(toolbar.querySelector('[data-testid="mobile-filter-trigger"]')).toBeNull();
-		expect(toolbar.querySelectorAll('[data-testid="gift-view-switcher"]')).toHaveLength(1);
-		const settings = screen
-			.getByRole('button', { name: m.wishlist_settings_title() })
-			.element();
+		await expect
+			.element(screen.getByRole('button', { name: m.wishlist_settings_title() }))
+			.not.toBeInTheDocument();
 		const add = screen
 			.getByRole('button', { name: m.wishlist_detail_add_gift_label() })
 			.element();
-		await expect.element(settings).toBeVisible();
 		await expect.element(add).toBeVisible();
 		expect(visibleButtons(toolbar).at(-1)).toBe(add);
-		expect(
-			getComputedStyle(add.querySelector(':scope > .elevation-surface') as HTMLElement)
-				.backgroundColor,
-		).not.toBe('rgba(0, 0, 0, 0)');
 		await screen.unmount();
 	});
 
@@ -509,7 +505,7 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 	});
 });
 
-describe('WishlistDetailToolbar desktop preservation (#340)', () => {
+describe('WishlistDetailToolbar consolidated desktop display (#359)', () => {
 	afterEach(async () => {
 		for (const host of hosts) {
 			host.remove();
@@ -518,42 +514,38 @@ describe('WishlistDetailToolbar desktop preservation (#340)', () => {
 		await page.viewport(1280, 760);
 	});
 
-	it('keeps separate labeled display controls, persistence callbacks, and 32px sizing', async () => {
-		const callbacks = {
-			onviewmodechange: vi.fn(),
-			onsortchange: vi.fn(),
-			ongroupingchange: vi.fn(),
-		};
+	it('places one Display trigger after View and opens persistent cascading categories', async () => {
+		const onsortchange = vi.fn();
 		const screen = await renderToolbar(
 			{
-				...callbacks,
-				canManage: true,
-				role: WISHLIST_ROLES.moderator,
+				onsortchange,
 				groupingAvailability: { priority: true, category: true },
 			},
 			1280,
 		);
 		await frames(1);
-		await expect.element(screen.getByTestId('mobile-display-trigger')).not.toBeInTheDocument();
-		const sort = screen.getByRole('button', {
-			name: `${m.gift_sort_by()}: ${m.gift_sort_owner_order()}`,
-		});
-		const grouping = screen.getByRole('button', {
-			name: `${m.gift_grouping_label()}: ${m.gift_grouping_none()}`,
-		});
-		const filter = screen.getByRole('button', { name: m.gift_filter() });
-		for (const control of [sort, grouping, filter]) {
-			await expect.element(control).toBeVisible();
-			expect(control.element().getBoundingClientRect().height).toBeCloseTo(32, 0);
-		}
-		await sort.click();
-		await page.getByRole('option', { name: m.gift_sort_name() }).click();
-		expect(callbacks.onsortchange).toHaveBeenCalledWith(GIFT_SORT_OPTIONS.name);
-		await grouping.click();
-		await page.getByRole('option', { name: m.gift_grouping_priority() }).click();
-		expect(callbacks.ongroupingchange).toHaveBeenCalledWith(GIFT_GROUPING_OPTIONS.priority);
-		await screen.getByTestId(`gift-view-${GIFT_VIEW_MODES.list}`).click();
-		expect(callbacks.onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
+		const controls = screen.getByTestId('wishlist-toolbar-controls').element();
+		const view = controls.querySelector('[data-testid="gift-view-switcher"]')!;
+		const viewWrapper = view.closest('.toolbar-responsive-view-switcher')!;
+		const display = controls.querySelector('[data-testid="desktop-display-trigger"]')!;
+		expect(viewWrapper.nextElementSibling).toBe(display);
+		expect(controls.querySelectorAll('[data-testid="desktop-display-trigger"]')).toHaveLength(
+			1,
+		);
+		await expect
+			.element(
+				screen.getByRole('button', {
+					name: `${m.gift_sort_by()}: ${m.gift_sort_owner_order()}`,
+				}),
+			)
+			.not.toBeInTheDocument();
+		await (display as HTMLButtonElement).click();
+		const root = page.getByRole('menu', { name: m.gift_display_options() });
+		await expect.element(root).toBeVisible();
+		await root.getByRole('menuitem', { name: new RegExp(m.gift_sort_by()) }).click();
+		await expect.element(root).toBeVisible();
+		await page.getByRole('menuitemradio', { name: m.gift_sort_name() }).click();
+		expect(onsortchange).toHaveBeenCalledWith(GIFT_SORT_OPTIONS.name);
 		await screen.unmount();
 	});
 
@@ -575,20 +567,26 @@ describe('WishlistDetailToolbar desktop preservation (#340)', () => {
 		await screen.unmount();
 	});
 
-	it('keeps the desktop management hierarchy and capability gates unchanged', async () => {
+	it('keeps eligible actions in toolbar More without Settings or a separator before full reorder text', async () => {
 		const screen = await renderToolbar(
-			{ canManage: true, role: WISHLIST_ROLES.recipient },
+			{ canManage: true, role: WISHLIST_ROLES.moderator },
 			1280,
 		);
-		const actions = screen.getByTestId('wishlist-toolbar-actions').element();
-		const names = visibleButtons(actions).map(
-			(button) => button.getAttribute('aria-label') ?? button.textContent?.trim(),
-		);
-		expect(names).toEqual([
-			m.wishlist_settings_title(),
-			m.batch_add_toolbar_label(),
-			m.wishlist_detail_add_gift_label(),
-		]);
+		await expect
+			.element(screen.getByRole('button', { name: m.wishlist_settings_title() }))
+			.not.toBeInTheDocument();
+		await screen.getByTestId('desktop-more-trigger').click();
+		const menu = page.getByRole('menu', { name: m.wishlist_more_actions() });
+		await expect
+			.element(menu.getByRole('menuitem', { name: m.gift_reorder_action(), exact: true }))
+			.toBeVisible();
+		await expect
+			.element(menu.getByRole('menuitem', { name: m.batch_add_toolbar_label(), exact: true }))
+			.toBeVisible();
+		expect(menu.element().querySelector('[data-slot="dropdown-menu-separator"]')).toBeNull();
+		expect(
+			menu.getByRole('menuitem', { name: m.gift_reorder_action(), exact: true }).element(),
+		).toHaveTextContent(m.gift_reorder_action());
 		await screen.unmount();
 	});
 });

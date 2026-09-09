@@ -1458,6 +1458,7 @@
 		{role}
 		giftCount={headerGiftCount}
 		{recipientIsModerator}
+		{adminSettingsAvailable}
 		onshare={handleShareOpened}
 		onmoderators={handleModeratorsOpened}
 		onarchive={handleArchive}
@@ -1496,7 +1497,6 @@
 		{/snippet}
 		<WishlistDetailToolbar
 			{canManage}
-			{adminSettingsAvailable}
 			{role}
 			{isArchived}
 			{isAuthenticated}
@@ -1515,7 +1515,6 @@
 			onsortchange={handleSortChange}
 			onfilterchange={handleFilterChange}
 			ongroupingchange={handleGroupingChange}
-			onsettings={handleSettingsOpened}
 			onunfollow={handleUnfollow}
 			onaddgift={openCreateModal}
 			onbatchadd={openBatchAddDialog}
