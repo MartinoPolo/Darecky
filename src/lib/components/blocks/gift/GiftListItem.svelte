@@ -137,7 +137,10 @@
 					class="absolute right-1 top-1 z-20 sm:right-2 sm:top-2"
 				/>
 			{/if}
-			<GiftStateOverlay model={presentation.overlay} />
+			<GiftStateOverlay
+				model={presentation.overlay}
+				class={contextualMode ? 'pt-[3.25rem]' : undefined}
+			/>
 		</div>
 
 		<!-- Ordinary rows keep content beside the image; narrow manager rows with multiple actions

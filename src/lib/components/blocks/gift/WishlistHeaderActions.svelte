@@ -72,6 +72,7 @@
 								size="icon"
 								intent="secondary"
 								class="size-10 shrink-0"
+								data-testid="desktop-header-more-trigger"
 								aria-label={m.gift_more_actions()}
 							>
 								<MoreHorizontalIcon />
@@ -114,6 +115,7 @@
 								size="icon"
 								intent="secondary"
 								class="size-10 shrink-0"
+								data-testid="mobile-header-more-trigger"
 								aria-label={m.gift_more_actions()}
 							>
 								<MoreHorizontalIcon />
@@ -126,7 +128,9 @@
 					>
 						<Sheet.Header>
 							<Sheet.Title>{m.gift_more_actions()}</Sheet.Title>
-							<Sheet.Description>{m.wishlist_settings_title()}</Sheet.Description>
+							<Sheet.Description
+								>{m.wishlist_more_actions_description()}</Sheet.Description
+							>
 						</Sheet.Header>
 						<div class="mt-3 flex flex-col">
 							{#if canShare}

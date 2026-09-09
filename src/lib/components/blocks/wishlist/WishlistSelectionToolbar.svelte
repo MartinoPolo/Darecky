@@ -119,6 +119,7 @@
 		| 'received';
 
 	const MIXED_RADIO_VALUE = '__mixed__';
+	let desktopActionsOpen = $state(false);
 	let mobileBulkSheetOpen = $state(false);
 	let mobileBulkTrigger = $state<HTMLButtonElement | null>(null);
 	let mobileBackButton = $state<HTMLButtonElement | null>(null);
@@ -132,6 +133,12 @@
 	let pendingFocusAction = $state<Exclude<MobileBulkAction, 'copy'> | null>(null);
 	let pendingFocusDestination = $state<PendingFocusDestination | null>(null);
 	let pendingFocusCycleObserved = $state(false);
+
+	$effect(() => {
+		if (disabled) {
+			desktopActionsOpen = false;
+		}
+	});
 
 	function clearPendingFocusTracking() {
 		pendingFocusAction = null;
@@ -261,9 +268,14 @@
 		>{/if}<DropdownMenu.RadioGroup
 		value={commonPriorityId === undefined ? MIXED_RADIO_VALUE : (commonPriorityId ?? '')}
 		onValueChange={(id) => onpriority(id === '' ? null : id)}
-		><DropdownMenu.RadioItem value="">{m.gift_priority_none()}</DropdownMenu.RadioItem
-		>{#each priorityLevels as choice (choice.id)}<DropdownMenu.RadioItem value={choice.id}
-				>{choice.label}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			value=""
+			disabled={disabled || !priorityReady}>{m.gift_priority_none()}</DropdownMenu.RadioItem
+		>{#each priorityLevels as choice (choice.id)}<DropdownMenu.RadioItem
+				closeOnSelect={false}
+				value={choice.id}
+				disabled={disabled || !priorityReady}>{choice.label}</DropdownMenu.RadioItem
 			>{/each}</DropdownMenu.RadioGroup
 	>{/snippet}
 {#snippet categoryItems()}{#if commonCategoryId === undefined}<DropdownMenu.Label
@@ -271,9 +283,15 @@
 		>{/if}<DropdownMenu.RadioGroup
 		value={commonCategoryId === undefined ? MIXED_RADIO_VALUE : (commonCategoryId ?? '')}
 		onValueChange={(id) => oncategory(id === '' ? null : id)}
-		><DropdownMenu.RadioItem value="">{m.gift_category_uncategorized()}</DropdownMenu.RadioItem
-		>{#each categories as choice (choice.id)}<DropdownMenu.RadioItem value={choice.id}
-				>{choice.label}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			value=""
+			disabled={disabled || !categoryReady}
+			>{m.gift_category_uncategorized()}</DropdownMenu.RadioItem
+		>{#each categories as choice (choice.id)}<DropdownMenu.RadioItem
+				closeOnSelect={false}
+				value={choice.id}
+				disabled={disabled || !categoryReady}>{choice.label}</DropdownMenu.RadioItem
 			>{/each}</DropdownMenu.RadioGroup
 	>{/snippet}
 {#snippet imageFitItems()}{#if commonImageFit === undefined}<DropdownMenu.Label
@@ -283,10 +301,16 @@
 		onValueChange={(fit) => {
 			if (fit === 'fill' || fit === 'fit') handleImageFit(fit);
 		}}
-		><DropdownMenu.RadioItem data-testid="selection-image-fit-fill" value="fill"
-			>{m.image_fit_fill()}</DropdownMenu.RadioItem
-		><DropdownMenu.RadioItem data-testid="selection-image-fit-fit" value="fit"
-			>{m.image_fit_fit()}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			data-testid="selection-image-fit-fill"
+			value="fill"
+			{disabled}>{m.image_fit_fill()}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			data-testid="selection-image-fit-fit"
+			value="fit"
+			{disabled}>{m.image_fit_fit()}</DropdownMenu.RadioItem
 		></DropdownMenu.RadioGroup
 	>{/snippet}
 {#snippet imageBackgroundItems()}{#if commonImageBackground === undefined}<DropdownMenu.Label
@@ -299,13 +323,21 @@
 			handleImageBackground(
 				background === '#ffffff' || background === '#000000' ? background : null,
 			)}
-		><DropdownMenu.RadioItem data-testid="selection-image-background-white" value="#ffffff"
-			>{m.image_background_white()}</DropdownMenu.RadioItem
-		><DropdownMenu.RadioItem data-testid="selection-image-background-black" value="#000000"
-			>{m.image_background_black()}</DropdownMenu.RadioItem
 		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			data-testid="selection-image-background-white"
+			value="#ffffff"
+			{disabled}>{m.image_background_white()}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			data-testid="selection-image-background-black"
+			value="#000000"
+			{disabled}>{m.image_background_black()}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
 			data-testid="selection-image-background-transparent"
-			value="transparent">{m.image_background_transparent()}</DropdownMenu.RadioItem
+			value="transparent"
+			{disabled}>{m.image_background_transparent()}</DropdownMenu.RadioItem
 		></DropdownMenu.RadioGroup
 	>{/snippet}
 {#snippet receivedItems()}{#if commonReceived === undefined}<DropdownMenu.Label
@@ -315,10 +347,16 @@
 		onValueChange={(received) => {
 			if (received === 'true' || received === 'false') handleReceived(received === 'true');
 		}}
-		><DropdownMenu.RadioItem data-testid="selection-received-true" value="true"
-			>{m.gift_mark_received()}</DropdownMenu.RadioItem
-		><DropdownMenu.RadioItem data-testid="selection-received-false" value="false"
-			>{m.gift_mark_unreceived()}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			data-testid="selection-received-true"
+			value="true"
+			{disabled}>{m.gift_mark_received()}</DropdownMenu.RadioItem
+		><DropdownMenu.RadioItem
+			closeOnSelect={false}
+			data-testid="selection-received-false"
+			value="false"
+			{disabled}>{m.gift_mark_unreceived()}</DropdownMenu.RadioItem
 		></DropdownMenu.RadioGroup
 	>{/snippet}
 
@@ -589,11 +627,17 @@
 	</Sheet.Root>
 {/snippet}
 
-{#snippet desktopActions(testId: string)}
-	<DropdownMenu.Root>
+{#snippet desktopActions()}
+	<DropdownMenu.Root bind:open={desktopActionsOpen}>
 		<DropdownMenu.Trigger>
 			{#snippet child({ props })}
-				<Button {...props} intent="outline" size="md" {disabled} data-testid={testId}>
+				<Button
+					{...props}
+					intent="outline"
+					size="md"
+					{disabled}
+					data-testid="desktop-selection-actions-trigger"
+				>
 					<SlidersHorizontalIcon data-icon="inline-start" />{pending !== null
 						? pendingLabel
 						: m.gift_selection_actions()}<ChevronDownIcon data-icon="inline-end" />
@@ -602,7 +646,7 @@
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Content align="end" aria-label={m.gift_selection_actions()}>
 			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger disabled={!priorityReady}>
+				<DropdownMenu.SubTrigger disabled={disabled || !priorityReady}>
 					{labelWithOptionalSummary(
 						m.gift_priority_label(),
 						priorityReady ? prioritySummary : m.moderator_loading(),
@@ -611,7 +655,7 @@
 				<DropdownMenu.SubContent>{@render priorityItems()}</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
 			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger disabled={!categoryReady}>
+				<DropdownMenu.SubTrigger disabled={disabled || !categoryReady}>
 					{labelWithOptionalSummary(
 						m.gift_context_category(),
 						categoryReady ? categorySummary : m.moderator_loading(),
@@ -620,29 +664,29 @@
 				<DropdownMenu.SubContent>{@render categoryItems()}</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
 			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+				<DropdownMenu.SubTrigger {disabled}>
 					{labelWithOptionalSummary(m.image_fit_label(), imageFitSummary)}
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>{@render imageFitItems()}</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
 			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+				<DropdownMenu.SubTrigger {disabled}>
 					{labelWithOptionalSummary(m.image_background_label(), backgroundSummary)}
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>{@render imageBackgroundItems()}</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
 			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+				<DropdownMenu.SubTrigger {disabled}>
 					<CopyIcon data-icon="inline-start" />{m.gift_bulk_copy()}
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>
-					<DropdownMenu.Item onclick={handleCopy}
+					<DropdownMenu.Item {disabled} onclick={handleCopy}
 						>{m.gift_bulk_copy_choose()}</DropdownMenu.Item
 					>
 				</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
 			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+				<DropdownMenu.SubTrigger {disabled}>
 					{labelWithOptionalSummary(m.gift_selection_received_state(), receivedSummary)}
 				</DropdownMenu.SubTrigger>
 				<DropdownMenu.SubContent>{@render receivedItems()}</DropdownMenu.SubContent>
@@ -683,11 +727,8 @@
 				})}</span
 			>{/if}
 	</div>
-	<div class="wide-controls" data-testid="selection-wide-controls">
-		{@render desktopActions('desktop-selection-actions-trigger')}
-	</div>
-	<div class="narrow-actions" data-testid="selection-narrow-actions">
-		{@render desktopActions('narrow-selection-actions-trigger')}
+	<div class="selection-actions">
+		{@render desktopActions()}
 	</div>
 	<Button class="done" intent="primary" size="md" onclick={ondone}>
 		{m.done()}
@@ -714,17 +755,11 @@
 		display: none;
 	}
 
-	.wide-controls {
-		display: none;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.narrow-actions {
+	.selection-actions {
 		grid-column: 1 / -1;
 	}
 
-	.narrow-actions :global(button) {
+	.selection-actions :global(button) {
 		width: 100%;
 	}
 
@@ -868,8 +903,7 @@
 		}
 
 		.desktop-selection-summary,
-		.wide-controls,
-		.narrow-actions,
+		.selection-actions,
 		:global(.done) {
 			display: none;
 		}
@@ -919,12 +953,12 @@
 			margin-right: auto;
 		}
 
-		.wide-controls {
+		.selection-actions {
 			display: flex;
 		}
 
-		.narrow-actions {
-			display: none;
+		.selection-actions :global(button) {
+			width: auto;
 		}
 
 		:global(.done) {
@@ -942,11 +976,11 @@
 			margin-right: auto;
 		}
 
-		.narrow-actions {
+		.selection-actions {
 			grid-column: auto;
 		}
 
-		.narrow-actions :global(button) {
+		.selection-actions :global(button) {
 			width: auto;
 		}
 	}

@@ -195,9 +195,8 @@ export function createLandingDemoWishlistHeaderProps() {
 }
 
 /**
- * Live like counts per demo slug. Absent slugs render as zero, which is also what a
- * cold start looks like before the counter query resolves — `LikeButton` hides a zero,
- * so the counts simply pop in after hydration.
+ * Live like counts per demo slug. Absent slugs render as zero, which is also shown on a
+ * cold start before the counter query resolves and hydration supplies the live count.
  */
 export type LandingDemoLikeCounts = Partial<Record<LandingDemoGiftSlug, number>>;
 

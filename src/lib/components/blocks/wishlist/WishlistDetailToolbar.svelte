@@ -27,7 +27,6 @@
 	import GiftViewSwitcher from '$lib/components/blocks/gift/GiftViewSwitcher.svelte';
 	import {
 		ActiveFilterPills,
-		FilterMenu,
 		normalizeActiveFilters,
 		type FilterDefinition,
 		type FilterFacetGroup,
@@ -163,7 +162,11 @@
 	}
 
 	function isGroupingOptionAvailable(option: GiftGroupingOption) {
-		return option === GIFT_GROUPING_OPTIONS.none || groupingAvailability[option];
+		return (
+			option === GIFT_GROUPING_OPTIONS.none ||
+			(option === GIFT_GROUPING_OPTIONS.priority && groupingAvailability.priority) ||
+			(option === GIFT_GROUPING_OPTIONS.category && groupingAvailability.category)
+		);
 	}
 
 	function updatePriorityFilter(value: GiftPriorityFilterValue, checked: boolean) {
@@ -447,7 +450,7 @@
 						onValueChange={(value) => onsortchange(value as GiftSortOption)}
 					>
 						{#each GIFT_SORT_KEYS as option (option)}
-							<DropdownMenu.RadioItem value={option}
+							<DropdownMenu.RadioItem value={option} closeOnSelect={false}
 								>{GIFT_SORT_LABELS[option]()}</DropdownMenu.RadioItem
 							>
 						{/each}
@@ -469,6 +472,7 @@
 							<DropdownMenu.RadioItem
 								value={option}
 								disabled={!isGroupingOptionAvailable(option)}
+								closeOnSelect={false}
 								>{GROUPING_LABELS[option]()}</DropdownMenu.RadioItem
 							>
 						{/each}
@@ -494,15 +498,17 @@
 					{/each}
 					{#each filterFacets.filter((facet) => facet.options.length > 0) as facet (facet.id)}
 						<DropdownMenu.Separator />
-						<DropdownMenu.GroupHeading>{facet.label}</DropdownMenu.GroupHeading>
-						{#each facet.options as option (option.value)}
-							<DropdownMenu.CheckboxItem
-								bind:checked={
-									() => option.checked, (checked) => option.onchange(checked)
-								}
-								closeOnSelect={false}>{option.label}</DropdownMenu.CheckboxItem
-							>
-						{/each}
+						<DropdownMenu.Group>
+							<DropdownMenu.GroupHeading>{facet.label}</DropdownMenu.GroupHeading>
+							{#each facet.options as option (option.value)}
+								<DropdownMenu.CheckboxItem
+									bind:checked={
+										() => option.checked, (checked) => option.onchange(checked)
+									}
+									closeOnSelect={false}>{option.label}</DropdownMenu.CheckboxItem
+								>
+							{/each}
+						</DropdownMenu.Group>
 					{/each}
 					{#if activeFilters.length > 0}
 						<DropdownMenu.Separator />
@@ -926,23 +932,44 @@
 					{#if mobileViewportMode === false}
 						{@render activeFilterRegion()}
 
-						{#if showActions || showManagementActions}
+						{#if reorderMode || showActions || showManagementActions}
 							<div
 								class="toolbar-actions min-w-0"
 								data-testid="wishlist-toolbar-actions"
 							>
-								{#if showActions}{@render desktopMoreMenu()}{/if}
-								{#if showManagementActions}
+								{#if reorderMode}
 									<Button
 										size="md"
-										aria-label={m.wishlist_detail_add_gift_label()}
-										disabled={reorderMode}
-										title={m.wishlist_detail_add_wish()}
-										onclick={onaddgift}
+										intent="primary"
+										onclick={() => onreordermodechange(false)}
 									>
-										<PlusIcon data-icon="inline-start" />
-										<span>{m.wishlist_detail_add_wish()}</span>
+										<CheckIcon data-icon="inline-start" />
+										<span>{m.gift_reorder_done()}</span>
 									</Button>
+									{#if showManagementActions}
+										<Button
+											size="md"
+											aria-label={m.wishlist_detail_add_gift_label()}
+											disabled
+											title={m.wishlist_detail_add_wish()}
+										>
+											<PlusIcon data-icon="inline-start" />
+											<span>{m.wishlist_detail_add_wish()}</span>
+										</Button>
+									{/if}
+								{:else}
+									{#if showActions}{@render desktopMoreMenu()}{/if}
+									{#if showManagementActions}
+										<Button
+											size="md"
+											aria-label={m.wishlist_detail_add_gift_label()}
+											title={m.wishlist_detail_add_wish()}
+											onclick={onaddgift}
+										>
+											<PlusIcon data-icon="inline-start" />
+											<span>{m.wishlist_detail_add_wish()}</span>
+										</Button>
+									{/if}
 								{/if}
 							</div>
 						{/if}

@@ -7,9 +7,7 @@
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
 	import HourglassIcon from '@lucide/svelte/icons/hourglass';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
-	import ShareIcon from '@lucide/svelte/icons/share-2';
 	import ArchiveIcon from '@lucide/svelte/icons/archive';
-	import UsersIcon from '@lucide/svelte/icons/users';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { WISHLIST_ROLES, type WishlistRole } from '$lib/modules/wishlists/types.js';
@@ -290,7 +288,10 @@
 				{/if}
 			</figure>
 
-			<div class={styles.headerText()}>
+			<div
+				class={styles.headerText()}
+				class:header-text-has-actions={settingsAvailable || canManage}
+			>
 				<!-- Every list leads with „Pro: {recipient}" — colon form, prefix lighter, name bold
 				     (2026-07-14 header decision, self lists included). A `<div>`, not a `<p>`: the
 				     recipient avatar below renders ImageFrame's `<div>` root, and a div nested in a
@@ -350,40 +351,6 @@
 						<span class={styles.managersLine()}>{managedByLabel}</span>
 					{/if}
 				</div>
-				{#if canManage}
-					<div class={styles.actionRow()}>
-						{#if !isArchived}
-							<Button
-								size="sm"
-								aria-label={m.wishlist_share_label()}
-								onclick={onshare}
-							>
-								<ShareIcon data-icon="inline-start" />
-								{m.wishlist_share_button()}
-							</Button>
-						{/if}
-						<Button
-							size="sm"
-							intent="secondary"
-							aria-label={m.wishlist_moderators_label()}
-							onclick={onmoderators}
-						>
-							<UsersIcon data-icon="inline-start" />
-							{m.wishlist_moderators_label()}
-						</Button>
-						{#if !isArchived}
-							<Button
-								size="sm"
-								intent="secondary"
-								aria-label={m.wishlist_archive_label()}
-								onclick={onarchive}
-							>
-								<ArchiveIcon data-icon="inline-start" />
-								{m.wishlist_archive_button()}
-							</Button>
-						{/if}
-					</div>
-				{/if}
 			</div>
 		</div>
 	</div>
@@ -575,6 +542,12 @@
 	@media (width <= 960px) {
 		.sticky-note {
 			display: none;
+		}
+	}
+
+	@media (width >= 640px) {
+		.header-text-has-actions {
+			padding-inline-end: 6.5rem;
 		}
 	}
 

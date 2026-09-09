@@ -516,10 +516,16 @@ describe('WishlistDetailToolbar consolidated desktop display (#359)', () => {
 
 	it('places one Display trigger after View and opens persistent cascading categories', async () => {
 		const onsortchange = vi.fn();
+		const ongroupingchange = vi.fn();
+		const onfilterchange = vi.fn();
 		const screen = await renderToolbar(
 			{
 				onsortchange,
+				ongroupingchange,
+				onfilterchange,
 				groupingAvailability: { priority: true, category: true },
+				categoryFilterOptions: [{ value: 'books', label: 'Knihy' }],
+				priorityFilterOptions: [{ value: 'high', label: 'Vysoká' }],
 			},
 			1280,
 		);
@@ -542,20 +548,57 @@ describe('WishlistDetailToolbar consolidated desktop display (#359)', () => {
 		await (display as HTMLButtonElement).click();
 		const root = page.getByRole('menu', { name: m.gift_display_options() });
 		await expect.element(root).toBeVisible();
-		await root.getByRole('menuitem', { name: new RegExp(m.gift_sort_by()) }).click();
+		const sort = root.getByRole('menuitem', { name: new RegExp(m.gift_sort_by()) });
+		const grouping = root.getByRole('menuitem', {
+			name: new RegExp(m.gift_grouping_label()),
+		});
+		const filter = root.getByRole('menuitem', { name: new RegExp(m.gift_filter()) });
+		await expect.element(sort).toBeVisible();
+		await expect.element(grouping).toBeVisible();
+		await expect.element(filter).toBeVisible();
+		await sort.click();
 		await expect.element(root).toBeVisible();
 		await page.getByRole('menuitemradio', { name: m.gift_sort_name() }).click();
 		expect(onsortchange).toHaveBeenCalledWith(GIFT_SORT_OPTIONS.name);
+		await expect.element(root).toBeVisible();
+
+		await root.getByRole('menuitem', { name: new RegExp(m.gift_grouping_label()) }).click();
+		await page.getByRole('menuitemradio', { name: m.gift_grouping_priority() }).click();
+		expect(ongroupingchange).toHaveBeenCalledWith(GIFT_GROUPING_OPTIONS.priority);
+		await expect.element(root).toBeVisible();
+		await root.getByRole('menuitem', { name: new RegExp(m.gift_filter()) }).click();
+		await page.getByRole('menuitemcheckbox', { name: 'Knihy' }).click();
+		expect(onfilterchange).toHaveBeenCalledWith({
+			...defaultFilters,
+			categoryValues: ['books'],
+		});
+		await expect.element(root).toBeVisible();
 		await screen.unmount();
 	});
 
-	it('keeps the desktop layout switcher enabled in reorder', async () => {
+	it('enters and exits desktop reorder with a dedicated visible Done action', async () => {
+		const onreordermodechange = vi.fn();
 		const onviewmodechange = vi.fn();
-		const screen = await renderToolbar(
+		let screen = await renderToolbar(
+			{
+				canManage: true,
+				role: WISHLIST_ROLES.moderator,
+				onreordermodechange,
+				onviewmodechange,
+			},
+			1280,
+		);
+		await screen.getByTestId('desktop-more-trigger').click();
+		await page.getByRole('menuitem', { name: m.gift_reorder_action(), exact: true }).click();
+		expect(onreordermodechange).toHaveBeenCalledWith(true);
+		await screen.unmount();
+
+		screen = await renderToolbar(
 			{
 				canManage: true,
 				role: WISHLIST_ROLES.moderator,
 				reorderMode: true,
+				onreordermodechange,
 				onviewmodechange,
 			},
 			1280,
@@ -564,6 +607,19 @@ describe('WishlistDetailToolbar consolidated desktop display (#359)', () => {
 		expect(listMode.element()).not.toBeDisabled();
 		await listMode.click();
 		expect(onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
+		await expect.element(screen.getByTestId('desktop-display-trigger')).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: m.wishlist_detail_add_gift_label() }))
+			.toBeDisabled();
+		await expect.element(screen.getByTestId('desktop-more-trigger')).not.toBeInTheDocument();
+		const done = screen.getByRole('button', { name: m.gift_reorder_done(), exact: true });
+		await expect.element(done).toBeVisible();
+		expect(done.element()).toHaveTextContent(m.gift_reorder_done());
+		expect((done.element() as HTMLElement).scrollWidth).toBeLessThanOrEqual(
+			(done.element() as HTMLElement).clientWidth,
+		);
+		await done.click();
+		expect(onreordermodechange).toHaveBeenLastCalledWith(false);
 		await screen.unmount();
 	});
 
