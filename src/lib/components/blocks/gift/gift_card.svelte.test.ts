@@ -1015,6 +1015,47 @@ describe('GiftCard actions (issue #255)', () => {
 	});
 });
 
+describe('GiftCard footer alignment', () => {
+	it.each([
+		{ role: WISHLIST_ROLES.recipient, received: false, isArchived: false, withMore: true },
+		{ role: WISHLIST_ROLES.recipient, received: true, isArchived: false, withMore: true },
+		{ role: WISHLIST_ROLES.recipient, received: false, isArchived: false, withMore: false },
+		{ role: WISHLIST_ROLES.recipient, received: true, isArchived: true, withMore: true },
+		{ role: WISHLIST_ROLES.visitor, received: false, isArchived: true, withMore: false },
+	])(
+		'right-aligns $role actions (received: $received, archived: $isArchived, More: $withMore)',
+		async ({ role, received, isArchived, withMore }) => {
+			await page.viewport(800, 720);
+			const host = document.createElement('div');
+			host.style.width = '360px';
+			document.body.appendChild(host);
+			fixedHosts.add(host);
+			await render(
+				GiftCardTestHost,
+				{
+					gift: makeVisitorGift({ received }),
+					role,
+					isArchived,
+					onreceived: () => {},
+					onunreserve: () => {},
+					onmore: withMore ? () => {} : undefined,
+				},
+				{ baseElement: host },
+			);
+
+			const footer = host.querySelector('[data-testid="gift-card-footer"]') as HTMLElement;
+			const footerStyle = getComputedStyle(footer);
+			const rightEdge =
+				footer.getBoundingClientRect().right - parseFloat(footerStyle.paddingRight);
+			const actions = Array.from(footer.querySelectorAll<HTMLElement>('button'));
+			expect(actions.length).toBeGreaterThan(0);
+			expect(
+				Math.max(...actions.map((action) => action.getBoundingClientRect().right)),
+			).toBeCloseTo(rightEdge, 1);
+		},
+	);
+});
+
 describe('GiftCard approved action geometry (issue #350)', () => {
 	it.each([
 		{ viewport: 320, width: 296, role: WISHLIST_ROLES.visitor, reservationId: null },

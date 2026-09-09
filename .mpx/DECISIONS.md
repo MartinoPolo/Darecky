@@ -446,6 +446,12 @@ Decided: 2026-08-12 (issue #255; supersedes issue #213's all-surface release UI 
 What: Mark received/unreceived is the primary manager action in card, list, and compact browse views. Marking a gift received enables the received filter so its updated action and badge remain visible. Privileged reservation release lives in the gift detail/editor dialog: správci use the edit form, while the app-admin override remains reachable from the read-only detail. Fully reserved gifts omit redundant disabled reservation actions.
 Why: Completion must react visibly from refreshed browse state, while reservation status already communicates that a gift is unavailable and privileged release belongs in deliberate gift-detail management rather than routine browsing.
 
+### Gift card footer action alignment
+
+What: The gift card's primary/More action group anchors to the right content edge regardless of role, received state, or whether Like is present. Mobile actions retain their full-width layout and accessible target sizes. Like remains a separate secondary control (desktop footer left, mobile image top-right); store links and inline description controls remain with their content.
+Why: Completion and overflow actions need a predictable position even when recipient privacy or archive state removes Like; secondary interest and content navigation serve different purposes.
+Rejected: Left-aligned Received or More-only footers; shrinking mobile actions just to create empty space on the left.
+
 ### Gift link always visible
 
 Decided: 2026-05-30
