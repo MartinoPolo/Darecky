@@ -101,7 +101,7 @@
 			hasMultipleActions && 'gift-list-item-multiple-actions',
 		)}
 	>
-		<!-- The 1:1 thumb fills the card's inner height in the normal horizontal layout. -->
+		<!-- The normal horizontal layout keeps the thumb 1:1 while taller content can grow the card. -->
 		<div
 			data-testid="gift-list-image"
 			class="gift-list-image relative aspect-square self-start border-r-2 border-ink"
@@ -165,7 +165,7 @@
 		>
 			<div class="flex items-start gap-1.5">
 				<h3
-					class="gift-list-title line-clamp-2 min-h-8 min-w-0 flex-1 font-heading text-[13px] font-semibold leading-4 text-foreground sm:min-h-0 sm:text-base sm:leading-snug"
+					class="gift-list-title line-clamp-2 min-w-0 flex-1 font-heading text-[13px] font-semibold leading-4 text-foreground sm:text-base sm:leading-snug"
 				>
 					{gift.name}
 				</h3>
@@ -299,7 +299,7 @@
 
 		box-sizing: border-box;
 		grid-template-columns: var(--gift-list-image-size) minmax(0, 1fr);
-		height: calc(var(--gift-list-image-size) + 0.25rem);
+		min-height: calc(var(--gift-list-image-size) + 0.25rem);
 	}
 
 	.gift-list-item-manager-dense {

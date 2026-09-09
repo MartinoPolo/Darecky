@@ -844,6 +844,74 @@ describe('GiftListItem Like geometry (issue #330 follow-up)', () => {
 
 describe('GiftListItem approved action geometry (issue #350)', () => {
 	it.each([
+		{
+			viewport: 430,
+			role: WISHLIST_ROLES.visitor,
+			name: 'Myš',
+		},
+		{
+			viewport: 430,
+			role: WISHLIST_ROLES.recipient,
+			name: REALISTIC_LONG_NAME,
+		},
+		{
+			viewport: 500,
+			role: WISHLIST_ROLES.moderator,
+			name: REALISTIC_LONG_NAME,
+		},
+	])(
+		'shows description and contains 48px actions near mobile width for $role with title variant',
+		async ({ viewport, role, name }) => {
+			await page.viewport(viewport, 900);
+			const host = document.createElement('div');
+			host.style.width = `${viewport - 24}px`;
+			document.body.appendChild(host);
+			await render(
+				GiftListItemTestHost,
+				{
+					gift: makeVisitorGift({
+						name,
+						description: 'Lehká myš pro pohodlné každodenní používání.',
+						myReservationId: role === WISHLIST_ROLES.visitor ? null : 'mine',
+						reservedCount: role === WISHLIST_ROLES.visitor ? 0 : 1,
+					}),
+					role,
+					onreceived: () => {},
+					onreserve: () => {},
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
+
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const description = host.querySelector('.gift-list-description') as HTMLElement;
+			const itemRect = item.getBoundingClientRect();
+			const descriptionRect = description.getBoundingClientRect();
+			expect(getComputedStyle(description).display).not.toBe('none');
+			expect(descriptionRect.top).toBeGreaterThanOrEqual(itemRect.top);
+			expect(descriptionRect.bottom).toBeLessThanOrEqual(itemRect.bottom);
+			expect(image.getBoundingClientRect().width).toBeCloseTo(
+				image.getBoundingClientRect().height,
+				0,
+			);
+			expect(item.scrollWidth).toBeLessThanOrEqual(item.clientWidth);
+			expect(item.scrollHeight).toBeLessThanOrEqual(item.clientHeight);
+			for (const action of host.querySelectorAll<HTMLElement>(
+				'[data-testid="gift-list-actions"] button',
+			)) {
+				const actionRect = action.getBoundingClientRect();
+				expect(actionRect.height).toBeCloseTo(48, 0);
+				expect(actionRect.left).toBeGreaterThanOrEqual(itemRect.left);
+				expect(actionRect.right).toBeLessThanOrEqual(itemRect.right);
+				expect(actionRect.bottom).toBeLessThanOrEqual(itemRect.bottom);
+			}
+			host.remove();
+		},
+	);
+
+	it.each([
 		{ viewport: 320, role: WISHLIST_ROLES.visitor, reservationId: null },
 		{ viewport: 390, role: WISHLIST_ROLES.visitor, reservationId: 'mine' },
 		{ viewport: 768, role: WISHLIST_ROLES.recipient, reservationId: null },

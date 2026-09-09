@@ -93,6 +93,35 @@ function deferredAnimation() {
 }
 
 describe('WishlistGiftDisplay mobile collection geometry (issue #336)', () => {
+	it.each([
+		{
+			kind: GIFT_SECTION_KINDS.priorityGroup,
+			key: 'priority:high',
+			label: 'Vysoká priorita',
+			priorityKey: null,
+		},
+		{
+			kind: GIFT_SECTION_KINDS.categoryGroup,
+			key: 'category:kitchen',
+			label: 'Kuchyně',
+			priorityKey: null,
+		},
+	])('keeps a short $kind heading close to its first card on mobile', async (section) => {
+		await page.viewport(390, 720);
+		const screen = await render(WishlistGiftDisplay, {
+			...defaultProps,
+			sections: [{ ...section, gifts: [visitorGift()] }],
+			viewMode: 'card',
+		});
+		const heading = screen.getByRole('heading', { name: section.label }).element();
+		const card = document.querySelector<HTMLElement>('[data-gift-item]')!;
+		const gap = card.getBoundingClientRect().top - heading.getBoundingClientRect().bottom;
+
+		expect(gap).toBeGreaterThanOrEqual(8);
+		expect(gap).toBeLessThanOrEqual(12);
+		await screen.unmount();
+	});
+
 	it('uses one card column at 320px and exactly two equal columns from 321px through 639px', async () => {
 		const second = { ...visitorGift(), id: 'gift-2', name: 'Kávovar' };
 		const responsiveSections = [{ ...sections[0]!, gifts: [visitorGift(), second] }];
