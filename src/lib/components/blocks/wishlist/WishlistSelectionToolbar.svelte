@@ -110,10 +110,6 @@
 	function labelWithOptionalSummary(label: string, summary: string) {
 		return `${label}: ${summary}`;
 	}
-	function triggerLabel(action: PendingGiftBulkActionDescriptor['action'], fallback: string) {
-		return pending?.action === action ? pendingLabel : fallback;
-	}
-
 	type MobileBulkAction =
 		| 'priority'
 		| 'category'
@@ -593,6 +589,68 @@
 	</Sheet.Root>
 {/snippet}
 
+{#snippet desktopActions(testId: string)}
+	<DropdownMenu.Root>
+		<DropdownMenu.Trigger>
+			{#snippet child({ props })}
+				<Button {...props} intent="outline" size="md" {disabled} data-testid={testId}>
+					<SlidersHorizontalIcon data-icon="inline-start" />{pending !== null
+						? pendingLabel
+						: m.gift_selection_actions()}<ChevronDownIcon data-icon="inline-end" />
+				</Button>
+			{/snippet}
+		</DropdownMenu.Trigger>
+		<DropdownMenu.Content align="end" aria-label={m.gift_selection_actions()}>
+			<DropdownMenu.Sub>
+				<DropdownMenu.SubTrigger disabled={!priorityReady}>
+					{labelWithOptionalSummary(
+						m.gift_priority_label(),
+						priorityReady ? prioritySummary : m.moderator_loading(),
+					)}
+				</DropdownMenu.SubTrigger>
+				<DropdownMenu.SubContent>{@render priorityItems()}</DropdownMenu.SubContent>
+			</DropdownMenu.Sub>
+			<DropdownMenu.Sub>
+				<DropdownMenu.SubTrigger disabled={!categoryReady}>
+					{labelWithOptionalSummary(
+						m.gift_context_category(),
+						categoryReady ? categorySummary : m.moderator_loading(),
+					)}
+				</DropdownMenu.SubTrigger>
+				<DropdownMenu.SubContent>{@render categoryItems()}</DropdownMenu.SubContent>
+			</DropdownMenu.Sub>
+			<DropdownMenu.Sub>
+				<DropdownMenu.SubTrigger>
+					{labelWithOptionalSummary(m.image_fit_label(), imageFitSummary)}
+				</DropdownMenu.SubTrigger>
+				<DropdownMenu.SubContent>{@render imageFitItems()}</DropdownMenu.SubContent>
+			</DropdownMenu.Sub>
+			<DropdownMenu.Sub>
+				<DropdownMenu.SubTrigger>
+					{labelWithOptionalSummary(m.image_background_label(), backgroundSummary)}
+				</DropdownMenu.SubTrigger>
+				<DropdownMenu.SubContent>{@render imageBackgroundItems()}</DropdownMenu.SubContent>
+			</DropdownMenu.Sub>
+			<DropdownMenu.Sub>
+				<DropdownMenu.SubTrigger>
+					<CopyIcon data-icon="inline-start" />{m.gift_bulk_copy()}
+				</DropdownMenu.SubTrigger>
+				<DropdownMenu.SubContent>
+					<DropdownMenu.Item onclick={handleCopy}
+						>{m.gift_bulk_copy_choose()}</DropdownMenu.Item
+					>
+				</DropdownMenu.SubContent>
+			</DropdownMenu.Sub>
+			<DropdownMenu.Sub>
+				<DropdownMenu.SubTrigger>
+					{labelWithOptionalSummary(m.gift_selection_received_state(), receivedSummary)}
+				</DropdownMenu.SubTrigger>
+				<DropdownMenu.SubContent>{@render receivedItems()}</DropdownMenu.SubContent>
+			</DropdownMenu.Sub>
+		</DropdownMenu.Content>
+	</DropdownMenu.Root>
+{/snippet}
+
 <div class="selection-toolbar" role="region" aria-label={m.gift_selection_toolbar()}>
 	<div class="mobile-selection-row">
 		<Checkbox
@@ -626,141 +684,10 @@
 			>{/if}
 	</div>
 	<div class="wide-controls" data-testid="selection-wide-controls">
-		<Button intent="outline" size="md" {disabled} onclick={handleCopy}>
-			<CopyIcon data-icon="inline-start" />{m.gift_bulk_copy()}
-		</Button>
-		<DropdownMenu.Root
-			><DropdownMenu.Trigger
-				>{#snippet child({ props })}<Button
-						{...props}
-						intent="outline"
-						size="md"
-						disabled={disabled || !priorityReady}
-						>{triggerLabel(
-							'priority',
-							labelWithOptionalSummary(
-								m.gift_priority_label(),
-								priorityReady ? prioritySummary : m.moderator_loading(),
-							),
-						)}<ChevronDownIcon data-icon="inline-end" /></Button
-					>{/snippet}</DropdownMenu.Trigger
-			><DropdownMenu.Content>{@render priorityItems()}</DropdownMenu.Content
-			></DropdownMenu.Root
-		>
-		<DropdownMenu.Root
-			><DropdownMenu.Trigger
-				>{#snippet child({ props })}<Button
-						{...props}
-						intent="outline"
-						size="md"
-						disabled={disabled || !categoryReady}
-						>{triggerLabel(
-							'category',
-							labelWithOptionalSummary(
-								m.gift_context_category(),
-								categoryReady ? categorySummary : m.moderator_loading(),
-							),
-						)}<ChevronDownIcon data-icon="inline-end" /></Button
-					>{/snippet}</DropdownMenu.Trigger
-			><DropdownMenu.Content>{@render categoryItems()}</DropdownMenu.Content
-			></DropdownMenu.Root
-		>
-		<DropdownMenu.Root
-			><DropdownMenu.Trigger
-				>{#snippet child({ props })}<Button {...props} intent="outline" size="md" {disabled}
-						>{triggerLabel(
-							'imageFit',
-							labelWithOptionalSummary(m.image_fit_label(), imageFitSummary),
-						)}<ChevronDownIcon data-icon="inline-end" /></Button
-					>{/snippet}</DropdownMenu.Trigger
-			><DropdownMenu.Content>{@render imageFitItems()}</DropdownMenu.Content
-			></DropdownMenu.Root
-		>
-		<DropdownMenu.Root
-			><DropdownMenu.Trigger
-				>{#snippet child({ props })}<Button {...props} intent="outline" size="md" {disabled}
-						>{triggerLabel(
-							'imageBackground',
-							labelWithOptionalSummary(m.image_background_label(), backgroundSummary),
-						)}<ChevronDownIcon data-icon="inline-end" /></Button
-					>{/snippet}</DropdownMenu.Trigger
-			><DropdownMenu.Content>{@render imageBackgroundItems()}</DropdownMenu.Content
-			></DropdownMenu.Root
-		>
-		<DropdownMenu.Root
-			><DropdownMenu.Trigger
-				>{#snippet child({ props })}<Button {...props} intent="outline" size="md" {disabled}
-						>{triggerLabel(
-							'received',
-							labelWithOptionalSummary(
-								m.gift_selection_received_state(),
-								receivedSummary,
-							),
-						)}<ChevronDownIcon data-icon="inline-end" /></Button
-					>{/snippet}</DropdownMenu.Trigger
-			><DropdownMenu.Content>{@render receivedItems()}</DropdownMenu.Content
-			></DropdownMenu.Root
-		>
+		{@render desktopActions('desktop-selection-actions-trigger')}
 	</div>
 	<div class="narrow-actions" data-testid="selection-narrow-actions">
-		<DropdownMenu.Root
-			><DropdownMenu.Trigger
-				>{#snippet child({ props })}<Button {...props} intent="outline" size="md" {disabled}
-						><SlidersHorizontalIcon data-icon="inline-start" />{pending !== null
-							? pendingLabel
-							: m.gift_selection_actions()}<ChevronDownIcon
-							data-icon="inline-end"
-						/></Button
-					>{/snippet}</DropdownMenu.Trigger
-			><DropdownMenu.Content align="end"
-				><DropdownMenu.Item onclick={handleCopy}>
-					<CopyIcon data-icon="inline-start" />{m.gift_bulk_copy()}
-				</DropdownMenu.Item>
-				<DropdownMenu.Separator />
-				<DropdownMenu.Sub
-					><DropdownMenu.SubTrigger disabled={!priorityReady}
-						>{labelWithOptionalSummary(
-							m.gift_priority_label(),
-							priorityReady ? prioritySummary : m.moderator_loading(),
-						)}</DropdownMenu.SubTrigger
-					><DropdownMenu.SubContent>{@render priorityItems()}</DropdownMenu.SubContent
-					></DropdownMenu.Sub
-				><DropdownMenu.Sub
-					><DropdownMenu.SubTrigger disabled={!categoryReady}
-						>{labelWithOptionalSummary(
-							m.gift_context_category(),
-							categoryReady ? categorySummary : m.moderator_loading(),
-						)}</DropdownMenu.SubTrigger
-					><DropdownMenu.SubContent>{@render categoryItems()}</DropdownMenu.SubContent
-					></DropdownMenu.Sub
-				><DropdownMenu.Sub
-					><DropdownMenu.SubTrigger
-						>{labelWithOptionalSummary(
-							m.image_fit_label(),
-							imageFitSummary,
-						)}</DropdownMenu.SubTrigger
-					><DropdownMenu.SubContent>{@render imageFitItems()}</DropdownMenu.SubContent
-					></DropdownMenu.Sub
-				><DropdownMenu.Sub
-					><DropdownMenu.SubTrigger
-						>{labelWithOptionalSummary(
-							m.image_background_label(),
-							backgroundSummary,
-						)}</DropdownMenu.SubTrigger
-					><DropdownMenu.SubContent
-						>{@render imageBackgroundItems()}</DropdownMenu.SubContent
-					></DropdownMenu.Sub
-				><DropdownMenu.Sub
-					><DropdownMenu.SubTrigger
-						>{labelWithOptionalSummary(
-							m.gift_selection_received_state(),
-							receivedSummary,
-						)}</DropdownMenu.SubTrigger
-					><DropdownMenu.SubContent>{@render receivedItems()}</DropdownMenu.SubContent
-					></DropdownMenu.Sub
-				></DropdownMenu.Content
-			></DropdownMenu.Root
-		>
+		{@render desktopActions('narrow-selection-actions-trigger')}
 	</div>
 	<Button class="done" intent="primary" size="md" onclick={ondone}>
 		{m.done()}

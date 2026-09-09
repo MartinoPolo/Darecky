@@ -401,18 +401,19 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 	});
 });
 
-describe('WishlistSelectionToolbar desktop preservation (#340)', () => {
+describe('WishlistSelectionToolbar consolidated desktop actions (#353)', () => {
 	beforeEach(async () => page.viewport(1280, 760));
 
-	it('keeps the existing wide field controls and Done action', async () => {
-		const screen = await render(WishlistSelectionToolbar, {
+	it('uses one Actions trigger with six persistent cascading categories and explicit copy choice', async () => {
+		const props = {
 			...createProps(),
 			commonPriorityId: 'high',
 			commonCategoryId: 'sport',
 			commonImageFit: 'fit' as const,
 			commonImageBackground: '#000000',
 			commonReceived: true,
-		});
+		};
+		const screen = await render(WishlistSelectionToolbar, props);
 		const summary = screen
 			.getByRole('region', { name: m.gift_selection_toolbar() })
 			.element()
@@ -420,16 +421,49 @@ describe('WishlistSelectionToolbar desktop preservation (#340)', () => {
 		expect(summary.children[0]).toHaveAttribute('role', 'checkbox');
 		expect(summary.children[1]).toHaveClass('selection-count');
 		expect(summary).not.toHaveTextContent(m.draft_grid_select_all());
+
 		const wide = screen.getByTestId('selection-wide-controls').element() as HTMLElement;
 		wide.style.display = 'flex';
-		expect(visibleChildren(wide)).toHaveLength(6);
+		expect(visibleChildren(wide)).toHaveLength(1);
+		const trigger = screen.getByTestId('desktop-selection-actions-trigger');
+		await expect.element(trigger).toHaveTextContent(m.gift_selection_actions());
+		await trigger.click();
+
+		const root = page.getByRole('menu', { name: m.gift_selection_actions() });
+		await expect.element(root).toBeVisible();
+		for (const label of [
+			m.gift_priority_label(),
+			m.gift_context_category(),
+			m.image_fit_label(),
+			m.image_background_label(),
+			m.gift_bulk_copy(),
+			m.gift_selection_received_state(),
+		]) {
+			await expect
+				.element(root.getByRole('menuitem', { name: new RegExp(label) }))
+				.toBeVisible();
+		}
+
+		const priority = root.getByRole('menuitem', {
+			name: new RegExp(m.gift_priority_label()),
+		});
+		priority.element().focus();
+		await userEvent.keyboard('{ArrowRight}');
+		await expect.element(root).toBeVisible();
 		await expect
-			.element(screen.getByRole('button', { name: m.gift_bulk_copy() }))
+			.element(page.getByRole('menuitemradio', { name: m.gift_priority_none() }))
 			.toBeVisible();
+		await userEvent.keyboard('{ArrowLeft}');
+		await expect.element(priority).toHaveFocus();
+		await userEvent.keyboard('{Escape}');
+		await expect.element(trigger).toHaveFocus();
+		await trigger.click();
+
+		const copy = root.getByRole('menuitem', { name: new RegExp(m.gift_bulk_copy()) });
+		await copy.click();
+		await page.getByRole('menuitem', { name: m.gift_bulk_copy_choose() }).click();
+		expect(props.oncopy).toHaveBeenCalledOnce();
 		await expect.element(screen.getByRole('button', { name: m.done() })).toBeVisible();
-		await expect
-			.element(screen.getByRole('button', { name: `${m.gift_priority_label()}: Vysoká` }))
-			.toBeVisible();
 		await screen.unmount();
 	});
 });
