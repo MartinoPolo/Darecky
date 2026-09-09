@@ -69,7 +69,7 @@
 		<p class="text-(length:--text-base) leading-relaxed text-muted-foreground">{hint}</p>
 	</div>
 
-	<div class="flex min-w-0 flex-col">
+	<div class="flex min-w-0 flex-col gap-1">
 		{#each gifts as gift (gift.id)}
 			{@const isNarrated = isRecipientPane && reservedGiftIds.has(gift.id)}
 			<!-- Horizontal padding is constant so the mobile narration tint can never shift the
