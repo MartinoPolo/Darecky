@@ -83,11 +83,12 @@
 				data-testid="landing-demo-gift-{gift.id}"
 			>
 				{#if gift.id === likePopupGiftId}
-					<!-- Absolutely positioned so the explainer can never nudge the row it
-					     comments on; anchored top-right, clear of the heart at the thumbnail's
-					     bottom-right corner. -->
+					<!-- Keep the explainer over the content column rather than the thumbnail: the
+					     like control can grow when its live count appears. The 34% boundary mirrors
+					     the list row's largest fluid thumbnail share, while the right inset aligns
+					     the bubble with the card inside this wrapper's negative margin. -->
 					<p
-						class="absolute -top-2 right-1 z-20 max-w-[min(380px,100%)] rounded-lg border-2 border-ink bg-note px-3 py-2 text-(length:--text-sm) leading-snug text-note-ink shadow-sticker"
+						class="absolute -top-2 right-2 z-20 w-[calc(66%-1rem)] max-w-96 rounded-lg border-2 border-ink bg-note px-3 py-2 text-(length:--text-sm) leading-snug text-note-ink shadow-sticker"
 						role="status"
 						data-testid="landing-demo-like-popup"
 					>

@@ -444,6 +444,20 @@ test.describe('Landing demo section', () => {
 			await expect(popup).toBeVisible();
 			await expect(popup).toHaveText(new RegExp(CS.likePopup));
 
+			const giftCard = demoGift(gifterPane(page)).getByTestId('gift-list-item');
+			const [popupBox, heartBox, giftCardBox] = await Promise.all([
+				popup.boundingBox(),
+				heart.boundingBox(),
+				giftCard.boundingBox(),
+			]);
+			expect(popupBox).not.toBeNull();
+			expect(heartBox).not.toBeNull();
+			expect(giftCardBox).not.toBeNull();
+			expect(popupBox!.x).toBeGreaterThanOrEqual(heartBox!.x + heartBox!.width);
+			expect(popupBox!.x + popupBox!.width).toBeLessThanOrEqual(
+				giftCardBox!.x + giftCardBox!.width,
+			);
+
 			// Restore the shared counter; unliking must never trigger the explainer.
 			await toggleLike(heart, false);
 			await expect(popup).toHaveCount(0, { timeout: 15_000 });
