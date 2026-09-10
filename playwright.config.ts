@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { resolveDevelopmentEnvironment } from './src/lib/config/mpx_development.js';
+import {
+	automatedServerEnvironment,
+	sharedChromeLaunchOptions,
+} from './scripts/browser-automation.mjs';
 
 const development = resolveDevelopmentEnvironment(process.env);
 const devServerPort = development.appPort;
@@ -17,6 +21,7 @@ export default defineConfig({
 	// requests, producing migrating timeouts that pass immediately on retry.
 	workers: 2,
 	use: {
+		...sharedChromeLaunchOptions,
 		baseURL: development.playwrightBaseUrl,
 		trace: 'on-first-retry',
 		actionTimeout: 15_000,
@@ -33,6 +38,7 @@ export default defineConfig({
 		// Never reuse a server that may lack the controlled local E2E environment.
 		reuseExistingServer: false,
 		env: {
+			...automatedServerEnvironment,
 			// Local E2E signing only; this deterministic fallback is not a production secret.
 			AUTH_SECRET:
 				process.env.AUTH_SECRET ??

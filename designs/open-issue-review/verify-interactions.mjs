@@ -1,8 +1,9 @@
+import { sharedChromeLaunchOptions } from '../../scripts/browser-automation.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { writeFile } from 'node:fs/promises';
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(sharedChromeLaunchOptions);
 const results = [];
 async function scenario(name, callback) {
 	const page = await browser.newPage({ viewport: { width: 390, height: 900 } });

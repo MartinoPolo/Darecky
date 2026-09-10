@@ -51,7 +51,8 @@ jobs:
                   node-version: 22
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
-            - run: pnpm exec playwright install --with-deps chromium
+            - run: pnpm exec playwright install --with-deps chrome
+            - run: pnpm run test:scripts
             # Unit tests + Vitest browser-mode component tests.
             - run: pnpm exec vitest run --coverage
 
@@ -90,7 +91,7 @@ jobs:
                   node-version: 22
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
-            - run: pnpm exec playwright install --with-deps chromium
+            - run: pnpm exec playwright install --with-deps chrome chromium
             # Apply the committed migrations (production path) instead of
             # `db:push`, so e2e also fails when migrations lag behind schema.ts.
             - run: pnpm run db:migrate

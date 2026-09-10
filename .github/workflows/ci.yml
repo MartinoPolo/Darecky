@@ -85,10 +85,10 @@ jobs:
               continue-on-error: true
               working-directory: performance-head
               run: pnpm install --frozen-lockfile
-            - name: Install Chromium
+            - name: Install Google Chrome
               continue-on-error: true
               working-directory: performance-head
-              run: pnpm exec playwright install --with-deps chromium
+              run: pnpm exec playwright install --with-deps chrome
             - name: Test performance reporter
               continue-on-error: true
               working-directory: performance-head

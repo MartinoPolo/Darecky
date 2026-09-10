@@ -34,7 +34,8 @@ When debugging or analyzing issues related to third-party libraries, delegate ex
 - **Default to raw Playwright** via the project's own installed `playwright` dependency — it has no MCP layer, so it works in every session:
     - Quick screenshot / crawl / click: `node scripts/shot.mjs <route> [--user martin|jana|petr|eva|tomas] [--mobile] [--dark] [--full] [--wait <sel>]`. Prints the PNG path; Read it back to view. Run from **PowerShell** (Git Bash mangles leading-slash args; from Bash prefix `MSYS_NO_PATHCONV=1`).
     - Repeatable verification: a `tests/e2e/*.spec.ts` with `@playwright/test`, reusing `tests/e2e/fixtures/{auth,wishlist}-helpers.ts`.
-- Prereqs: dev server (`pnpm run dev`) + seeded DB (`pnpm db:seed`). Authed routes are under the `(app)` group: `/my-lists`, `/followed`, `/moderated`, `/settings`, `/w/<id>`.
+- Automation prereqs are explicit: prepare the seeded DB separately, then start the assigned isolated server with `pnpm dev:agent --port <assigned-port>` (use `.worktree-ports.json`). This command does not run `predev`, start/seed a database, or open a browser. Manual `pnpm dev` and its existing `predev`/auto-open behavior are unchanged.
+- Browser automation requires installed Google Chrome and uses Playwright temporary contexts only: never fall back to the default browser, reuse a personal profile, change browser/profile settings, or clean up personal profile data. The sole bundled-Chromium exception is `hover-stability.spec.ts`, whose isolated temporary persistent context loads an unpacked extension for real browser zoom because branded Chrome removed those sideload flags. Authed routes are under the `(app)` group: `/my-lists`, `/followed`, `/moderated`, `/settings`, `/w/<id>`.
 - Prefer explicit `waitForSelector` over `waitUntil: 'networkidle'` (networkidle hangs on SSE/long-poll surfaces).
 
 ## Commands

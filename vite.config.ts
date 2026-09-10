@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { resolveDevelopmentEnvironment } from './src/lib/config/mpx_development.js';
+import { sharedChromeLaunchOptions } from './scripts/browser-automation.mjs';
 
 // Read current git branch at dev-server start so each worktree gets its own
 // branch name baked in – consumed by +layout.svelte to prefix browser tab titles.
@@ -124,7 +125,7 @@ export default defineConfig({
 	server: {
 		...development.appServer,
 		strictPort: true,
-		open: development.appOrigin,
+		open: isVitest || process.env.BROWSER === 'none' ? false : development.appOrigin,
 		watch: {
 			ignored: ['**/.mpx/**', './*.html'],
 		},
@@ -208,7 +209,7 @@ export default defineConfig({
 					retry: 1,
 					browser: {
 						enabled: true,
-						provider: playwright(),
+						provider: playwright({ launchOptions: sharedChromeLaunchOptions }),
 						instances: [{ browser: 'chromium', headless: true }],
 						// Fixed API port so the two browser projects (client + storybook) bind
 						// distinct Vitest servers instead of racing for a default port when both
@@ -249,7 +250,7 @@ export default defineConfig({
 					browser: {
 						enabled: true,
 						headless: true,
-						provider: playwright(),
+						provider: playwright({ launchOptions: sharedChromeLaunchOptions }),
 						instances: [{ browser: 'chromium' }],
 						api: {
 							host: '127.0.0.1',

@@ -1,7 +1,8 @@
+import { sharedChromeLaunchOptions } from '../../scripts/browser-automation.mjs';
 import { chromium } from 'playwright';
 import { writeFile } from 'node:fs/promises';
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(sharedChromeLaunchOptions);
 const results = [];
 for (const variant of ['a', 'b']) {
 	const page = await browser.newPage({ viewport: { width: 320, height: 900 } });
