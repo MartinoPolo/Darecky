@@ -68,6 +68,7 @@ async function launchZoomableContext(
 	const profile = testInfo.outputPath('chromium-profile');
 	await rm(profile, { recursive: true, force: true });
 	const context = await chromium.launchPersistentContext(profile, {
+		// Isolated exception: bundled Chromium retains unpacked-extension flags that Chrome removed.
 		channel: 'chromium',
 		headless: true,
 		viewport: { width: 1602, height: 1100 },

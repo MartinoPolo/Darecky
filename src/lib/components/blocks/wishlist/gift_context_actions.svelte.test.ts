@@ -1,5 +1,7 @@
+import '../../../../app.css';
 import { render } from 'vitest-browser-svelte';
-import { describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import GiftContextActions from './GiftContextActions.svelte';
 import GiftContextActionsTestHost from './GiftContextActionsTestHost.svelte';
 import * as m from '$lib/paraglide/messages.js';
@@ -47,6 +49,77 @@ describe('GiftContextActions desktop ContextMenu', () => {
 });
 
 describe('GiftContextActions mobile Sheet', () => {
+	afterEach(async () => page.viewport(1280, 720));
+
+	it('uses the inset rounded action-sheet shell with shared header, body, rows, and icon column', async () => {
+		await page.viewport(390, 720);
+		const screen = await render(GiftContextActions, managerProps);
+		const dialog = screen.getByRole('dialog', { name: 'Kolo' }).element() as HTMLElement;
+		const dialogRect = dialog.getBoundingClientRect();
+		const dialogStyle = getComputedStyle(dialog);
+
+		expect(dialogRect.left).toBeCloseTo(window.innerWidth - dialogRect.right, 1);
+		expect(dialogRect.left).toBeGreaterThan(0);
+		expect(parseFloat(dialogStyle.borderLeftWidth)).toBeGreaterThan(0);
+		expect(dialogStyle.borderLeftWidth).toBe(dialogStyle.borderRightWidth);
+		expect(dialogStyle.borderLeftWidth).toBe(dialogStyle.borderTopWidth);
+		expect(dialogStyle.borderTopLeftRadius).toBe(dialogStyle.borderTopRightRadius);
+		expect(parseFloat(dialogStyle.borderTopLeftRadius)).toBeGreaterThan(0);
+
+		const header = dialog.querySelector<HTMLElement>('[data-slot="sheet-header"]')!;
+		const headerStyle = getComputedStyle(header);
+		expect(header.getBoundingClientRect().width).toBeCloseTo(
+			dialogRect.width -
+				parseFloat(dialogStyle.borderLeftWidth) -
+				parseFloat(dialogStyle.borderRightWidth),
+			1,
+		);
+		expect(headerStyle.paddingLeft).toBe('16px');
+		expect(headerStyle.paddingRight).toBe('56px');
+		expect(headerStyle.paddingTop).toBe('12px');
+		expect(headerStyle.paddingBottom).toBe('12px');
+		expect(parseFloat(headerStyle.borderBottomWidth)).toBeCloseTo(1, 1);
+
+		const body = header.nextElementSibling as HTMLElement;
+		const bodyStyle = getComputedStyle(body);
+		expect(bodyStyle.paddingLeft).toBe('8px');
+		expect(bodyStyle.paddingRight).toBe('8px');
+		expect(bodyStyle.paddingTop).toBe('8px');
+		expect(bodyStyle.paddingBottom).toBe('8px');
+
+		const iconRow = screen.getByRole('button', { name: m.gift_context_edit() }).element();
+		const textOnlyRow = screen.getByRole('button', { name: m.gift_priority_label() }).element();
+		for (const row of [iconRow, textOnlyRow]) {
+			expect(row.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+			const surface = row.querySelector<HTMLElement>(':scope > .elevation-surface')!;
+			expect(surface).toBeTruthy();
+			expect(getComputedStyle(surface).justifyContent).toBe('flex-start');
+		}
+		const iconText = Array.from(
+			iconRow.querySelector(':scope > .elevation-surface')!.childNodes,
+		).find(
+			(node) =>
+				node.nodeType === Node.TEXT_NODE &&
+				node.textContent !== null &&
+				node.textContent.trim() !== '',
+		) as Text;
+		const textOnlyText = Array.from(
+			textOnlyRow.querySelector(':scope > .elevation-surface')!.childNodes,
+		).find(
+			(node) =>
+				node.nodeType === Node.TEXT_NODE &&
+				node.textContent !== null &&
+				node.textContent.trim() !== '',
+		) as Text;
+		const textLeft = (node: Text) => {
+			const range = document.createRange();
+			range.selectNodeContents(node);
+			return range.getBoundingClientRect().left;
+		};
+		expect(textLeft(textOnlyText)).toBeCloseTo(textLeft(iconText), 1);
+		await screen.unmount();
+	});
+
 	it('drills into configured priorities and provides Back without exposing like/reserve actions', async () => {
 		const screen = await render(GiftContextActions, managerProps);
 		await screen.getByRole('button', { name: m.gift_priority_label() }).click();

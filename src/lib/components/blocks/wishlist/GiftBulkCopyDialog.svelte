@@ -3,6 +3,8 @@
 	import * as Sheet from '$lib/components/base/sheet/index.js';
 	import { Button } from '$lib/components/base/button/index.js';
 	import WishlistBottomSheet from './WishlistBottomSheet.svelte';
+	import WishlistSheetBody from './WishlistSheetBody.svelte';
+	import WishlistSheetHeader from './WishlistSheetHeader.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 
 	export interface BulkCopyDestination {
@@ -123,12 +125,12 @@
 {#if mobile}
 	<Sheet.Root {open} onOpenChange={onopenchange}>
 		{#if open}
-			<WishlistBottomSheet class="max-h-[calc(100dvh-0.25rem)]">
-				<Sheet.Header class="border-border shrink-0 border-b px-4 py-2 pr-14">
+			<WishlistBottomSheet>
+				<WishlistSheetHeader>
 					<Sheet.Title>{m.gift_bulk_copy_title()}</Sheet.Title>
 					<Sheet.Description>{m.gift_bulk_copy_description()}</Sheet.Description>
-				</Sheet.Header>
-				<div class="min-h-0 flex-1 overflow-y-auto">{@render destinationPicker()}</div>
+				</WishlistSheetHeader>
+				<WishlistSheetBody>{@render destinationPicker()}</WishlistSheetBody>
 				{@render actions()}
 			</WishlistBottomSheet>
 		{/if}

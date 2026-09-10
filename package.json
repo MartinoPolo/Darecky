@@ -10,7 +10,7 @@
 		"deploy": "vite build && wrangler deploy",
 		"preview": "node scripts/run-development-service.mjs preview",
 		"paraglide:compile": "node ./scripts/paraglide-compile.mjs",
-		"check": "pnpm paraglide:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check": "node ./scripts/paraglide-compile.mjs && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"typecheck": "pnpm check",
 		"check:prepush": "node scripts/pre-push-parallel.js",
 		"check:fast": "prettier --write --log-level warn . && oxlint",

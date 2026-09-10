@@ -43,11 +43,8 @@ export const giftCardVariants = tv({
 		priorityEyebrow: 'row-start-3 mt-2 hidden items-center gap-1 sm:flex',
 		linkList: 'row-start-4 mt-2 hidden flex-col sm:flex',
 		// min-w-0: grid items (unlike flex) get an automatic min-content floor that can force the row wider (#211).
-		footer: 'row-start-3 flex min-w-0 items-stretch justify-between gap-1.5 border-t border-dashed border-border p-[6.5px] sm:row-start-7 sm:gap-2 sm:border-0 sm:px-4 sm:pt-1 sm:pb-[15px]',
+		footer: 'row-start-3 flex min-w-0 items-stretch justify-between gap-1.5 border-t border-dashed border-border [--gift-footer-edge-inset:max(0px,calc(var(--radius-panel)-var(--border-w)-var(--radius-btn)))] [--gift-footer-hit-overhang:4px] [--gift-footer-layout-inset:calc(var(--gift-footer-edge-inset)+var(--elevation-ordinary-offset)-var(--gift-footer-hit-overhang))] p-(--gift-footer-layout-inset) [&_[data-slot=button]]:rounded-[max(0px,calc(var(--radius-panel)-var(--border-w)-var(--gift-footer-layout-inset)-var(--gift-footer-hit-overhang)))] sm:row-start-7 sm:gap-2 sm:border-0 sm:[--gift-footer-hit-overhang:0px]',
 		reservationActions: 'ml-auto flex min-w-0 flex-1 flex-col gap-1.5',
-		/** Edit-icon hover affordance for managers (issue #125 REQ-3): hidden until card hover/focus. */
-		editIcon:
-			'absolute top-2.5 right-2.5 z-10 flex items-center justify-center rounded-full border-2 border-ink bg-card p-1.5 opacity-0 shadow-sticker transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100',
 	},
 	variants: {
 		dimmed: {

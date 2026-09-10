@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
 	import { Badge } from '$lib/components/base/badge/index.js';
-	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import GiftImage from '$lib/components/blocks/gift/GiftImage.svelte';
 	import GiftPieceCount from '$lib/components/blocks/gift/GiftPieceCount.svelte';
 	import GiftLinkList from '$lib/components/blocks/gift/GiftLinkList.svelte';
@@ -79,8 +78,6 @@
 		visitorGift !== null &&
 			(visitorGift.myReservationId !== null || (!isArchived && !isFullyReserved)),
 	);
-	// Edit-icon hover affordance (issue #125 REQ-3): editing roles see a pencil icon appear
-	// on card hover/focus; visitors rely on the shared cursor-pointer + hover lift only.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
 	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
 	const hasMultipleActions = $derived(
@@ -108,6 +105,15 @@
 
 <div class={styles.card()}>
 	<ElevationSurface plate class={styles.plate()} />
+	{#if !contextualMode && presentation.showLike && visitorGift}
+		<LikeButton
+			giftId={gift.id}
+			giftName={gift.name}
+			likeCount={visitorGift.likeCount}
+			size="md"
+			class="absolute top-2 right-2 z-20"
+		/>
+	{/if}
 	<!-- Image area: dotted mat behind the photo; letterboxed photos keep the mat visible -->
 	<div
 		class={cn(styles.imageArea(), explicitImageFrameFill !== null && 'bg-[var(--frame-fill)]')}
@@ -139,30 +145,8 @@
 			<div class="max-sm:hidden"><GiftCategoryBadge category={gift.category} /></div>
 		{/if}
 
-		{#if canManage}
-			<!-- Edit affordance (issue #125 REQ-3): hidden until the card is hovered/focused;
-			     purely decorative, the whole card is already the click target via
-			     WishlistGiftDraggableWrapper. -->
-			<span
-				class={cn(styles.editIcon(), 'max-sm:hidden')}
-				data-testid="gift-card-edit-icon"
-				aria-hidden="true"
-			>
-				<PencilIcon class="size-3.5" />
-			</span>
-		{/if}
-
-		<GiftStateOverlay model={presentation.overlay} />
-		{#if !contextualMode && presentation.showLike && visitorGift}
-			<LikeButton
-				giftId={gift.id}
-				giftName={gift.name}
-				likeCount={visitorGift.likeCount}
-				size="md"
-				class="absolute top-0 right-0 z-20"
-				surfaceClass="!items-start !pt-0"
-			/>
-		{/if}
+		<!-- Keep the centered state labels in their own region below the md Like action band. -->
+		<GiftStateOverlay model={presentation.overlay} class="top-12" />
 	</div>
 
 	<!-- Body -->
@@ -236,13 +220,13 @@
 							size="md"
 							{onreserve}
 							{onunreserve}
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 						/>
 					{/if}
 				{/snippet}
 				<GiftActionRow
 					{onmore}
 					secondary={hasMultipleActions ? secondaryReservationAction : undefined}
+					controlSizing="intrinsic"
 				>
 					{#if !canManage && isVisitorOrModerator && visitorGift && onmore === undefined}
 						<PurchasedToggle
@@ -260,7 +244,6 @@
 							{onreceived}
 							size="md"
 							compactLabel
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1 [&_svg]:hidden"
 						/>
 					{:else if isVisitorOrModerator && visitorGift}
 						<ReserveButton
@@ -269,7 +252,6 @@
 							size="md"
 							{onreserve}
 							{onunreserve}
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 						/>
 					{/if}
 				</GiftActionRow>

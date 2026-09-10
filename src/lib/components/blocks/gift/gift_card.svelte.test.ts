@@ -261,9 +261,6 @@ describe('GiftCard category badge (issue #265)', () => {
 			const badgeRect = badge.getBoundingClientRect();
 			const imageFrameRect = imageFrame.getBoundingClientRect();
 			expect(imageFrameRect.width / imageFrameRect.height).toBeCloseTo(4 / 3, 2);
-			const editRect = (
-				host.querySelector('[data-testid="gift-card-edit-icon"]') as HTMLElement
-			).getBoundingClientRect();
 			const overlayRects = Array.from(
 				host.querySelectorAll<HTMLElement>('[data-testid="gift-state-overlay"] > span'),
 				(pill) => pill.getBoundingClientRect(),
@@ -280,10 +277,8 @@ describe('GiftCard category badge (issue #265)', () => {
 			expect(badgeRect.top + badgeRect.height / 2).toBeLessThan(
 				imageFrameRect.top + imageFrameRect.height / 2,
 			);
-			expect(overlaps(badgeRect, editRect)).toBe(false);
 			for (const overlayRect of overlayRects) {
 				expect(overlaps(badgeRect, overlayRect)).toBe(false);
-				expect(overlaps(editRect, overlayRect)).toBe(false);
 			}
 		},
 	);
@@ -904,6 +899,7 @@ describe('GiftCard approved Like geometry (issue #357)', () => {
 			const image = host.querySelector(
 				'[data-testid="gift-card-image-frame"]',
 			) as HTMLElement;
+			const card = image.parentElement as HTMLElement;
 			const footer = host.querySelector('[data-testid="gift-card-footer"]') as HTMLElement;
 			const like = host.querySelector('[data-like-heart]')?.closest('button') as HTMLElement;
 			const heart = like.querySelector('[data-like-heart]') as HTMLElement;
@@ -911,11 +907,14 @@ describe('GiftCard approved Like geometry (issue #357)', () => {
 			const imageRect = image.getBoundingClientRect();
 			const likeRect = like.getBoundingClientRect();
 
-			expect(image.contains(like)).toBe(true);
+			expect(card.contains(like)).toBe(true);
+			expect(image.contains(like)).toBe(false);
 			expect(footer.contains(like)).toBe(false);
 			expect(imageRect.width / imageRect.height).toBeCloseTo(4 / 3, 2);
+			const cardRect = card.getBoundingClientRect();
 			expect(likeRect.top).toBeLessThan(imageRect.top + imageRect.height / 2);
-			expect(likeRect.right).toBeLessThanOrEqual(imageRect.right);
+			expect(likeRect.right).toBeLessThanOrEqual(cardRect.right);
+			expect(likeRect.top - cardRect.top).toBeCloseTo(cardRect.right - likeRect.right, 1);
 			expect(countNode.textContent).toBe(String(count));
 			expect(heart.getBoundingClientRect().right).toBeLessThanOrEqual(
 				countNode.getBoundingClientRect().left,
@@ -1093,8 +1092,9 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 			const primary = row.querySelector(
 				'[data-testid="gift-received-toggle"], [data-testid="reserve-button"]',
 			) as HTMLElement;
-			const card = host.firstElementChild as HTMLElement;
-			const expectedControlSize = viewport < 640 ? 48 : 32;
+			const card = host.querySelector('[data-testid="gift-card-image-frame"]')!
+				.parentElement as HTMLElement;
+			const expectedControlSize = 32;
 			const actions = Array.from(row.querySelectorAll<HTMLElement>('button'));
 			expect(primary).toBeTruthy();
 			expect(more).toBeTruthy();
@@ -1108,23 +1108,15 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 			}
 			if (role === WISHLIST_ROLES.moderator) {
 				const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
-				const received = host.querySelector(
-					'[data-testid="gift-received-toggle"]',
-				) as HTMLElement;
 				expect(actions).toHaveLength(3);
 				expect(
 					host.querySelector('[data-testid="gift-card-image-frame"]')?.contains(reserve),
 				).toBe(false);
 				expect(row.contains(reserve)).toBe(true);
-				if (viewport < 640) {
-					expect(reserve.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-						received.getBoundingClientRect().top,
-					);
-				} else {
-					const widths = actions.map((action) => action.getBoundingClientRect().width);
-					expect(widths[1]).toBeCloseTo(widths[0]!, 0);
-					expect(widths[2]).toBeCloseTo(32, 0);
-				}
+				const widths = actions.map((action) => action.getBoundingClientRect().width);
+				expect(widths[0]).toBeGreaterThan(32);
+				expect(widths[1]).toBeGreaterThan(32);
+				expect(widths[2]).toBeCloseTo(32, 0);
 			}
 		},
 	);
@@ -1155,7 +1147,8 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 					},
 					{ baseElement: host },
 				);
-				const card = host.firstElementChild as HTMLElement;
+				const card = host.querySelector('[data-testid="gift-card-image-frame"]')!
+					.parentElement as HTMLElement;
 				const primary = host.querySelector(
 					'[data-testid="gift-received-toggle"]',
 				) as HTMLElement;
@@ -1170,14 +1163,14 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 				expect(more.getAttribute('aria-label')).toBe(m.gift_more_actions());
 				const actions = [reserve, primary, more];
 				for (const action of actions) {
-					expect(action.getBoundingClientRect().height).toBeCloseTo(48, 0);
+					expect(action.getBoundingClientRect().height).toBeCloseTo(32, 0);
 					expectRaisedActionShadowInside(action, card);
 				}
 				expect(
 					host.querySelector('[data-testid="gift-card-image-frame"]')?.contains(reserve),
 				).toBe(false);
-				expect(reserve.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-					primary.getBoundingClientRect().top,
+				expect(reserve.getBoundingClientRect().right).toBeLessThanOrEqual(
+					primary.getBoundingClientRect().left,
 				);
 			} finally {
 				overwriteGetLocale(() => 'cs');
@@ -1220,7 +1213,7 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 });
 
 describe('GiftCard reservation-action layout (issue #211)', () => {
-	it('lets a direct mobile Reserve action fill the full actions width when More is absent', async () => {
+	it('keeps a direct mobile Reserve action intrinsic when More is absent', async () => {
 		await page.viewport(390, 720);
 		const host = document.createElement('div');
 		host.style.width = '179px';
@@ -1240,10 +1233,10 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 			'[data-testid="gift-card-reservation-actions"]',
 		) as HTMLElement;
 		const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
-		expect(reserve.getBoundingClientRect().width).toBeCloseTo(
+		expect(reserve.getBoundingClientRect().width).toBeLessThan(
 			actions.getBoundingClientRect().width,
-			1,
 		);
+		expect(reserve.getBoundingClientRect().height).toBeCloseTo(32, 0);
 	});
 
 	it('keeps an onmore-only archived recipient footer available on desktop and mobile', async () => {
@@ -1285,7 +1278,7 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		);
 	});
 
-	it('stacks the mark-as-bought and cancel-reservation actions vertically at equal width on desktop', async () => {
+	it('stacks mark-as-bought and cancel-reservation with intrinsic widths on desktop', async () => {
 		await page.viewport(800, 720);
 		await renderCardInGridColumn(makeVisitorGift());
 
@@ -1305,9 +1298,8 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		// Stacked: the reserve/cancel button sits below the purchased-toggle button,
 		// not beside it (no vertical overlap).
 		expect(reserveRect.top).toBeGreaterThanOrEqual(purchasedRect.bottom);
-		// Equal width: both actions get `w-full` inside the shared `reservationActions`
-		// column, rather than each sizing to its own (differently-localized) label.
-		expect(reserveRect.width).toBeCloseTo(purchasedRect.width, 1);
+		// Each localized action keeps its intrinsic width rather than stretching to its sibling.
+		expect(reserveRect.width).not.toBeCloseTo(purchasedRect.width, 1);
 	});
 
 	it('keeps Purchased off the direct mobile face and exposes its context through More', async () => {
@@ -1359,8 +1351,8 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 		) as HTMLButtonElement;
 		expect(directAction).toBeTruthy();
 		expect(more).toBeTruthy();
-		expect(directAction.getBoundingClientRect().height).toBeGreaterThanOrEqual(40);
-		expect(more.getBoundingClientRect().width).toBeCloseTo(48, 0);
+		expect(directAction.getBoundingClientRect().height).toBeCloseTo(32, 0);
+		expect(more.getBoundingClientRect().width).toBeCloseTo(32, 0);
 		expect(more.getBoundingClientRect().height).toBeCloseTo(
 			directAction.getBoundingClientRect().height,
 			0,
@@ -1490,9 +1482,9 @@ describe('GiftCard reservation-action layout (issue #211)', () => {
 			directAction.closest('[class*="rounded-panel"]') as HTMLElement
 		).getBoundingClientRect();
 
-		expect(actionRect.height).toBeGreaterThanOrEqual(40);
-		expect(moreRect.width).toBeGreaterThanOrEqual(40);
-		expect(moreRect.height).toBeGreaterThanOrEqual(40);
+		expect(actionRect.height).toBeCloseTo(32, 0);
+		expect(moreRect.width).toBeCloseTo(32, 0);
+		expect(moreRect.height).toBeCloseTo(32, 0);
 		expect(labelRect.left).toBeGreaterThanOrEqual(actionRect.left);
 		expect(labelRect.right).toBeLessThanOrEqual(actionRect.right);
 		expect(labelRect.top).toBeGreaterThanOrEqual(actionRect.top);

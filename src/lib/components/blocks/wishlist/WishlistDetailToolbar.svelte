@@ -35,6 +35,10 @@
 	import { flushSync, onMount, tick, type Snippet } from 'svelte';
 	import { emptyGiftFilters } from '$lib/modules/gifts/gifts.context.svelte.js';
 	import WishlistBottomSheet from './WishlistBottomSheet.svelte';
+	import WishlistSheetAction from './WishlistSheetAction.svelte';
+	import WishlistSheetBody from './WishlistSheetBody.svelte';
+	import WishlistSheetChoice from './WishlistSheetChoice.svelte';
+	import WishlistSheetHeader from './WishlistSheetHeader.svelte';
 	import {
 		GIFT_GROUPING_OPTIONS,
 		GIFT_SORT_OPTIONS,
@@ -667,24 +671,22 @@
 	<Sheet.Root open={mobileMoreOpen} onOpenChange={handleMobileMoreOpenChange}>
 		{#if mobileMoreOpen}
 			<WishlistBottomSheet portalDisabled>
-				<Sheet.Header class="border-border border-b px-4 py-3">
+				<WishlistSheetHeader>
 					<Sheet.Title>{m.wishlist_more_actions()}</Sheet.Title>
 					<Sheet.Description>{m.wishlist_more_actions_description()}</Sheet.Description>
-				</Sheet.Header>
-				<div class="mobile-more-actions">
+				</WishlistSheetHeader>
+				<WishlistSheetBody class="flex flex-col">
 					{#if showReset}
-						<Button
-							intent="ghost"
+						<WishlistSheetAction
 							onclick={() => runMobileMoreAction(resetDisplayControls)}
 						>
 							<RotateCcwIcon
 								data-icon="inline-start"
 							/>{m.gift_display_reset_tooltip()}
-						</Button>
+						</WishlistSheetAction>
 					{/if}
 					{#if canPreviewRecipientView}
-						<Button
-							intent="ghost"
+						<WishlistSheetAction
 							aria-pressed={recipientViewPreview}
 							onclick={() =>
 								runMobileMoreAction(() =>
@@ -697,34 +699,30 @@
 							{recipientViewPreview
 								? m.recipient_view_preview_turn_off()
 								: m.recipient_view_preview_turn_on()}
-						</Button>
+						</WishlistSheetAction>
 					{/if}
 					{#if showUnfollowAction}
-						<Button intent="ghost" onclick={() => runMobileMoreAction(onunfollow)}>
+						<WishlistSheetAction onclick={() => runMobileMoreAction(onunfollow)}>
 							<BellOffIcon data-icon="inline-start" />{m.wishlist_detail_unfollow()}
-						</Button>
+						</WishlistSheetAction>
 					{/if}
 					{#if showManagementActions}
-						<Button
-							intent="ghost"
-							onclick={() => runMobileMoreAction(onselectionstart)}
-						>
+						<WishlistSheetAction onclick={() => runMobileMoreAction(onselectionstart)}>
 							<ListChecksIcon data-icon="inline-start" />{m.gift_selection_toolbar()}
-						</Button>
+						</WishlistSheetAction>
 						{#if canReorder}
-							<Button
-								intent="ghost"
+							<WishlistSheetAction
 								onclick={() =>
 									runMobileMoreAction(() => void changeMobileReorderMode(true))}
 							>
 								<HandIcon data-icon="inline-start" />{m.gift_reorder_action()}
-							</Button>
+							</WishlistSheetAction>
 						{/if}
-						<Button intent="ghost" onclick={() => runMobileMoreAction(onbatchadd)}>
+						<WishlistSheetAction onclick={() => runMobileMoreAction(onbatchadd)}>
 							<ListPlusIcon data-icon="inline-start" />{m.batch_add_toolbar_label()}
-						</Button>
+						</WishlistSheetAction>
 					{/if}
-				</div>
+				</WishlistSheetBody>
 			</WishlistBottomSheet>
 		{/if}
 	</Sheet.Root>
@@ -738,7 +736,7 @@
 				portalDisabled
 				onCloseAutoFocus={(event) => event.preventDefault()}
 			>
-				<Sheet.Header class="border-border shrink-0 border-b px-4 py-3">
+				<WishlistSheetHeader>
 					<Sheet.Title>{m.gift_display_options()}</Sheet.Title>
 					<Sheet.Description>
 						{mobileOpenDisplayControl === 'sort'
@@ -751,11 +749,11 @@
 											: '0'
 									}`}
 					</Sheet.Description>
-				</Sheet.Header>
-				<div class="mobile-sheet-scroll" data-testid="mobile-sheet-scroll">
+				</WishlistSheetHeader>
+				<WishlistSheetBody class="mobile-sheet-scroll" data-testid="mobile-sheet-scroll">
 					{#if mobileOpenDisplayControl === 'sort'}
 						{#each GIFT_SORT_KEYS as option (option)}
-							<label class="mobile-sheet-choice">
+							<WishlistSheetChoice>
 								<input
 									type="radio"
 									name="mobile-gift-sort"
@@ -767,16 +765,11 @@
 									}}
 								/>
 								<span>{GIFT_SORT_LABELS[option]()}</span>
-							</label>
+							</WishlistSheetChoice>
 						{/each}
 					{:else if mobileOpenDisplayControl === 'grouping'}
 						{#each Object.values(GIFT_GROUPING_OPTIONS) as option (option)}
-							<label
-								class="mobile-sheet-choice"
-								class:mobile-sheet-choice-disabled={!isGroupingOptionAvailable(
-									option,
-								)}
-							>
+							<WishlistSheetChoice disabledStyle={!isGroupingOptionAvailable(option)}>
 								<input
 									type="radio"
 									name="mobile-gift-grouping"
@@ -789,7 +782,7 @@
 									}}
 								/>
 								<span>{GROUPING_LABELS[option]()}</span>
-							</label>
+							</WishlistSheetChoice>
 						{/each}
 					{:else}
 						{#each filterDefinitions as definition (definition.id)}
@@ -835,7 +828,7 @@
 							>
 						{/if}
 					{/if}
-				</div>
+				</WishlistSheetBody>
 				<div
 					class="mobile-sheet-switcher"
 					role="group"
@@ -1027,7 +1020,7 @@
 		container-type: inline-size;
 		max-width: 100%;
 		overflow: visible;
-		padding: 4px 8px;
+		padding: 0.5rem;
 	}
 
 	.toolbar-responsive-carrier,
@@ -1046,7 +1039,7 @@
 	.toolbar-mobile {
 		display: grid;
 		min-width: 0;
-		grid-auto-rows: 46px;
+		grid-auto-rows: var(--size-control-md);
 		gap: 8px;
 	}
 
@@ -1077,9 +1070,9 @@
 
 	.toolbar-mobile :global(.mobile-reorder-done) {
 		width: auto;
-		min-width: 40px;
-		height: 40px;
-		min-height: 40px;
+		min-width: var(--size-control-md);
+		height: var(--size-control-md);
+		min-height: var(--size-control-md);
 		padding-inline: 1rem;
 	}
 
@@ -1091,10 +1084,10 @@
 
 	.toolbar-mobile :global(button),
 	.toolbar-responsive-view-switcher :global([data-slot='toggle-group-item']) {
-		width: 40px;
-		min-width: 40px;
-		height: 40px;
-		min-height: 40px;
+		width: var(--size-control-md);
+		min-width: var(--size-control-md);
+		height: var(--size-control-md);
+		min-height: var(--size-control-md);
 		padding: 0;
 	}
 
@@ -1146,14 +1139,6 @@
 		background: var(--accent);
 	}
 
-	.mobile-sheet-scroll {
-		min-height: 0;
-		flex: 1 1 auto;
-		overflow-y: auto;
-		overscroll-behavior: contain;
-		padding: 0.5rem;
-	}
-
 	.mobile-sheet-choice {
 		display: flex;
 		min-height: 48px;
@@ -1168,33 +1153,9 @@
 		background: var(--accent);
 	}
 
-	.mobile-sheet-choice input[type='radio'] {
-		width: 20px;
-		height: 20px;
-		accent-color: var(--primary);
-	}
-
-	.mobile-sheet-choice-disabled {
-		opacity: 0.5;
-	}
-
 	.mobile-filter-section {
 		border-top: 1px solid var(--border);
 		padding-top: 0.5rem;
-	}
-
-	.mobile-more-actions {
-		display: flex;
-		min-height: 0;
-		flex-direction: column;
-		overflow-y: auto;
-		padding: 0.5rem;
-	}
-
-	.mobile-more-actions :global(button) {
-		min-height: 48px;
-		width: 100%;
-		justify-content: flex-start;
 	}
 
 	@media (width <= 639px) {

@@ -83,17 +83,36 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		}
 	});
 
-	it('shows exactly six first-level actions without scrolling at 320px height', async () => {
+	it('keeps all six first-level actions in the shared sheet with 48px touch rows', async () => {
 		await page.viewport(320, 320);
 		const screen = await render(WishlistSelectionToolbar, createProps());
 		await screen.getByRole('button', { name: m.gift_selection_actions() }).click();
 		const dialog = screen.getByRole('dialog', { name: m.gift_selection_actions() });
 		await expect.element(dialog).toBeVisible();
-		const style = getComputedStyle(dialog.element());
+		const shell = dialog.element();
+		const shellRect = shell.getBoundingClientRect();
+		const style = getComputedStyle(shell);
 		expect(style.bottom).toBe('0px');
-		expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
-		expect(parseFloat(style.borderLeftWidth)).toBeGreaterThan(0);
-		expect(parseFloat(style.borderRightWidth)).toBeGreaterThan(0);
+		expect(parseFloat(style.maxHeight)).toBeCloseTo(window.innerHeight * 0.8, 1);
+		expect(shellRect.left).toBeCloseTo(window.innerWidth - shellRect.right, 1);
+		expect(shellRect.left).toBeGreaterThan(0);
+		expect(style.borderLeftWidth).toBe(style.borderRightWidth);
+		expect(style.borderLeftWidth).toBe(style.borderTopWidth);
+		expect(style.borderTopLeftRadius).toBe(style.borderTopRightRadius);
+		expect(parseFloat(style.borderTopLeftRadius)).toBeGreaterThan(0);
+		const header = shell.querySelector<HTMLElement>('[data-slot="sheet-header"]')!;
+		const headerStyle = getComputedStyle(header);
+		expect(header.getBoundingClientRect().width).toBeCloseTo(
+			shellRect.width -
+				parseFloat(style.borderLeftWidth) -
+				parseFloat(style.borderRightWidth),
+			1,
+		);
+		expect(headerStyle.paddingLeft).toBe('16px');
+		expect(headerStyle.paddingRight).toBe('56px');
+		expect(headerStyle.paddingTop).toBe('12px');
+		expect(headerStyle.paddingBottom).toBe('12px');
+		expect(parseFloat(headerStyle.borderBottomWidth)).toBeCloseTo(1, 1);
 		const actions = screen.getByTestId('selection-bulk-sheet-actions').element();
 		const rows = Array.from(
 			actions.querySelectorAll<HTMLButtonElement>('[data-mobile-bulk-action]'),
@@ -106,14 +125,17 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			'copy',
 			'received',
 		]);
-		await expect
-			.poll(() => Math.max(...rows.map((row) => row.getBoundingClientRect().bottom)))
-			.toBeLessThanOrEqual(320);
+		const bodyStyle = getComputedStyle(actions.parentElement!);
+		expect(bodyStyle.paddingLeft).toBe('8px');
+		expect(bodyStyle.paddingRight).toBe('8px');
+		expect(bodyStyle.paddingTop).toBe('8px');
+		expect(bodyStyle.paddingBottom).toBe('8px');
 		for (const row of rows) {
-			expect(row.getBoundingClientRect().height).toBeCloseTo(40, 1);
+			expect(row.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+			const surface = row.querySelector<HTMLElement>(':scope > .elevation-surface')!;
+			expect(surface).toBeTruthy();
+			expect(getComputedStyle(surface).justifyContent).toBe('flex-start');
 		}
-		expect(actions.scrollHeight).toBeLessThanOrEqual(actions.clientHeight);
-		expect(getComputedStyle(actions).overflowY).not.toBe('auto');
 		await screen.unmount();
 	});
 
@@ -361,8 +383,12 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			.querySelector<HTMLButtonElement>('[data-mobile-bulk-action="category"]')!
 			.click();
 		const options = screen.getByTestId('selection-bulk-sheet-options').element();
-		expect(options.scrollHeight).toBeGreaterThan(options.clientHeight);
-		expect(getComputedStyle(options).overflowY).toBe('auto');
+		const scrollBody = options.parentElement!;
+		const firstChoice =
+			options.querySelector<HTMLInputElement>('input[type="radio"]')!.parentElement!;
+		expect(getComputedStyle(firstChoice).minHeight).toBe('48px');
+		expect(scrollBody.scrollHeight).toBeGreaterThan(scrollBody.clientHeight);
+		expect(getComputedStyle(scrollBody).overflowY).toBe('auto');
 		await expect
 			.element(screen.getByRole('button', { name: m.gift_context_back() }))
 			.toBeVisible();

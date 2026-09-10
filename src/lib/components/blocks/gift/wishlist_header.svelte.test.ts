@@ -55,7 +55,26 @@ describe('WishlistHeader responsive presentation', () => {
 		await expect.element(screen.getByTestId('wishlist-banner')).not.toBeVisible();
 		await expect
 			.element(screen.getByRole('button', { name: m.gift_more_actions() }))
-			.toHaveStyle({ width: '40px', height: '40px' });
+			.toHaveStyle({ width: '32px', height: '32px' });
+		await screen.unmount();
+	});
+
+	it('opens hero More with the shared inset Wishlist bottom-sheet geometry', async () => {
+		await page.viewport(390, 720);
+		const screen = await render(WishlistHeader, baseProps);
+		await screen.getByRole('button', { name: m.gift_more_actions() }).click();
+		const dialog = screen.getByRole('dialog', { name: m.gift_more_actions() }).element();
+		const rect = dialog.getBoundingClientRect();
+		const style = getComputedStyle(dialog);
+
+		expect(dialog).toHaveAttribute('data-side', 'bottom');
+		expect(rect.left).toBeCloseTo(8, 0);
+		expect(rect.right).toBeCloseTo(382, 0);
+		expect(style.bottom).toBe('0px');
+		expect(parseFloat(style.borderTopLeftRadius)).toBeGreaterThan(0);
+		expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
+		expect(parseFloat(style.borderLeftWidth)).toBeGreaterThan(0);
+		expect(parseFloat(style.borderRightWidth)).toBeGreaterThan(0);
 		await screen.unmount();
 	});
 

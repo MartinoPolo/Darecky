@@ -308,7 +308,7 @@ test.describe('mobile wishlist acceptance', () => {
 		await page.context().close();
 	});
 
-	test('manager list presentation persists and stacks square imagery above contained mobile actions', async ({
+	test('manager list presentation remains horizontal with compact square thumbnails and contained mobile actions', async ({
 		browser,
 		request,
 		baseURL,
@@ -347,9 +347,14 @@ test.describe('mobile wishlist acceptance', () => {
 					Number.parseFloat(getComputedStyle(element).borderTopWidth),
 				);
 				expect(imageBox.width).toBeCloseTo(imageBox.height, 0);
-				expect(imageBox.width).toBeCloseTo(itemBox.width - 2 * border, 0);
+				expect(imageBox.width).toBeLessThan(itemBox.width / 2);
 				const contentBox = await box(item.getByTestId('gift-list-content'));
-				expect(contentBox.y).toBeGreaterThanOrEqual(imageBox.y + imageBox.height);
+				expect(imageBox.y).toBeCloseTo(itemBox.y + border, 0);
+				expect(contentBox.y).toBeCloseTo(imageBox.y, 0);
+				expect(contentBox.x).toBeCloseTo(imageBox.x + imageBox.width, 0);
+				expect(contentBox.x + contentBox.width).toBeLessThanOrEqual(
+					itemBox.x + itemBox.width - border,
+				);
 				const reserve = item.getByTestId('reserve-button');
 				await expect(
 					item.getByTestId('gift-list-image').getByTestId('reserve-button'),

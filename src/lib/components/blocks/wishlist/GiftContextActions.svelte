@@ -10,7 +10,10 @@
 	import ShoppingBagIcon from '@lucide/svelte/icons/shopping-bag';
 	import * as ContextMenu from '$lib/components/base/context-menu/index.js';
 	import * as Sheet from '$lib/components/base/sheet/index.js';
-	import { Button } from '$lib/components/base/button/index.js';
+	import WishlistBottomSheet from './WishlistBottomSheet.svelte';
+	import WishlistSheetAction from './WishlistSheetAction.svelte';
+	import WishlistSheetBody from './WishlistSheetBody.svelte';
+	import WishlistSheetHeader from './WishlistSheetHeader.svelte';
 	import { giftContextActions } from '$lib/modules/gifts/gift_context_actions.js';
 	import { normalizeGiftUrl } from '$lib/modules/gifts/gift_url.js';
 	import type { WishlistRole } from '$lib/modules/wishlists/types.js';
@@ -147,11 +150,8 @@
 
 {#if mobile}
 	<Sheet.Root {open} onOpenChange={handleOpenChange}>
-		<Sheet.Content
-			side="bottom"
-			class="max-h-[80dvh] overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
-		>
-			<Sheet.Header>
+		<WishlistBottomSheet>
+			<WishlistSheetHeader>
 				<Sheet.Title
 					>{mobileScreen === 'main'
 						? name
@@ -160,21 +160,14 @@
 							: m.gift_context_category()}</Sheet.Title
 				>
 				<Sheet.Description>{m.gift_context_actions_description()}</Sheet.Description>
-			</Sheet.Header>
-			<div class="mt-3 flex flex-col" data-mobile-screen={mobileScreen}>
+			</WishlistSheetHeader>
+			<WishlistSheetBody class="flex flex-col" data-mobile-screen={mobileScreen}>
 				{#if mobileScreen !== 'main'}
-					<Button
-						intent="ghost"
-						class="min-h-11 w-full"
-						surfaceClass="justify-start"
-						onclick={() => (mobileScreen = 'main')}
-						><ChevronLeftIcon data-icon="inline-start" />{m.gift_context_back()}</Button
+					<WishlistSheetAction onclick={() => (mobileScreen = 'main')}
+						><ChevronLeftIcon />{m.gift_context_back()}</WishlistSheetAction
 					>
 					{#each [{ id: null, label: mobileScreen === 'priority' ? m.gift_priority_none() : m.gift_category_uncategorized() }, ...(mobileScreen === 'priority' ? priorityLevels : categories)] as choice (choice.id)}
-						<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+						<WishlistSheetAction
 							onclick={() =>
 								finish(() =>
 									mobileScreen === 'priority'
@@ -182,101 +175,75 @@
 										: oncategory(choice.id),
 								)}
 						>
-							<span class="w-4"
+							<span class="flex size-5 shrink-0 items-center justify-center"
 								>{#if (mobileScreen === 'priority' ? priorityLevelId : categoryId) === choice.id}<CheckIcon
 										class="size-4"
 									/>{/if}</span
 							>{choice.label}
-						</Button>
+						</WishlistSheetAction>
 					{/each}
 				{:else}
-					{#if has('open')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+					{#if has('open')}<WishlistSheetAction
 							href={safePrimaryUrl!}
 							target="_blank"
 							rel="external noopener noreferrer"
 							onclick={onclose}
-							>{@render icon('open')}{m.gift_context_open_link()}</Button
+							>{@render icon('open')}{m.gift_context_open_link()}</WishlistSheetAction
 						>{/if}
-					{#if has('copy')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
-							onclick={copyLink}
-							>{@render icon('copy')}{m.gift_context_copy_link()}</Button
+					{#if has('copy')}<WishlistSheetAction onclick={copyLink}
+							>{@render icon('copy')}{m.gift_context_copy_link()}</WishlistSheetAction
 						>{/if}
-					{#if has('edit')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
-							onclick={() => finish(onedit)}
-							>{@render icon('edit')}{m.gift_context_edit()}</Button
+					{#if has('edit')}<WishlistSheetAction onclick={() => finish(onedit)}
+							>{@render icon('edit')}{m.gift_context_edit()}</WishlistSheetAction
 						>{/if}
-					{#if has('priority')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+					{#if has('priority')}<WishlistSheetAction
+							indent
 							disabled={!priorityReady}
 							onclick={() => (mobileScreen = 'priority')}
 							>{priorityReady
 								? m.gift_priority_label()
-								: `${m.gift_priority_label()}: ${m.moderator_loading()}`}</Button
+								: `${m.gift_priority_label()}: ${m.moderator_loading()}`}</WishlistSheetAction
 						>{/if}
-					{#if has('category')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+					{#if has('category')}<WishlistSheetAction
+							indent
 							disabled={!categoryReady}
 							onclick={() => (mobileScreen = 'category')}
 							>{categoryReady
 								? m.gift_context_category()
-								: `${m.gift_context_category()}: ${m.moderator_loading()}`}</Button
+								: `${m.gift_context_category()}: ${m.moderator_loading()}`}</WishlistSheetAction
 						>{/if}
-					{#if has('received')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
-							onclick={() => finish(onreceived)}
+					{#if has('received')}<WishlistSheetAction onclick={() => finish(onreceived)}
 							>{@render icon('received')}{received
 								? m.gift_mark_unreceived()
-								: m.gift_mark_received()}</Button
+								: m.gift_mark_received()}</WishlistSheetAction
 						>{/if}
-					{#if has('multiselect')}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
-							onclick={() => finish(onselect)}
-							>{@render icon('multiselect')}{m.gift_context_select_multiple()}</Button
+					{#if has('multiselect')}<WishlistSheetAction onclick={() => finish(onselect)}
+							>{@render icon(
+								'multiselect',
+							)}{m.gift_context_select_multiple()}</WishlistSheetAction
 						>{/if}
-					{#if has('reserve') && onreserve}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+					{#if has('reserve') && onreserve}<WishlistSheetAction
 							onclick={() => finish(onreserve)}
-							>{@render icon('reserve')}{m.reserve_button_reserve()}</Button
+							>{@render icon(
+								'reserve',
+							)}{m.reserve_button_reserve()}</WishlistSheetAction
 						>{/if}
-					{#if has('cancel-reservation') && oncancelreservation}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+					{#if has('cancel-reservation') && oncancelreservation}<WishlistSheetAction
 							onclick={() => finish(oncancelreservation)}
-							>{@render icon('cancel-reservation')}{m.reserve_button_cancel()}</Button
+							>{@render icon(
+								'cancel-reservation',
+							)}{m.reserve_button_cancel()}</WishlistSheetAction
 						>{/if}
-					{#if has('purchased') && onpurchased}<Button
-							intent="ghost"
-							class="min-h-11 w-full"
-							surfaceClass="justify-start"
+					{#if has('purchased') && onpurchased}<WishlistSheetAction
 							aria-pressed={purchased}
 							onclick={() => finish(onpurchased)}
 							>{@render icon('purchased')}{purchased
 								? m.gift_bought()
-								: m.gift_mark_bought()}</Button
+								: m.gift_mark_bought()}</WishlistSheetAction
 						>{/if}
 				{/if}
-			</div>
-		</Sheet.Content>
+			</WishlistSheetBody>
+		</WishlistBottomSheet>
 	</Sheet.Root>
 {:else}
 	<!-- Keep the Bits primitive mounted while closed. Context menus position from the triggering

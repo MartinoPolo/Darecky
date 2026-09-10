@@ -10,15 +10,17 @@
 		children?: Snippet;
 		secondary?: Snippet;
 		onmore?: () => void;
+		controlSizing?: 'fill' | 'intrinsic';
 		class?: string;
 	}
 
-	let { children, secondary, onmore, class: className }: Props = $props();
+	let { children, secondary, onmore, controlSizing = 'fill', class: className }: Props = $props();
 
 	const styles = $derived(
 		giftActionRowVariants({
 			withMore: onmore !== undefined,
 			withSecondary: secondary !== undefined,
+			controlSizing,
 		}),
 	);
 </script>
@@ -37,38 +39,39 @@
 			intent="outline"
 			size="md"
 			class={styles.more()}
-			surfaceClass="h-full p-0"
+			surfaceClass="size-full min-h-0 min-w-0 p-0"
 			aria-label={m.gift_more_actions()}
 			data-testid="gift-more-actions"
 			onclick={(event) => {
 				event.stopPropagation();
 				onmore();
-			}}><EllipsisIcon /></Button
+			}}><EllipsisIcon class="size-[16px]" /></Button
 		>
 	{/if}
 </div>
 
 <style>
 	.gift-action-row {
-		--gift-action-control-size: var(--size-control-xl);
+		--gift-action-control-size: var(--size-control-md);
 	}
 
 	.gift-action-slot :global(> [data-slot='button']) {
-		height: auto;
-		min-height: var(--gift-action-control-size);
-		flex-grow: 1;
+		height: var(--gift-action-control-size);
 		min-width: 0;
-		width: 100%;
-		align-self: stretch;
 	}
 
 	.gift-action-slot :global(> [data-slot='button'] > .elevation-surface) {
 		height: 100%;
 	}
 
-	@media (width >= 640px) {
-		.gift-action-row {
-			--gift-action-control-size: var(--size-control-md);
+	/* Keep compact visuals while giving coarse pointers a separate 40px hit area.
+	 * The 8px mobile gaps make neighboring 4px expansions meet without overlapping. */
+	@media (width < 640px) and (pointer: coarse) {
+		.gift-action-slot :global(> [data-slot='button']::before),
+		.gift-action-row > :global([data-slot='button']::before) {
+			position: absolute;
+			inset: -4px;
+			content: '';
 		}
 	}
 </style>

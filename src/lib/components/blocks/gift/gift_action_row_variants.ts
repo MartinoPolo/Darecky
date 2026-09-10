@@ -2,12 +2,26 @@ import { tv } from 'tailwind-variants';
 
 export const giftActionRowVariants = tv({
 	slots: {
-		row: 'gift-action-row grid min-w-0 grid-cols-[minmax(0,1fr)] items-stretch gap-1.5',
-		primary: 'gift-action-slot flex min-w-0 flex-col gap-1.5',
-		secondary: 'gift-action-slot col-span-full row-start-1 flex min-w-0 flex-col gap-1.5',
-		more: 'h-auto min-h-(--gift-action-control-size) w-(--gift-action-control-size) self-stretch',
+		row: 'gift-action-row grid min-w-0 grid-cols-[minmax(0,1fr)] items-stretch gap-2 sm:gap-1.5',
+		primary: 'gift-action-slot flex min-w-0 flex-col gap-2 sm:gap-1.5',
+		secondary:
+			'gift-action-slot col-span-full row-start-1 flex min-w-0 flex-col gap-2 sm:gap-1.5',
+		more: 'size-(--gift-action-control-size) min-h-0 min-w-0 flex-none self-start',
 	},
 	variants: {
+		controlSizing: {
+			fill: {
+				primary: "[&>[data-slot='button']]:w-full [&>[data-slot='button']]:grow",
+				secondary: "[&>[data-slot='button']]:w-full [&>[data-slot='button']]:grow",
+			},
+			intrinsic: {
+				row: 'ml-auto flex w-fit max-w-full flex-wrap justify-end',
+				primary:
+					"max-w-full flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
+				secondary:
+					"max-w-full flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
+			},
+		},
 		withMore: {
 			true: {
 				row: 'grid-cols-[minmax(0,1fr)_var(--gift-action-control-size)]',
@@ -38,6 +52,7 @@ export const giftActionRowVariants = tv({
 		},
 	],
 	defaultVariants: {
+		controlSizing: 'fill',
 		withMore: false,
 		withSecondary: false,
 	},

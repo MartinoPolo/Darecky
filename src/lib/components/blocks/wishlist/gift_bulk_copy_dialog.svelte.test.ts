@@ -69,8 +69,36 @@ describe('GiftBulkCopyDialog', () => {
 		});
 		const dialog = screen.getByRole('dialog', { name: m.gift_bulk_copy_title() });
 		await expect.element(dialog).toBeVisible();
-		expect(dialog.element()).toHaveClass('wishlist-bottom-sheet');
-		expect(getComputedStyle(dialog.element()).bottom).toBe('0px');
+		const shell = dialog.element();
+		const shellRect = shell.getBoundingClientRect();
+		const shellStyle = getComputedStyle(shell);
+		expect(shellStyle.bottom).toBe('0px');
+		expect(parseFloat(shellStyle.maxHeight)).toBeCloseTo(window.innerHeight * 0.8, 1);
+		expect(shellRect.left).toBeCloseTo(window.innerWidth - shellRect.right, 1);
+		expect(shellRect.left).toBeGreaterThan(0);
+		expect(shellStyle.borderLeftWidth).toBe(shellStyle.borderRightWidth);
+		expect(shellStyle.borderLeftWidth).toBe(shellStyle.borderTopWidth);
+		expect(shellStyle.borderTopLeftRadius).toBe(shellStyle.borderTopRightRadius);
+		expect(parseFloat(shellStyle.borderTopLeftRadius)).toBeGreaterThan(0);
+		const header = shell.querySelector<HTMLElement>('[data-slot="sheet-header"]')!;
+		const headerStyle = getComputedStyle(header);
+		expect(header.getBoundingClientRect().width).toBeCloseTo(
+			shellRect.width -
+				parseFloat(shellStyle.borderLeftWidth) -
+				parseFloat(shellStyle.borderRightWidth),
+			1,
+		);
+		expect(headerStyle.paddingLeft).toBe('16px');
+		expect(headerStyle.paddingRight).toBe('56px');
+		expect(headerStyle.paddingTop).toBe('12px');
+		expect(headerStyle.paddingBottom).toBe('12px');
+		expect(parseFloat(headerStyle.borderBottomWidth)).toBeCloseTo(1, 1);
+		const body = header.nextElementSibling as HTMLElement;
+		const bodyStyle = getComputedStyle(body);
+		expect(bodyStyle.paddingLeft).toBe('8px');
+		expect(bodyStyle.paddingRight).toBe('8px');
+		expect(bodyStyle.paddingTop).toBe('8px');
+		expect(bodyStyle.paddingBottom).toBe('8px');
 		await dialog.getByRole('button', { name: m.gift_context_back() }).click();
 		expect(onback).toHaveBeenCalledOnce();
 		await screen.unmount();

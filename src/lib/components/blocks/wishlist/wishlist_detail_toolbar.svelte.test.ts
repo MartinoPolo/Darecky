@@ -83,12 +83,32 @@ function visibleButtons(root: Element) {
 
 function expectBottomSheet(dialog: Element) {
 	expect(dialog).toHaveAttribute('data-side', 'bottom');
+	const rect = dialog.getBoundingClientRect();
 	const style = getComputedStyle(dialog);
 	expect(style.bottom).toBe('0px');
-	expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
-	expect(parseFloat(style.borderLeftWidth)).toBeGreaterThan(0);
-	expect(parseFloat(style.borderRightWidth)).toBeGreaterThan(0);
+	expect(rect.left).toBeCloseTo(window.innerWidth - rect.right, 1);
+	expect(rect.left).toBeGreaterThan(0);
+	expect(style.borderLeftWidth).toBe(style.borderRightWidth);
+	expect(style.borderLeftWidth).toBe(style.borderTopWidth);
+	expect(style.borderTopLeftRadius).toBe(style.borderTopRightRadius);
 	expect(parseFloat(style.borderTopLeftRadius)).toBeGreaterThan(0);
+	const header = dialog.querySelector<HTMLElement>('[data-slot="sheet-header"]')!;
+	const headerStyle = getComputedStyle(header);
+	expect(header.getBoundingClientRect().width).toBeCloseTo(
+		rect.width - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth),
+		1,
+	);
+	expect(headerStyle.paddingLeft).toBe('16px');
+	expect(headerStyle.paddingRight).toBe('56px');
+	expect(headerStyle.paddingTop).toBe('12px');
+	expect(headerStyle.paddingBottom).toBe('12px');
+	expect(parseFloat(headerStyle.borderBottomWidth)).toBeCloseTo(1, 1);
+	const body = header.nextElementSibling as HTMLElement;
+	const bodyStyle = getComputedStyle(body);
+	expect(bodyStyle.paddingLeft).toBe('8px');
+	expect(bodyStyle.paddingRight).toBe('8px');
+	expect(bodyStyle.paddingTop).toBe('8px');
+	expect(bodyStyle.paddingBottom).toBe('8px');
 }
 
 describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
@@ -122,7 +142,7 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 					(rows[0] as HTMLElement).clientWidth,
 				);
 				for (const button of visibleButtons(toolbar)) {
-					expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(40);
+					expect(button.getBoundingClientRect().height).toBeCloseTo(32, 0);
 				}
 				await screen.unmount();
 			}
@@ -181,9 +201,11 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 				(selector) => selector.element().getAttribute('aria-pressed') === 'true',
 			),
 		).toHaveLength(1);
-		await expect
-			.element(screen.getByRole('radio', { name: m.gift_sort_owner_order() }))
-			.toBeChecked();
+		const selectedSort = screen
+			.getByRole('radio', { name: m.gift_sort_owner_order() })
+			.element();
+		await expect.element(selectedSort).toBeChecked();
+		expect(getComputedStyle(selectedSort.parentElement!).minHeight).toBe('48px');
 
 		await selectors[1].click();
 		expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
@@ -396,9 +418,17 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		await expect
 			.element(more.getByRole('button', { name: m.gift_reorder_action() }))
 			.toBeVisible();
-		await expect
-			.element(more.getByRole('button', { name: m.batch_add_toolbar_label() }))
-			.toBeVisible();
+		const batchAdd = more.getByRole('button', { name: m.batch_add_toolbar_label() });
+		await expect.element(batchAdd).toBeVisible();
+		for (const action of [
+			more.getByRole('button', { name: m.recipient_view_preview_turn_on() }).element(),
+			batchAdd.element(),
+		]) {
+			expect(action.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+			const surface = action.querySelector<HTMLElement>(':scope > .elevation-surface')!;
+			expect(surface).toBeTruthy();
+			expect(getComputedStyle(surface).justifyContent).toBe('flex-start');
+		}
 		await expect
 			.element(more.getByRole('button', { name: m.wishlist_detail_unfollow() }))
 			.not.toBeInTheDocument();
@@ -480,7 +510,7 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		const done = screen
 			.getByRole('button', { name: m.gift_reorder_done() })
 			.element() as HTMLButtonElement;
-		expect(done.getBoundingClientRect().height).toBeGreaterThanOrEqual(40);
+		expect(done.getBoundingClientRect().height).toBeCloseTo(32, 0);
 		expect(done.getBoundingClientRect().right).toBeCloseTo(
 			row.getBoundingClientRect().right,
 			1,
