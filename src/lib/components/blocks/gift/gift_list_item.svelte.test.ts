@@ -1181,102 +1181,37 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 	});
 });
 
-describe('GiftListItem image-column continuity on narrow rows (mobile issue 4)', () => {
-	it.each([
-		{
-			label: 'manager reservation, received, More, description, and reserver state',
-			width: 366,
-			gift: makeVisitorGift({
-				imageUrl: IMAGE_URL,
-				imageMeta: imageMeta('#ffffff'),
-				description: 'Dlouhý popis dárku se všemi důležitými podrobnostmi.',
-				priorityLabel: 'Vysoká',
-				quantity: 3,
-				reservedCount: 3,
-				isFullyReserved: true,
-				myReservationId: 'mine',
-				reserverNames: ['Alexandra Nováková'],
-			}),
-			role: WISHLIST_ROLES.moderator,
-		},
-		{
-			label: 'no-image placeholder with bounded visitor actions',
-			width: 296,
-			gift: makeVisitorGift({
-				description: 'Dárek bez obrázku s delším popisem.',
-				priorityLabel: 'Vysoká',
-				myReservationId: null,
-				reservedCount: 0,
-			}),
-			role: WISHLIST_ROLES.visitor,
-		},
-	])('covers the complete inner row height for $label', async ({ width, gift, role }) => {
-		await page.viewport(width + 24, 900);
+describe('GiftListItem mobile list thumbnail geometry', () => {
+	it('keeps the baseline square thumbnail with content and actions to its right at 390px', async () => {
+		await page.viewport(390, 900);
 		const host = document.createElement('div');
-		host.style.width = `${width}px`;
+		host.style.width = '366px';
 		document.body.appendChild(host);
 		await render(
 			GiftListItemTestHost,
 			{
-				gift,
-				role,
-				onreceived: () => {},
+				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
+				role: WISHLIST_ROLES.visitor,
 				onreserve: () => {},
-				onunreserve: () => {},
 				onmore: () => {},
 			},
 			{ baseElement: host },
 		);
 
 		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
-		const imageColumn = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
-		const imageSurface = imageColumn.querySelector(
-			'[data-testid="image-frame"]',
-		) as HTMLElement;
-		const itemRect = item.getBoundingClientRect();
-		const imageRect = imageColumn.getBoundingClientRect();
-		const surfaceRect = imageSurface.getBoundingClientRect();
-		const itemStyle = getComputedStyle(item);
-		const innerTop = itemRect.top + Number.parseFloat(itemStyle.borderTopWidth);
-		const innerBottom = itemRect.bottom - Number.parseFloat(itemStyle.borderBottomWidth);
-
-		expect(getComputedStyle(item).display).toBe('grid');
-		expect(imageRect.top).toBeCloseTo(innerTop, 0);
-		expect(imageRect.bottom).toBeCloseTo(innerBottom, 0);
-		expect(surfaceRect.top).toBeCloseTo(innerTop, 0);
-		expect(surfaceRect.bottom).toBeCloseTo(innerBottom, 0);
-		expect(getComputedStyle(imageColumn).borderRightWidth).toBe('2px');
-		expect(
-			host.querySelector('[data-testid="gift-list-content"]')?.getBoundingClientRect().left,
-		).toBeCloseTo(imageRect.right, 0);
-		host.remove();
-	});
-
-	it('preserves the desktop 1:1 thumb and horizontal content layout', async () => {
-		await page.viewport(900, 900);
-		const host = document.createElement('div');
-		host.style.width = '720px';
-		document.body.appendChild(host);
-		await render(
-			GiftListItemTestHost,
-			{
-				gift: makeVisitorGift({
-					imageUrl: IMAGE_URL,
-					imageMeta: imageMeta('#ffffff'),
-					description: 'Desktopový popis nesmí změnit geometrii náhledu.',
-				}),
-				role: WISHLIST_ROLES.visitor,
-				onreserve: () => {},
-			},
-			{ baseElement: host },
-		);
-
 		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
 		const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+		const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+		const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
 		const imageRect = image.getBoundingClientRect();
 
-		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+		expect(getComputedStyle(item).display).toBe('grid');
+		expect(imageRect.width).toBeGreaterThanOrEqual(104);
+		expect(imageRect.width).toBeLessThanOrEqual(128);
+		expect(imageRect.height).toBeCloseTo(imageRect.width, 0);
 		expect(content.getBoundingClientRect().left).toBeCloseTo(imageRect.right, 0);
+		expect(reserve.getBoundingClientRect().left).toBeGreaterThanOrEqual(imageRect.right);
+		expect(more.getBoundingClientRect().left).toBeGreaterThanOrEqual(imageRect.right);
 		host.remove();
 	});
 });

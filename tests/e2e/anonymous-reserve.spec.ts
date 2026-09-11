@@ -90,7 +90,9 @@ test.describe('Anonymous visitor reservation', () => {
 
 		// Mobile gift layout (issue #163): switch to list view and assert the image/actions
 		// arrangement. Use stable data-testids so the assertions stay locale-robust (issue #154).
-		await visitorPage.getByTestId('gift-view-list').click();
+		const listChoice = visitorPage.getByTestId('gift-view-list');
+		await listChoice.click();
+		await expect(listChoice).toHaveAttribute('aria-checked', 'true');
 
 		const mobileListItem = visitorPage
 			.getByTestId('gift-list-item')
@@ -103,35 +105,42 @@ test.describe('Anonymous visitor reservation', () => {
 		const moreActions = mobileListItem.getByRole('button', {
 			name: /Další akce|More actions/i,
 		});
-		const [imageElement, reserveElement, likeElement, moreActionsElement] = await Promise.all([
-			image.elementHandle(),
-			reserve.elementHandle(),
-			like.elementHandle(),
-			moreActions.elementHandle(),
-		]);
+		await expect(like).toBeVisible();
+		const [itemElement, imageElement, reserveElement, likeElement, moreActionsElement] =
+			await Promise.all([
+				mobileListItem.elementHandle(),
+				image.elementHandle(),
+				reserve.elementHandle(),
+				like.elementHandle(),
+				moreActions.elementHandle(),
+			]);
+		expect(itemElement).not.toBeNull();
 		expect(imageElement).not.toBeNull();
 		expect(reserveElement).not.toBeNull();
 		expect(likeElement).not.toBeNull();
 		expect(moreActionsElement).not.toBeNull();
 
 		// Read every rectangle in one browser task so a running view transition cannot
-		// move the card between separately awaited protocol calls.
-		const [imageBounds, reserveBounds, likeBounds, moreActionsBounds] =
+		// move the item between separately awaited protocol calls.
+		const [itemBounds, imageBounds, reserveBounds, likeBounds, moreActionsBounds] =
 			await visitorPage.evaluate(
 				(elements) =>
 					elements.map((element) => {
 						const { x, y, width, height } = element.getBoundingClientRect();
 						return { x, y, width, height };
 					}),
-				[imageElement!, reserveElement!, likeElement!, moreActionsElement!],
+				[itemElement!, imageElement!, reserveElement!, likeElement!, moreActionsElement!],
 			);
 
+		expect(itemBounds).not.toBeNull();
 		expect(imageBounds).not.toBeNull();
 		expect(reserveBounds).not.toBeNull();
 		expect(likeBounds).not.toBeNull();
 		expect(moreActionsBounds).not.toBeNull();
 		await expect(mobileListItem.getByRole('link', { name: /example\.com/ })).toBeVisible();
-		expect(imageBounds!.width).toBeGreaterThanOrEqual(128);
+		// The baseline mobile clamp is 6.5rem–8rem; allow the wider outer tolerance
+		// for browser rounding and layout-shell differences without permitting enlargement.
+		expect(imageBounds!.width).toBeGreaterThanOrEqual(104);
 		expect(imageBounds!.width).toBeLessThanOrEqual(152);
 		// 1:1 list/reservation crop (issue #189, reverting the interim 4:3 list thumb
 		// from #183): the thumb is square again, so height ≈ width via the same
@@ -142,14 +151,28 @@ test.describe('Anonymous visitor reservation', () => {
 		);
 		expect(reserveBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x + imageBounds!.width);
 		expect(moreActionsBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x + imageBounds!.width);
-		expect(likeBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x);
-		expect(likeBounds!.y).toBeGreaterThanOrEqual(imageBounds!.y);
-		expect(likeBounds!.x + likeBounds!.width).toBeLessThanOrEqual(
-			imageBounds!.x + imageBounds!.width,
-		);
-		expect(likeBounds!.y + likeBounds!.height).toBeLessThanOrEqual(
-			imageBounds!.y + imageBounds!.height,
-		);
+
+		// Like is a separate control at the full item's top-right, never inside the thumb.
+		const itemRight = itemBounds!.x + itemBounds!.width;
+		const itemBottom = itemBounds!.y + itemBounds!.height;
+		const likeRight = likeBounds!.x + likeBounds!.width;
+		const likeBottom = likeBounds!.y + likeBounds!.height;
+		expect(likeBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x + imageBounds!.width);
+		expect(likeBounds!.x).toBeGreaterThanOrEqual(itemBounds!.x - 1);
+		expect(likeBounds!.y).toBeGreaterThanOrEqual(itemBounds!.y - 1);
+		expect(likeRight).toBeLessThanOrEqual(itemRight + 1);
+		expect(likeBottom).toBeLessThanOrEqual(itemBottom + 1);
+		expect(
+			Math.abs(likeBounds!.y - itemBounds!.y - (itemRight - likeRight)),
+		).toBeLessThanOrEqual(1);
+		for (const actionBounds of [reserveBounds!, moreActionsBounds!]) {
+			const overlaps =
+				likeBounds!.x < actionBounds.x + actionBounds.width &&
+				likeRight > actionBounds.x &&
+				likeBounds!.y < actionBounds.y + actionBounds.height &&
+				likeBottom > actionBounds.y;
+			expect(overlaps).toBe(false);
+		}
 
 		await moreActions.click();
 		const moreActionsDialog = visitorPage.getByRole('dialog');

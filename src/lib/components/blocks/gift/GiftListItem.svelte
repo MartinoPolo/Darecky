@@ -317,19 +317,7 @@
 	@container gift-list (width < 40rem) {
 		.gift-list-item,
 		.gift-list-item-manager-dense {
-			--gift-list-content-floor: 8.5rem;
-			--gift-list-image-size: clamp(
-				6.625rem,
-				calc(100cqi - var(--gift-list-content-floor) - 0.25rem),
-				13rem
-			);
-		}
-
-		.gift-list-image {
-			aspect-ratio: auto;
-			height: auto;
-			min-height: var(--gift-list-image-size);
-			align-self: stretch;
+			--gift-list-image-size: clamp(6.5rem, 32cqi, 8rem);
 		}
 	}
 </style>
