@@ -37,7 +37,9 @@
 		onreserve?: (gift: GiftForVisitor) => void;
 		onunreserve?: (gift: GiftForVisitor) => void;
 		onreceived?: (giftId: string, received: boolean) => void;
-		onmore?: () => void;
+		onmore?: (anchor: HTMLButtonElement) => void;
+		moreOpen?: boolean;
+		moreSurface?: 'menu' | 'dialog';
 	}
 
 	let {
@@ -50,6 +52,8 @@
 		onunreserve,
 		onreceived,
 		onmore,
+		moreOpen = false,
+		moreSurface = 'menu',
 	}: GiftListItemProps = $props();
 
 	const displayState = $derived(
@@ -107,7 +111,6 @@
 			/>
 		{/if}
 
-		<!-- The normal horizontal layout keeps the thumb 1:1 while taller content can grow the card. -->
 		<div
 			data-testid="gift-list-image"
 			class="gift-list-image relative aspect-square self-start border-r-2 border-ink"
@@ -230,6 +233,8 @@
 					{/snippet}
 					<GiftActionRow
 						{onmore}
+						{moreOpen}
+						{moreSurface}
 						secondary={hasMultipleActions ? secondaryReservationAction : undefined}
 						controlSizing="intrinsic"
 					>
@@ -281,7 +286,7 @@
 
 		box-sizing: border-box;
 		grid-template-columns: var(--gift-list-image-size) minmax(0, 1fr);
-		min-height: calc(var(--gift-list-image-size) + 0.25rem);
+		min-height: calc(var(--gift-list-image-size) + 4px);
 	}
 
 	.gift-list-item-manager-dense {
@@ -312,7 +317,19 @@
 	@container gift-list (width < 40rem) {
 		.gift-list-item,
 		.gift-list-item-manager-dense {
-			--gift-list-image-size: clamp(6.5rem, 32cqi, 8rem);
+			--gift-list-content-floor: 8.5rem;
+			--gift-list-image-size: clamp(
+				6.625rem,
+				calc(100cqi - var(--gift-list-content-floor) - 0.25rem),
+				13rem
+			);
+		}
+
+		.gift-list-image {
+			aspect-ratio: auto;
+			height: auto;
+			min-height: var(--gift-list-image-size);
+			align-self: stretch;
 		}
 	}
 </style>

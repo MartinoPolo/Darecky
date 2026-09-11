@@ -9,12 +9,22 @@
 	interface Props {
 		children?: Snippet;
 		secondary?: Snippet;
-		onmore?: () => void;
+		onmore?: (anchor: HTMLButtonElement) => void;
+		moreOpen?: boolean;
+		moreSurface?: 'menu' | 'dialog';
 		controlSizing?: 'fill' | 'intrinsic';
 		class?: string;
 	}
 
-	let { children, secondary, onmore, controlSizing = 'fill', class: className }: Props = $props();
+	let {
+		children,
+		secondary,
+		onmore,
+		moreOpen = false,
+		moreSurface = 'menu',
+		controlSizing = 'fill',
+		class: className,
+	}: Props = $props();
 
 	const styles = $derived(
 		giftActionRowVariants({
@@ -37,15 +47,24 @@
 	{#if onmore}
 		<Button
 			intent="outline"
-			size="md"
+			size="icon"
 			class={styles.more()}
-			surfaceClass="size-full min-h-0 min-w-0 p-0"
 			aria-label={m.gift_more_actions()}
+			data-gift-action="more"
 			data-testid="gift-more-actions"
 			onclick={(event) => {
 				event.stopPropagation();
-				onmore();
-			}}><EllipsisIcon class="size-[16px]" /></Button
+				onmore(event.currentTarget as HTMLButtonElement);
+			}}
+			onkeydown={(event) => {
+				if (event.key === 'ArrowDown') {
+					event.preventDefault();
+					event.stopPropagation();
+					onmore(event.currentTarget as HTMLButtonElement);
+				}
+			}}
+			aria-haspopup={moreSurface}
+			aria-expanded={moreOpen}><EllipsisIcon data-icon /></Button
 		>
 	{/if}
 </div>

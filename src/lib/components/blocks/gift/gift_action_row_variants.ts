@@ -15,7 +15,7 @@ export const giftActionRowVariants = tv({
 				secondary: "[&>[data-slot='button']]:w-full [&>[data-slot='button']]:grow",
 			},
 			intrinsic: {
-				row: 'ml-auto flex w-fit max-w-full flex-wrap justify-end',
+				row: 'ml-auto w-fit max-w-full',
 				primary:
 					"max-w-full flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
 				secondary:

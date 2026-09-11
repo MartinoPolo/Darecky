@@ -66,9 +66,10 @@
 	}
 </script>
 
+<!-- Flexible-height exception: notification copy and digest details must wrap naturally. -->
 <Button
 	intent="ghost"
-	class="flex h-auto w-full rounded-[10px]"
+	class="flex h-auto w-full"
 	surfaceClass={cn(
 		'items-start gap-3 px-3 py-2.5 text-left transition-colors group-hover:bg-accent',
 		!notification.read && 'bg-tint',

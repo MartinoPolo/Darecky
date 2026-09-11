@@ -862,6 +862,76 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 		},
 	);
 
+	it('keeps Reserve alone above the grouped Received and More actions on mobile', async () => {
+		await page.viewport(390, 900);
+		const host = document.createElement('div');
+		host.style.width = '366px';
+		document.body.appendChild(host);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
+				role: WISHLIST_ROLES.moderator,
+				onreceived: () => {},
+				onreserve: () => {},
+				onmore: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const row = host.querySelector('[data-testid="gift-action-row"]') as HTMLElement;
+		const reserve = row.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+		const received = row.querySelector('[data-testid="gift-received-toggle"]') as HTMLElement;
+		const more = row.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+		const rowRect = row.getBoundingClientRect();
+		const reserveRect = reserve.getBoundingClientRect();
+		const receivedRect = received.getBoundingClientRect();
+		const moreRect = more.getBoundingClientRect();
+
+		expect(reserveRect.bottom).toBeLessThanOrEqual(receivedRect.top);
+		expect(receivedRect.top).toBeCloseTo(moreRect.top, 0);
+		expect(receivedRect.bottom).toBeCloseTo(moreRect.bottom, 0);
+		expect(reserveRect.right).toBeCloseTo(rowRect.right, 0);
+		expect(moreRect.right).toBeCloseTo(rowRect.right, 0);
+		expect(reserveRect.width).toBeLessThan(rowRect.width);
+		expect(receivedRect.width).toBeLessThan(rowRect.width);
+		host.remove();
+	});
+
+	it('keeps Reserve, Received, and More in one right-aligned desktop row', async () => {
+		await page.viewport(768, 900);
+		const host = document.createElement('div');
+		host.style.width = '720px';
+		document.body.appendChild(host);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
+				role: WISHLIST_ROLES.moderator,
+				onreceived: () => {},
+				onreserve: () => {},
+				onmore: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const row = host.querySelector('[data-testid="gift-action-row"]') as HTMLElement;
+		const reserve = row.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+		const received = row.querySelector('[data-testid="gift-received-toggle"]') as HTMLElement;
+		const more = row.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+		const rowRect = row.getBoundingClientRect();
+		const reserveRect = reserve.getBoundingClientRect();
+		const receivedRect = received.getBoundingClientRect();
+		const moreRect = more.getBoundingClientRect();
+
+		expect(reserveRect.top).toBeCloseTo(receivedRect.top, 0);
+		expect(receivedRect.top).toBeCloseTo(moreRect.top, 0);
+		expect(reserveRect.right).toBeLessThanOrEqual(receivedRect.left);
+		expect(receivedRect.right).toBeLessThanOrEqual(moreRect.left);
+		expect(moreRect.right).toBeCloseTo(rowRect.right, 0);
+		host.remove();
+	});
+
 	it.each([
 		{ viewport: 320, role: WISHLIST_ROLES.visitor, reservationId: null },
 		{ viewport: 390, role: WISHLIST_ROLES.visitor, reservationId: 'mine' },
@@ -1107,6 +1177,106 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 		expect(content.getBoundingClientRect().left).toBeCloseTo(imageRect.right, 0);
 		expect(host.querySelector('[data-testid="reserve-button"]')).toBeTruthy();
 		expect(host.querySelector('[data-testid="gift-more-actions"]')).toBeTruthy();
+		host.remove();
+	});
+});
+
+describe('GiftListItem image-column continuity on narrow rows (mobile issue 4)', () => {
+	it.each([
+		{
+			label: 'manager reservation, received, More, description, and reserver state',
+			width: 366,
+			gift: makeVisitorGift({
+				imageUrl: IMAGE_URL,
+				imageMeta: imageMeta('#ffffff'),
+				description: 'Dlouhý popis dárku se všemi důležitými podrobnostmi.',
+				priorityLabel: 'Vysoká',
+				quantity: 3,
+				reservedCount: 3,
+				isFullyReserved: true,
+				myReservationId: 'mine',
+				reserverNames: ['Alexandra Nováková'],
+			}),
+			role: WISHLIST_ROLES.moderator,
+		},
+		{
+			label: 'no-image placeholder with bounded visitor actions',
+			width: 296,
+			gift: makeVisitorGift({
+				description: 'Dárek bez obrázku s delším popisem.',
+				priorityLabel: 'Vysoká',
+				myReservationId: null,
+				reservedCount: 0,
+			}),
+			role: WISHLIST_ROLES.visitor,
+		},
+	])('covers the complete inner row height for $label', async ({ width, gift, role }) => {
+		await page.viewport(width + 24, 900);
+		const host = document.createElement('div');
+		host.style.width = `${width}px`;
+		document.body.appendChild(host);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift,
+				role,
+				onreceived: () => {},
+				onreserve: () => {},
+				onunreserve: () => {},
+				onmore: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+		const imageColumn = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+		const imageSurface = imageColumn.querySelector(
+			'[data-testid="image-frame"]',
+		) as HTMLElement;
+		const itemRect = item.getBoundingClientRect();
+		const imageRect = imageColumn.getBoundingClientRect();
+		const surfaceRect = imageSurface.getBoundingClientRect();
+		const itemStyle = getComputedStyle(item);
+		const innerTop = itemRect.top + Number.parseFloat(itemStyle.borderTopWidth);
+		const innerBottom = itemRect.bottom - Number.parseFloat(itemStyle.borderBottomWidth);
+
+		expect(getComputedStyle(item).display).toBe('grid');
+		expect(imageRect.top).toBeCloseTo(innerTop, 0);
+		expect(imageRect.bottom).toBeCloseTo(innerBottom, 0);
+		expect(surfaceRect.top).toBeCloseTo(innerTop, 0);
+		expect(surfaceRect.bottom).toBeCloseTo(innerBottom, 0);
+		expect(getComputedStyle(imageColumn).borderRightWidth).toBe('2px');
+		expect(
+			host.querySelector('[data-testid="gift-list-content"]')?.getBoundingClientRect().left,
+		).toBeCloseTo(imageRect.right, 0);
+		host.remove();
+	});
+
+	it('preserves the desktop 1:1 thumb and horizontal content layout', async () => {
+		await page.viewport(900, 900);
+		const host = document.createElement('div');
+		host.style.width = '720px';
+		document.body.appendChild(host);
+		await render(
+			GiftListItemTestHost,
+			{
+				gift: makeVisitorGift({
+					imageUrl: IMAGE_URL,
+					imageMeta: imageMeta('#ffffff'),
+					description: 'Desktopový popis nesmí změnit geometrii náhledu.',
+				}),
+				role: WISHLIST_ROLES.visitor,
+				onreserve: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+		const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+		const imageRect = image.getBoundingClientRect();
+
+		expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+		expect(content.getBoundingClientRect().left).toBeCloseTo(imageRect.right, 0);
 		host.remove();
 	});
 });

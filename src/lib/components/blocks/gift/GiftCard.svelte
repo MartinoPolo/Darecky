@@ -40,7 +40,9 @@
 		onreserve?: (gift: GiftForVisitor) => void;
 		onunreserve?: (gift: GiftForVisitor) => void;
 		onreceived?: (giftId: string, received: boolean) => void;
-		onmore?: () => void;
+		onmore?: (anchor: HTMLButtonElement) => void;
+		moreOpen?: boolean;
+		moreSurface?: 'menu' | 'dialog';
 	}
 
 	let {
@@ -54,6 +56,8 @@
 		onunreserve,
 		onreceived,
 		onmore,
+		moreOpen = false,
+		moreSurface = 'menu',
 	}: GiftCardProps = $props();
 
 	const displayState = $derived(
@@ -103,7 +107,7 @@
 	);
 </script>
 
-<div class={styles.card()}>
+<div class={styles.card()} data-testid="gift-card-surface">
 	<ElevationSurface plate class={styles.plate()} />
 	{#if !contextualMode && presentation.showLike && visitorGift}
 		<LikeButton
@@ -225,6 +229,8 @@
 				{/snippet}
 				<GiftActionRow
 					{onmore}
+					{moreOpen}
+					{moreSurface}
 					secondary={hasMultipleActions ? secondaryReservationAction : undefined}
 					controlSizing="intrinsic"
 				>

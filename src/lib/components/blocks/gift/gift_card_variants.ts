@@ -19,7 +19,7 @@ export const giftCardVariants = tv({
 	slots: {
 		// The `group/gift-card` triggers only mirror the drag grip so the card and grip lift in
 		// lock-step; the card itself lifts through the semantic owner selector in app.css.
-		card: 'group relative isolate grid h-full min-h-[280px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-panel bg-card sm:row-span-7 sm:min-h-0 sm:grid-rows-subgrid',
+		card: 'group relative isolate grid h-full min-h-[280px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-panel bg-card [--gift-card-footer-visible-gap:calc(var(--radius-panel)-var(--radius-btn))] sm:row-span-7 sm:min-h-0 sm:grid-rows-subgrid',
 		plate: 'elevation-ordinary pointer-events-none absolute inset-0 z-[1] rounded-panel border-[2.5px] border-ink bg-transparent transition-[translate,scale,box-shadow] duration-(--duration-normal) ease-(--ease-standard) group-hover/gift-card:-translate-y-0.5 group-focus-within/gift-card:-translate-y-0.5',
 		// 4:3 (issue #183, revises the earlier 1:1 shape): shorter cards, same
 		// `minmax(280px, 1fr)` grid column sizing.
@@ -43,7 +43,7 @@ export const giftCardVariants = tv({
 		priorityEyebrow: 'row-start-3 mt-2 hidden items-center gap-1 sm:flex',
 		linkList: 'row-start-4 mt-2 hidden flex-col sm:flex',
 		// min-w-0: grid items (unlike flex) get an automatic min-content floor that can force the row wider (#211).
-		footer: 'row-start-3 flex min-w-0 items-stretch justify-between gap-1.5 border-t border-dashed border-border [--gift-footer-edge-inset:max(0px,calc(var(--radius-panel)-var(--border-w)-var(--radius-btn)))] [--gift-footer-hit-overhang:4px] [--gift-footer-layout-inset:calc(var(--gift-footer-edge-inset)+var(--elevation-ordinary-offset)-var(--gift-footer-hit-overhang))] p-(--gift-footer-layout-inset) [&_[data-slot=button]]:rounded-[max(0px,calc(var(--radius-panel)-var(--border-w)-var(--gift-footer-layout-inset)-var(--gift-footer-hit-overhang)))] sm:row-start-7 sm:gap-2 sm:border-0 sm:[--gift-footer-hit-overhang:0px]',
+		footer: 'row-start-3 flex min-w-0 items-stretch justify-between gap-1.5 border-t border-dashed border-border p-[var(--gift-card-footer-visible-gap)] sm:row-start-7 sm:gap-2 sm:border-0',
 		reservationActions: 'ml-auto flex min-w-0 flex-1 flex-col gap-1.5',
 	},
 	variants: {
