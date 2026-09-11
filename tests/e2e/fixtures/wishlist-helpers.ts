@@ -117,7 +117,18 @@ export async function addGift(
 
 /** Run the share wizard to completion, making the wishlist active/shared. */
 export async function shareWishlist(page: Page): Promise<void> {
-	await page.getByRole('button', { name: 'Sdílet seznam' }).first().click();
+	const mobile = (page.viewportSize()?.width ?? 1280) < 640;
+	if (mobile) {
+		await page.getByTestId('mobile-header-more-trigger').filter({ visible: true }).click();
+		const sheet = page.getByRole('dialog', { name: 'Další akce' }).filter({ visible: true });
+		await expect(sheet).toBeVisible({ timeout: 5_000 });
+		await sheet.getByRole('button', { name: 'Sdílet', exact: true }).click();
+	} else {
+		await page.getByTestId('desktop-header-more-trigger').filter({ visible: true }).click();
+		const menu = page.getByRole('menu', { name: 'Další akce' }).filter({ visible: true });
+		await expect(menu).toBeVisible({ timeout: 5_000 });
+		await menu.getByRole('menuitem', { name: 'Sdílet', exact: true }).click();
+	}
 
 	const dialog = page.getByRole('dialog');
 	await expect(dialog).toBeVisible({ timeout: 5_000 });
@@ -130,7 +141,6 @@ export async function shareWishlist(page: Page): Promise<void> {
 	// closing overlay can intercept clicks on header buttons in the following steps.
 	await expect(dialog).not.toBeVisible({ timeout: 5_000 });
 	await waitForDialogOverlayRemoval(page);
-	await page.waitForLoadState('networkidle');
 }
 
 /**

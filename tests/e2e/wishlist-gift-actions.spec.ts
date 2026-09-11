@@ -1,5 +1,6 @@
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 import * as m from '../../src/lib/paraglide/messages.js';
+import { DEFAULT_PRIORITY_LEVELS } from '../../src/lib/modules/wishlists/types.js';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
 import {
@@ -15,6 +16,10 @@ function gift(page: Page, name: string) {
 		.filter({ has: page.getByRole('heading', { name, exact: true }) });
 }
 
+function escapeRegex(value: string) {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function openSelectionFromContext(page: Page, giftName: string) {
 	await gift(page, giftName).getByRole('heading', { name: giftName, exact: true }).click({
 		button: 'right',
@@ -24,27 +29,42 @@ async function openSelectionFromContext(page: Page, giftName: string) {
 	return page.getByRole('region', { name: 'Nástroje výběru' });
 }
 
-async function openFilterMenu(page: Page) {
-	await page.getByRole('button', { name: /Filtrovat/ }).click();
-	await expect(page.getByRole('menu')).toBeVisible();
+async function openFilterMenu(page: Page, optionName: string) {
+	const displayMenu = page.getByRole('menu', { name: m.gift_display_options(), exact: true });
+	if (!(await displayMenu.isVisible())) {
+		await page.getByTestId('desktop-display-trigger').click();
+	}
+	await expect(displayMenu).toBeVisible();
+	await displayMenu
+		.getByRole('menuitem', { name: new RegExp(`^${escapeRegex(m.gift_filter())}`) })
+		.click();
+
+	const option = page
+		.getByRole('menuitemcheckbox', { name: optionName, exact: true })
+		.filter({ visible: true });
+	await expect(option).toHaveCount(1);
+	await expect(option).toBeVisible();
+	return { displayMenu, option };
 }
 
 async function toggleFilterCheckbox(page: Page, name: string) {
-	await openFilterMenu(page);
-	await page.getByRole('menuitemcheckbox', { name }).click();
-	await expect(page.getByRole('menu')).toBeVisible();
+	const { displayMenu, option } = await openFilterMenu(page, name);
+	await option.click();
+	await expect(displayMenu).toBeVisible();
 }
 
 async function selectPriorityFilter(page: Page, name: string) {
-	if (!(await page.getByRole('menu').isVisible())) {
-		await openFilterMenu(page);
+	const displayMenu = page.getByRole('menu', { name: m.gift_display_options(), exact: true });
+	let option = page
+		.getByRole('menuitemcheckbox', { name, exact: true })
+		.filter({ visible: true });
+	if ((await option.count()) === 0) {
+		({ option } = await openFilterMenu(page, name));
 	}
-	await expect(async () => {
-		const option = page.getByRole('menuitemcheckbox', { name });
-		await option.click();
-		await expect(option).toHaveAttribute('aria-checked', 'true');
-	}).toPass();
-	await expect(page.getByRole('menu')).toBeVisible();
+	await expect(option).toHaveCount(1);
+	await option.click();
+	await expect(option).toHaveAttribute('aria-checked', 'true');
+	await expect(displayMenu).toBeVisible();
 }
 
 async function waitForReceivedState(giftRow: Locator, received: boolean) {
@@ -69,6 +89,15 @@ async function dismissToasts(page: Page) {
 		}
 	});
 	await expect(toasts).toHaveCount(0);
+}
+
+async function expectBodyPointerEventsRestored(page: Page) {
+	await expect
+		.poll(() => page.locator('body').evaluate((body) => body.style.pointerEvents))
+		.toBe('');
+	await expect
+		.poll(() => page.locator('body').evaluate((body) => getComputedStyle(body).pointerEvents))
+		.toBe('auto');
 }
 
 async function attachScreenshot(page: Page, testInfo: TestInfo, name: string) {
@@ -209,6 +238,233 @@ test('desktop contextual selection works in both supported card and list views',
 	await page.context().close();
 });
 
+test('desktop More uses a menu in card and list views with truthful state and focus lifecycle', async ({
+	browser,
+	request,
+	baseURL,
+}) => {
+	const page = await registerAndGetPage(
+		browser,
+		request,
+		baseURL!,
+		createTestUser('gift-actions-desktop-more'),
+	);
+	await createActionFixture(page);
+
+	for (const view of ['card', 'list'] as const) {
+		if (view === 'list') {
+			const listView = page.getByRole('radio', { name: m.gift_view_list() });
+			// The sticky toolbar's top fade intentionally masks controls while the toolbar is
+			// tucked under the header. Center it before exercising the normally clickable control.
+			await listView.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+			await expect(listView).toBeVisible();
+			const hitTest = await listView.evaluate((element) => {
+				const box = element.getBoundingClientRect();
+				const hit = document.elementFromPoint(
+					box.left + box.width / 2,
+					box.top + box.height / 2,
+				);
+				return {
+					unobscured: hit !== null && (element === hit || element.contains(hit)),
+					box: { top: box.top, left: box.left, width: box.width, height: box.height },
+					hit: hit instanceof HTMLElement ? hit.outerHTML.slice(0, 300) : null,
+				};
+			});
+			expect(hitTest.unobscured, JSON.stringify(hitTest)).toBe(true);
+			await listView.click();
+		}
+		const activeCollection = page.locator(
+			`[data-wishlist-gift-collection][data-view-mode="${view}"]:not([inert])`,
+		);
+		await expect(activeCollection).toBeVisible();
+		await expect(activeCollection).not.toHaveAttribute('aria-hidden', 'true');
+		const more = activeCollection
+			.locator('[data-gift-item]')
+			.filter({ has: page.getByRole('heading', { name: 'Kolo pro výlety', exact: true }) })
+			.getByTestId('gift-more-actions');
+		await expect(more).toHaveAttribute('aria-haspopup', 'menu');
+		await expect(more).toHaveAttribute('aria-expanded', 'false');
+		await more.press('ArrowDown');
+		await expect(more).toHaveAttribute('aria-expanded', 'true');
+		await expect(page.getByRole('menu')).toBeVisible();
+		await expect(page.getByRole('menu').getByRole('menuitem').first()).toBeFocused();
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+		await page.keyboard.press('Escape');
+		await expect(more).toHaveAttribute('aria-expanded', 'false');
+		await expect(more).toBeFocused();
+		await expectBodyPointerEventsRestored(page);
+	}
+
+	const secondMore = gift(page, 'Stan pro dva').getByTestId('gift-more-actions');
+	await secondMore.click();
+	await page.getByRole('menuitem', { name: m.gift_context_edit() }).click();
+	const editDialog = page.getByRole('dialog');
+	await expect(editDialog).toBeVisible();
+	await expect(editDialog.getByRole('textbox', { name: m.gift_name_label() })).toHaveValue(
+		'Stan pro dva',
+	);
+	await expect
+		.poll(() => editDialog.evaluate((dialog) => dialog.contains(document.activeElement)))
+		.toBe(true);
+	await expect(secondMore).not.toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(editDialog).toBeHidden();
+	await expectBodyPointerEventsRestored(page);
+
+	const cardView = page.getByRole('radio', { name: m.gift_view_card() });
+	await cardView.click();
+	await expect(cardView).toBeChecked();
+	await gift(page, 'Stan pro dva').getByRole('heading', { name: 'Stan pro dva' }).click();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	await page.context().close();
+});
+
+test('language and palette popovers close when their selected choice is reselected', async ({
+	browser,
+	request,
+	baseURL,
+}) => {
+	const page = await registerAndGetPage(
+		browser,
+		request,
+		baseURL!,
+		createTestUser('choice-row-reselect'),
+	);
+	await createActionFixture(page);
+
+	const languageTrigger = page.getByRole('button', { name: /Jazyk:/ });
+	await languageTrigger.click();
+	const languagePopover = page.locator(
+		`[data-slot="popover-content"][aria-label="${m.settings_language_label()}"]`,
+	);
+	await languagePopover.getByRole('button', { pressed: true }).click();
+	await expect(languagePopover).toBeHidden();
+	await expect(languageTrigger).toBeFocused();
+
+	const paletteTrigger = page.getByRole('button', {
+		name: m.palette_switcher_label(),
+		exact: true,
+	});
+	await paletteTrigger.click();
+	const palettePopover = page.locator(
+		`[data-slot="popover-content"][aria-label="${m.palette_switcher_label()}"]`,
+	);
+	await palettePopover.getByRole('button', { pressed: true }).click();
+	await expect(palettePopover).toBeHidden();
+	await expect(paletteTrigger).toBeFocused();
+	await page.context().close();
+});
+
+test('wide touch long press uses the shared Sheet while desktop More remains a menu', async ({
+	browser,
+	request,
+	baseURL,
+}) => {
+	const page = await registerAndGetPage(
+		browser,
+		request,
+		baseURL!,
+		createTestUser('gift-actions-wide-touch'),
+	);
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await createActionFixture(page);
+
+	const target = gift(page, 'Kolo pro výlety');
+	await openMobileGiftActions(page, target, 'Kolo pro výlety');
+	await expect(page.getByRole('menu')).toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await expectBodyPointerEventsRestored(page);
+
+	const more = target.getByTestId('gift-more-actions');
+	await more.click();
+	await expect(page.getByRole('menu')).toBeVisible();
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await page.context().close();
+});
+
+test('gift card footer follows nested radii and keeps the action shadow and touch hit inside', async ({
+	browser,
+	request,
+	baseURL,
+}) => {
+	const page = await registerAndGetPage(
+		browser,
+		request,
+		baseURL!,
+		createTestUser('gift-actions-footer-geometry'),
+	);
+	await page.setViewportSize({ width: 390, height: 844 });
+	await createActionFixture(page);
+
+	const target = gift(page, 'Kolo pro výlety');
+	const card = target.getByTestId('gift-card-surface');
+	const action = target.getByTestId('gift-more-actions');
+	const surface = action.locator(':scope > .elevation-surface');
+	const geometry = await card.evaluate(
+		(cardElement, buttonElement) => {
+			const cardBox = cardElement.getBoundingClientRect();
+			const actionSurface = (buttonElement as HTMLElement).querySelector<HTMLElement>(
+				'.elevation-surface',
+			)!;
+			const surfaceBox = actionSurface.getBoundingClientRect();
+			const styles = getComputedStyle(cardElement);
+			const actionStyles = getComputedStyle(actionSurface);
+			return {
+				outerRadius: Number.parseFloat(styles.borderTopRightRadius),
+				buttonRadius: Number.parseFloat(actionStyles.borderTopRightRadius),
+				rightGap: cardBox.right - surfaceBox.right,
+				bottomGap: cardBox.bottom - surfaceBox.bottom,
+			};
+		},
+		await action.elementHandle(),
+	);
+
+	await expect(surface).toBeVisible();
+	expect(geometry.outerRadius).toBe(16);
+	expect(geometry.buttonRadius).toBe(7);
+	expect(geometry.rightGap).toBeCloseTo(geometry.outerRadius - geometry.buttonRadius, 0);
+	expect(geometry.bottomGap).toBeCloseTo(geometry.rightGap, 0);
+	expect(geometry.rightGap).toBeGreaterThanOrEqual(4);
+	expect(geometry.bottomGap).toBeGreaterThanOrEqual(4);
+	await page.context().close();
+});
+
+test('mobile More uses a Sheet in card and list views and returns focus on Escape', async ({
+	browser,
+	request,
+	baseURL,
+}) => {
+	const page = await registerAndGetPage(
+		browser,
+		request,
+		baseURL!,
+		createTestUser('gift-actions-mobile-more'),
+	);
+	await page.setViewportSize({ width: 390, height: 844 });
+	await createActionFixture(page);
+
+	for (const view of ['card', 'list'] as const) {
+		if (view === 'list') {
+			await page.evaluate(() => {
+				window.localStorage.setItem('prejemesi-gift-view-mode', JSON.stringify('list'));
+			});
+			await page.reload();
+			await expect(page.locator('[data-view-mode="list"]')).toBeVisible();
+		}
+		const more = gift(page, 'Kolo pro výlety').getByTestId('gift-more-actions');
+		await expect(more).toHaveAttribute('aria-haspopup', 'dialog');
+		await more.click();
+		await expect(more).toHaveAttribute('aria-expanded', 'true');
+		await expect(page.getByRole('dialog', { name: 'Kolo pro výlety' })).toBeVisible();
+		await expect(page.getByRole('menu')).toHaveCount(0);
+		await page.keyboard.press('Escape');
+		await expect(more).toHaveAttribute('aria-expanded', 'false');
+		await expect(more).toBeFocused();
+		await expectBodyPointerEventsRestored(page);
+	}
+	await page.context().close();
+});
+
 test('selection survives responsive reflow while normal controls remain replaced', async ({
 	browser,
 	request,
@@ -256,10 +512,11 @@ test('mobile toolbar starts an empty selection from deterministic SSR markup', a
 	const serverResponse = await page.context().request.get(page.url());
 	expect(serverResponse.ok()).toBe(true);
 	const serverRenderedHtml = await serverResponse.text();
-	expect(
-		serverRenderedHtml.match(/data-testid=(?:"gift-view-switcher"|'gift-view-switcher')/g) ??
-			[],
-	).toHaveLength(1);
+	const serverRenderedSwitcherCount = await page.evaluate((html) => {
+		const document = new DOMParser().parseFromString(html, 'text/html');
+		return document.querySelectorAll('[data-testid="gift-view-switcher"]').length;
+	}, serverRenderedHtml);
+	expect(serverRenderedSwitcherCount).toBe(1);
 
 	await page.getByTestId('mobile-more-trigger').click();
 	await page
@@ -355,21 +612,54 @@ test('mobile bulk hierarchy fits all actions and restores focus through every ne
 	for (const width of [320, 360, 390]) {
 		await page.setViewportSize({ width, height: 640 });
 		await expect(actionRows).toHaveCount(6);
+		const fittingBody = sheet.getByTestId('selection-bulk-sheet-actions').locator('..');
+		const fittingGeometry = await fittingBody.evaluate((element) => ({
+			clientHeight: element.clientHeight,
+			scrollHeight: element.scrollHeight,
+		}));
+		expect(fittingGeometry.scrollHeight).toBeLessThanOrEqual(fittingGeometry.clientHeight);
 		await attachScreenshot(page, testInfo, `bulk-actions-${width}x640`);
 	}
 
 	await page.setViewportSize({ width: 320, height: 320 });
-	const rootGeometry = await sheet
-		.getByTestId('selection-bulk-sheet-actions')
-		.evaluate((element) => ({
-			clientHeight: element.clientHeight,
-			scrollHeight: element.scrollHeight,
-			rowBottoms: Array.from(
-				element.querySelectorAll<HTMLElement>('[data-mobile-bulk-action]'),
-			).map((row) => row.getBoundingClientRect().bottom),
-		}));
-	expect(rootGeometry.scrollHeight).toBeLessThanOrEqual(rootGeometry.clientHeight);
-	expect(Math.max(...rootGeometry.rowBottoms)).toBeLessThanOrEqual(320);
+	const scrollBody = sheet.getByTestId('selection-bulk-sheet-actions').locator('..');
+	const shortGeometry = await sheet.evaluate((dialog) => {
+		const body = dialog.querySelector<HTMLElement>(
+			'[data-testid="selection-bulk-sheet-actions"]',
+		)!.parentElement!;
+		const dialogRect = dialog.getBoundingClientRect();
+		const bodyRect = body.getBoundingClientRect();
+		return {
+			dialogTop: dialogRect.top,
+			dialogBottom: dialogRect.bottom,
+			bodyTop: bodyRect.top,
+			bodyBottom: bodyRect.bottom,
+			bodyClientHeight: body.clientHeight,
+			bodyScrollHeight: body.scrollHeight,
+			rowMinHeights: Array.from(
+				dialog.querySelectorAll<HTMLElement>('[data-mobile-bulk-action]'),
+			).map((row) => Number.parseFloat(getComputedStyle(row).minHeight)),
+		};
+	});
+	expect(shortGeometry.dialogTop).toBeGreaterThanOrEqual(0);
+	expect(shortGeometry.dialogBottom).toBeLessThanOrEqual(320);
+	expect(shortGeometry.bodyTop).toBeGreaterThanOrEqual(0);
+	expect(shortGeometry.bodyBottom).toBeLessThanOrEqual(320);
+	expect(shortGeometry.bodyScrollHeight).toBeGreaterThan(shortGeometry.bodyClientHeight);
+	expect(shortGeometry.rowMinHeights.every((height) => height >= 48)).toBe(true);
+
+	const physicalPixelTolerance = await page.evaluate(() => 1 / window.devicePixelRatio);
+	for (const actionRow of await actionRows.all()) {
+		await actionRow.scrollIntoViewIfNeeded();
+		const rowBox = await actionRow.boundingBox();
+		const bodyBox = await scrollBody.boundingBox();
+		expect(rowBox).not.toBeNull();
+		expect(bodyBox).not.toBeNull();
+		const clipTop = Math.max(0, bodyBox!.y);
+		const clipBottom = Math.min(320, bodyBox!.y + bodyBox!.height);
+		expect(rowBox!.y).toBeGreaterThanOrEqual(clipTop - physicalPixelTolerance);
+		expect(rowBox!.y + rowBox!.height).toBeLessThanOrEqual(clipBottom + physicalPixelTolerance);
+	}
 	await attachScreenshot(page, testInfo, 'bulk-actions-320x320');
 
 	for (const action of ['priority', 'category', 'imageFit', 'imageBackground', 'received']) {
@@ -734,17 +1024,31 @@ test('bulk hidden-selection confirmation preserves exact received state on undo'
 	await gift(page, 'Stan pro dva').click();
 	await selectionCount(toolbar, 2);
 
-	await page.getByRole('button', { name: new RegExp(`${m.gift_priority_label()}:`) }).click();
-	await page.getByRole('menuitemradio', { name: /Vysok/i }).click();
+	await toolbar.getByTestId('desktop-selection-actions-trigger').click();
+	const selectionActionsMenu = page.getByRole('menu', {
+		name: m.gift_selection_actions(),
+		exact: true,
+	});
+	await expect(selectionActionsMenu).toBeVisible();
+	await selectionActionsMenu
+		.getByRole('menuitem', {
+			name: new RegExp(`^${escapeRegex(m.gift_priority_label())}`),
+		})
+		.click();
+	const highPriorityOption = page
+		.getByRole('menuitemradio', { name: DEFAULT_PRIORITY_LEVELS[0].label, exact: true })
+		.filter({ visible: true });
+	await expect(highPriorityOption).toHaveCount(1);
+	await highPriorityOption.click();
 	await expect(toolbar.getByText(m.gift_selection_hidden_count({ count: 2 }))).toBeVisible();
 
-	const selectionActionsButton = page.getByRole('button', { name: m.gift_selection_actions() });
-	if (await selectionActionsButton.count()) {
-		await selectionActionsButton.click();
-		await page.getByRole('menuitem', { name: m.gift_selection_received_state() }).click();
-	} else {
-		await page.getByRole('button', { name: m.gift_selection_received_state() }).click();
-	}
+	await toolbar.getByTestId('desktop-selection-actions-trigger').click();
+	await expect(selectionActionsMenu).toBeVisible();
+	await selectionActionsMenu
+		.getByRole('menuitem', {
+			name: new RegExp(`^${escapeRegex(m.gift_selection_received_state())}`),
+		})
+		.click();
 	await page.getByTestId('selection-received-true').click();
 	await expect(page.getByRole('dialog')).toContainText(
 		m.gift_hidden_selection_description({ count: 2 }),
@@ -757,7 +1061,10 @@ test('bulk hidden-selection confirmation preserves exact received state on undo'
 	await expect(toolbar.getByText(m.gift_selection_hidden_count({ count: 2 }))).toBeVisible();
 
 	await page.getByRole('button', { name: m.done() }).click();
-	await page.getByRole('button', { name: m.gift_display_reset_aria() }).click();
+	await page
+		.getByTestId('wishlist-toolbar-active-filters')
+		.getByRole('button', { name: m.wishlist_detail_clear_filters(), exact: true })
+		.click();
 	await expect(firstGift).toHaveCount(0);
 	await waitForReceivedState(secondGift, false);
 	await toggleFilterCheckbox(page, m.gift_filter_show_received());

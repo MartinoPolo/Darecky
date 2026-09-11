@@ -9,6 +9,7 @@
 	import WishlistGiftCompactTable from './WishlistGiftCompactTable.svelte';
 	import type { GiftByRole, GiftForVisitor, GiftViewMode } from '$lib/modules/gifts/types.js';
 	import type { GiftSection } from '$lib/modules/gifts/gift_ordering.js';
+	import type { GiftContextInvocation } from './gift_context_invocation.js';
 	import { WISHLIST_ROLES, type WishlistRole } from '$lib/modules/wishlists/types.js';
 	import { canManageWishlist } from '$lib/modules/wishlists/wishlist_capabilities.js';
 
@@ -35,10 +36,14 @@
 		selectionMode?: boolean;
 		selectedIds?: readonly string[];
 		onselectiontoggle?: (giftId: string) => void;
-		oncontextactions?: (gift: GiftByRole, event: MouseEvent | null) => boolean;
+		oncontextactions?: (gift: GiftByRole, invocation: GiftContextInvocation) => boolean;
 		hascontextactions?: (gift: GiftByRole) => boolean;
 		contextContent?: Snippet;
-		contextMenuOpen?: boolean;
+		nativeContextOpen?: boolean;
+		nativeContextSessionId?: number;
+		onnativecontextcomplete?: (sessionId: number) => void;
+		activeContextGiftId?: string | null;
+		contextSurface?: 'menu' | 'dialog';
 	}
 
 	let {
@@ -66,7 +71,11 @@
 		oncontextactions,
 		hascontextactions,
 		contextContent,
-		contextMenuOpen = $bindable(false),
+		nativeContextOpen = $bindable(false),
+		nativeContextSessionId = 0,
+		onnativecontextcomplete,
+		activeContextGiftId = null,
+		contextSurface = 'menu',
 	}: WishlistGiftDisplayProps = $props();
 
 	// Management affordances (add/edit/reorder) open to recipient OR správce.
@@ -81,7 +90,9 @@
 	let displayedViewMode = $state(untrack(() => viewMode));
 	let collectionElement = $state<HTMLElement | null>(null);
 	let activeAnimation: Animation | null = null;
+	let openedNativeSessionId = $state(0);
 	let transitionRun = 0;
+	const collectionIsOutgoing = $derived(viewMode !== displayedViewMode);
 	const selectedIdSet = $derived(new Set(selectedIds));
 	setContext<(giftId: string) => boolean>('wishlist-gift-selection', (giftId) =>
 		selectedIdSet.has(giftId),
@@ -154,15 +165,27 @@
 	});
 
 	$effect(() => {
-		if (selectionMode && contextMenuOpen) {
-			contextMenuOpen = false;
+		if (selectionMode && nativeContextOpen === true) {
+			nativeContextOpen = false;
 		}
 	});
 
 	$effect(() => () => cancelActiveTransition());
 </script>
 
-<ContextMenu.Root bind:open={contextMenuOpen}>
+<ContextMenu.Root
+	bind:open={nativeContextOpen}
+	onOpenChange={(open) => {
+		if (open === true) {
+			openedNativeSessionId = nativeContextSessionId;
+		}
+	}}
+	onOpenChangeComplete={(open) => {
+		if (open === false) {
+			onnativecontextcomplete?.(openedNativeSessionId);
+		}
+	}}
+>
 	{#if isLoading}
 		<div
 			class="gift-card-skeleton-grid grid grid-cols-2 gap-2 sm:gap-5 sm:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
@@ -182,7 +205,9 @@
 			{onclearfilters}
 		/>
 	{:else}
-		<ContextMenu.Trigger disabled={displayedViewMode === 'compact' || selectionMode}>
+		<ContextMenu.Trigger
+			disabled={displayedViewMode === 'compact' || selectionMode || collectionIsOutgoing}
+		>
 			{#snippet child({ props: triggerProps })}
 				<div
 					{...triggerProps}
@@ -190,6 +215,8 @@
 					bind:this={collectionElement}
 					data-wishlist-gift-collection
 					data-view-mode={displayedViewMode}
+					inert={collectionIsOutgoing}
+					aria-hidden={collectionIsOutgoing ? true : undefined}
 					class="relative z-(--z-base)"
 					role={selectionMode ? 'group' : undefined}
 					aria-label={selectionMode ? m.gift_selection_listbox_label() : undefined}
@@ -197,6 +224,8 @@
 					{#if displayedViewMode === 'card'}
 						<WishlistGiftCardGrid
 							{hascontextactions}
+							{activeContextGiftId}
+							{contextSurface}
 							{sections}
 							{role}
 							{isArchived}
@@ -219,6 +248,8 @@
 					{:else if displayedViewMode === 'list'}
 						<WishlistGiftListView
 							{hascontextactions}
+							{activeContextGiftId}
+							{contextSurface}
 							{sections}
 							{role}
 							{isArchived}

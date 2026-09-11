@@ -7,7 +7,9 @@ import GiftContextActionsTestHost from './GiftContextActionsTestHost.svelte';
 import * as m from '$lib/paraglide/messages.js';
 
 const managerProps = {
-	open: true,
+	sessionId: 1,
+	nativeOpen: false,
+	programmaticOpen: true,
 	mobile: true,
 	name: 'Kolo',
 	role: 'recipient' as const,
@@ -21,6 +23,8 @@ const managerProps = {
 	priorityLevelId: 'high',
 	categoryId: null,
 	onclose: vi.fn(),
+	oncomplete: vi.fn(),
+	onfinish: vi.fn((_policy, callback: () => void) => callback()),
 	onedit: vi.fn(),
 	onpriority: vi.fn(),
 	oncategory: vi.fn(),
@@ -29,10 +33,65 @@ const managerProps = {
 };
 
 describe('GiftContextActions desktop ContextMenu', () => {
+	it('restores More only after the parent-owned genuine close completion', async () => {
+		const trigger = document.createElement('button');
+		trigger.textContent = 'More';
+		document.body.append(trigger);
+		trigger.focus();
+		const oncomplete = vi.fn();
+		const screen = await render(GiftContextActionsTestHost, {
+			...managerProps,
+			oncomplete,
+			mobile: false,
+			nativeOpen: false,
+			programmaticOpen: true,
+			desktopAnchor: trigger,
+		});
+		await expect.element(screen.getByRole('menu')).toBeInTheDocument();
+		expect(oncomplete).not.toHaveBeenCalled();
+
+		await screen.rerender({ programmaticOpen: false });
+		await expect.poll(() => oncomplete).toHaveBeenCalledWith(1);
+		await expect.poll(() => document.activeElement).toBe(trigger);
+
+		await screen.unmount();
+		trigger.remove();
+	});
+
+	it('consumes a handoff once and preserves focus moved by its callback', async () => {
+		const trigger = document.createElement('button');
+		const dialogControl = document.createElement('button');
+		trigger.textContent = 'More';
+		dialogControl.textContent = 'Dialog control';
+		document.body.append(trigger, dialogControl);
+		const onedit = vi.fn(() => dialogControl.focus());
+		const screen = await render(GiftContextActionsTestHost, {
+			...managerProps,
+			onedit,
+			mobile: false,
+			nativeOpen: false,
+			programmaticOpen: true,
+			desktopAnchor: trigger,
+		});
+
+		await screen.getByRole('menuitem', { name: m.gift_context_edit() }).click();
+		await expect.poll(() => onedit).toHaveBeenCalledTimes(1);
+		await expect.poll(() => document.activeElement).toBe(dialogControl);
+
+		await screen.unmount();
+		trigger.remove();
+		dialogControl.remove();
+	});
+
 	it('uses menu roles and nested submenus for configured manager choices', async () => {
 		managerProps.onpriority.mockReset();
 		managerProps.oncategory.mockReset();
-		const screen = await render(GiftContextActionsTestHost, { ...managerProps, mobile: false });
+		const screen = await render(GiftContextActionsTestHost, {
+			...managerProps,
+			mobile: false,
+			nativeOpen: true,
+			programmaticOpen: false,
+		});
 		await expect.element(screen.getByRole('menu')).toBeInTheDocument();
 		const priorityTrigger = screen.getByRole('menuitem', { name: m.gift_priority_label() });
 		await expect.element(priorityTrigger).toBeInTheDocument();
@@ -50,6 +109,62 @@ describe('GiftContextActions desktop ContextMenu', () => {
 
 describe('GiftContextActions mobile Sheet', () => {
 	afterEach(async () => page.viewport(1280, 720));
+
+	it('shows decorative right chevrons at the far edge of nested action rows', async () => {
+		const screen = await render(GiftContextActions, managerProps);
+		for (const name of [m.gift_priority_label(), m.gift_context_category()]) {
+			const row = screen.getByRole('button', { name, exact: true }).element();
+			const surface = row.querySelector<HTMLElement>(':scope > .elevation-surface')!;
+			const chevron = row.querySelector<SVGElement>(
+				'svg.lucide-chevron-right[aria-hidden="true"]',
+			);
+
+			expect(chevron).toBeTruthy();
+			expect(surface.lastElementChild).toBe(chevron);
+			const surfaceStyle = getComputedStyle(surface);
+			expect(chevron!.getBoundingClientRect().right).toBeCloseTo(
+				surface.getBoundingClientRect().right -
+					parseFloat(surfaceStyle.borderRightWidth) -
+					parseFloat(surfaceStyle.paddingRight),
+				1,
+			);
+		}
+		await screen.unmount();
+	});
+
+	it('keeps nested chevrons visible while their rows are loading and disabled', async () => {
+		const screen = await render(GiftContextActions, {
+			...managerProps,
+			priorityReady: false,
+			categoryReady: false,
+		});
+		for (const name of [
+			`${m.gift_priority_label()}: ${m.moderator_loading()}`,
+			`${m.gift_context_category()}: ${m.moderator_loading()}`,
+		]) {
+			const row = screen.getByRole('button', { name, exact: true }).element();
+			expect(row.querySelector('svg.lucide-chevron-right[aria-hidden="true"]')).toBeTruthy();
+		}
+		await screen.unmount();
+	});
+
+	it('does not add right chevrons to terminal mobile actions', async () => {
+		const screen = await render(GiftContextActions, managerProps);
+		for (const name of [
+			m.gift_context_open_link(),
+			m.gift_context_copy_link(),
+			m.gift_context_edit(),
+		]) {
+			const row = screen
+				.getByRole(name === m.gift_context_open_link() ? 'link' : 'button', {
+					name,
+					exact: true,
+				})
+				.element();
+			expect(row.querySelector('svg.lucide-chevron-right')).toBeNull();
+		}
+		await screen.unmount();
+	});
 
 	it('uses the inset rounded action-sheet shell with shared header, body, rows, and icon column', async () => {
 		await page.viewport(390, 720);
