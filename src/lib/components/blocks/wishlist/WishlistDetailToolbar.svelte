@@ -4,6 +4,7 @@
 	import * as DropdownMenu from '$lib/components/base/dropdown-menu/index.js';
 	import * as Sheet from '$lib/components/base/sheet/index.js';
 	import { Checkbox } from '$lib/components/base/checkbox/index.js';
+	import * as RadioGroup from '$lib/components/base/radio-group/index.js';
 	import * as m from '$lib/paraglide/messages.js';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import ListPlusIcon from '@lucide/svelte/icons/list-plus';
@@ -231,6 +232,7 @@
 	let mobileSheetScrollCapturedFromPointer = false;
 	let mobileSheetFocusFrame: number | null = null;
 	let mobileSheetScrollFrame: number | null = null;
+	const MOBILE_SHEET_RESTORE_FRAMES = 5;
 
 	function resetMobileSheetState() {
 		if (mobileSheetFocusFrame !== null) {
@@ -318,16 +320,20 @@
 		mobileSheetFocusFrame = requestAnimationFrame(() => {
 			mobileSheetFocusFrame = null;
 			trigger?.focus({ preventScroll: true });
-			window.scrollTo(scrollPosition.x, scrollPosition.y);
-			mobileSheetScrollFrame = requestAnimationFrame(() => {
+
+			let remainingFrames = MOBILE_SHEET_RESTORE_FRAMES;
+			const restoreScrollAfterTeardown = () => {
 				window.scrollTo(scrollPosition.x, scrollPosition.y);
-				mobileSheetScrollFrame = requestAnimationFrame(() => {
-					mobileSheetScrollFrame = null;
-					window.scrollTo(scrollPosition.x, scrollPosition.y);
-					mobileSheetRestoreTrigger = null;
-					mobileSheetFocusRestorationScheduled = false;
-				});
-			});
+				remainingFrames -= 1;
+				if (remainingFrames > 0) {
+					mobileSheetScrollFrame = requestAnimationFrame(restoreScrollAfterTeardown);
+					return;
+				}
+				mobileSheetScrollFrame = null;
+				mobileSheetRestoreTrigger = null;
+				mobileSheetFocusRestorationScheduled = false;
+			};
+			restoreScrollAfterTeardown();
 		});
 	}
 
@@ -597,6 +603,7 @@
 			size="md"
 			intent="primary"
 			class="mobile-reorder-done"
+			surfaceClass="px-1"
 			aria-label={m.gift_reorder_done()}
 			onclick={() => changeMobileReorderMode(false)}
 		>
@@ -751,83 +758,120 @@
 					</Sheet.Description>
 				</WishlistSheetHeader>
 				<WishlistSheetBody class="mobile-sheet-scroll" data-testid="mobile-sheet-scroll">
-					{#if mobileOpenDisplayControl === 'sort'}
-						{#each GIFT_SORT_KEYS as option (option)}
-							<WishlistSheetChoice>
-								<input
-									type="radio"
-									name="mobile-gift-sort"
-									value={option}
-									checked={sortOption === option}
-									onchange={() => {
-										onsortchange(option);
-										closeMobileDisplaySheet();
-									}}
-								/>
-								<span>{GIFT_SORT_LABELS[option]()}</span>
-							</WishlistSheetChoice>
-						{/each}
-					{:else if mobileOpenDisplayControl === 'grouping'}
-						{#each Object.values(GIFT_GROUPING_OPTIONS) as option (option)}
-							<WishlistSheetChoice disabledStyle={!isGroupingOptionAvailable(option)}>
-								<input
-									type="radio"
-									name="mobile-gift-grouping"
-									value={option}
-									checked={grouping === option}
-									disabled={!isGroupingOptionAvailable(option)}
-									onchange={() => {
-										ongroupingchange(option);
-										closeMobileDisplaySheet();
-									}}
-								/>
-								<span>{GROUPING_LABELS[option]()}</span>
-							</WishlistSheetChoice>
-						{/each}
-					{:else}
-						{#each filterDefinitions as definition (definition.id)}
-							<div
-								class="mobile-sheet-choice"
-								use:filterRowActivation={{
-									checked: definition.checked,
-									onchange: definition.onchange,
+					<div class="mobile-display-sections">
+						<div
+							class="mobile-display-section"
+							class:mobile-display-section-active={mobileOpenDisplayControl ===
+								'sort'}
+							aria-hidden={mobileOpenDisplayControl !== 'sort'}
+							inert={mobileOpenDisplayControl !== 'sort'}
+						>
+							<RadioGroup.Root
+								value={sortOption}
+								aria-label={m.gift_sort_by()}
+								class="gap-0"
+								onValueChange={(option) => {
+									onsortchange(option as GiftSortOption);
+									closeMobileDisplaySheet();
 								}}
 							>
-								<Checkbox
-									checked={definition.checked}
-									onCheckedChange={definition.onchange}
-									aria-label={definition.menuLabel}
-								/>
-								<span>{definition.menuLabel}</span>
-							</div>
-						{/each}
-						{#each filterFacets as facet (facet.id)}
-							<section class="mobile-filter-section">
-								<h3>{facet.label}</h3>
-								{#each facet.options as option (option.value)}
-									<div
-										class="mobile-sheet-choice"
-										use:filterRowActivation={{
-											checked: option.checked,
-											onchange: option.onchange,
-										}}
-									>
-										<Checkbox
-											checked={option.checked}
-											onCheckedChange={option.onchange}
-											aria-label={option.label}
+								{#each GIFT_SORT_KEYS as option (option)}
+									<WishlistSheetChoice for={`mobile-gift-sort-${option}`}>
+										<RadioGroup.Item
+											id={`mobile-gift-sort-${option}`}
+											value={option}
 										/>
-										<span>{option.label}</span>
-									</div>
+										<span>{GIFT_SORT_LABELS[option]()}</span>
+									</WishlistSheetChoice>
 								{/each}
-							</section>
-						{/each}
-						{#if activeFilters.length > 0}
-							<Button class="m-3" intent="ghost" size="lg" onclick={clearGiftFilters}
-								>{m.wishlist_detail_clear_filters()}</Button
+							</RadioGroup.Root>
+						</div>
+						<div
+							class="mobile-display-section"
+							class:mobile-display-section-active={mobileOpenDisplayControl ===
+								'grouping'}
+							aria-hidden={mobileOpenDisplayControl !== 'grouping'}
+							inert={mobileOpenDisplayControl !== 'grouping'}
+						>
+							<RadioGroup.Root
+								value={grouping}
+								aria-label={m.gift_grouping_label()}
+								class="gap-0"
+								onValueChange={(option) => {
+									ongroupingchange(option as GiftGroupingOption);
+									closeMobileDisplaySheet();
+								}}
 							>
-						{/if}
-					{/if}
+								{#each Object.values(GIFT_GROUPING_OPTIONS) as option (option)}
+									<WishlistSheetChoice
+										for={`mobile-gift-grouping-${option}`}
+										disabledStyle={!isGroupingOptionAvailable(option)}
+									>
+										<RadioGroup.Item
+											id={`mobile-gift-grouping-${option}`}
+											value={option}
+											disabled={!isGroupingOptionAvailable(option)}
+										/>
+										<span>{GROUPING_LABELS[option]()}</span>
+									</WishlistSheetChoice>
+								{/each}
+							</RadioGroup.Root>
+						</div>
+						<div
+							class="mobile-display-section"
+							class:mobile-display-section-active={mobileOpenDisplayControl ===
+								'filter'}
+							aria-hidden={mobileOpenDisplayControl !== 'filter'}
+							inert={mobileOpenDisplayControl !== 'filter'}
+						>
+							{#each filterDefinitions as definition (definition.id)}
+								<div
+									class="mobile-sheet-choice"
+									use:filterRowActivation={{
+										checked: definition.checked,
+										onchange: definition.onchange,
+									}}
+								>
+									<Checkbox
+										checked={definition.checked}
+										onCheckedChange={definition.onchange}
+										aria-label={definition.menuLabel}
+									/>
+									<span>{definition.menuLabel}</span>
+								</div>
+							{/each}
+							{#each filterFacets as facet (facet.id)}
+								<section class="mobile-filter-section">
+									<h3>{facet.label}</h3>
+									{#each facet.options as option (option.value)}
+										<div
+											class="mobile-sheet-choice"
+											use:filterRowActivation={{
+												checked: option.checked,
+												onchange: option.onchange,
+											}}
+										>
+											<Checkbox
+												checked={option.checked}
+												onCheckedChange={option.onchange}
+												aria-label={option.label}
+											/>
+											<span>{option.label}</span>
+										</div>
+									{/each}
+								</section>
+							{/each}
+							{#if activeFilters.length > 0}
+								<Button
+									class="m-3"
+									intent="ghost"
+									size="lg"
+									onclick={clearGiftFilters}
+									>{m.wishlist_detail_clear_filters()}</Button
+								>
+							{/if}
+						</div>
+					</div>
 				</WishlistSheetBody>
 				<div
 					class="mobile-sheet-switcher"
@@ -1039,7 +1083,7 @@
 	.toolbar-mobile {
 		display: grid;
 		min-width: 0;
-		grid-auto-rows: var(--size-control-md);
+		grid-auto-rows: minmax(var(--size-control-md), auto);
 		gap: 8px;
 	}
 
@@ -1060,8 +1104,14 @@
 		justify-content: space-between;
 	}
 
+	.mobile-reorder-row :global([data-testid='gift-view-switcher']),
+	.toolbar-mobile :global(.mobile-reorder-done) {
+		flex: 0 0 auto;
+	}
+
 	.mobile-mode-label {
 		min-width: 0;
+		flex: 1 1 auto;
 		overflow: hidden;
 		font-family: var(--font-heading);
 		font-size: var(--text-sm);
@@ -1073,7 +1123,7 @@
 		min-width: var(--size-control-md);
 		height: var(--size-control-md);
 		min-height: var(--size-control-md);
-		padding-inline: 1rem;
+		padding: 0;
 	}
 
 	.mobile-browse-spacer {
@@ -1082,8 +1132,7 @@
 		margin-inline-end: -6px;
 	}
 
-	.toolbar-mobile :global(button),
-	.toolbar-responsive-view-switcher :global([data-slot='toggle-group-item']) {
+	.toolbar-mobile :global(button:not([data-slot='toggle-group-item'], .mobile-reorder-done)) {
 		width: var(--size-control-md);
 		min-width: var(--size-control-md);
 		height: var(--size-control-md);
@@ -1112,8 +1161,19 @@
 		line-height: 1;
 	}
 
-	:global(.wishlist-bottom-sheet.mobile-display-sheet) {
-		height: 80dvh;
+	.mobile-display-sections {
+		display: grid;
+	}
+
+	.mobile-display-section {
+		visibility: hidden;
+		grid-area: 1 / 1;
+		pointer-events: none;
+	}
+
+	.mobile-display-section-active {
+		visibility: visible;
+		pointer-events: auto;
 	}
 
 	.mobile-sheet-switcher {
@@ -1255,14 +1315,6 @@
 			display: block;
 			min-width: 0;
 			flex: 1 1 auto;
-		}
-
-		.toolbar-responsive-view-switcher :global([data-slot='toggle-group-item']) {
-			width: auto;
-			min-width: 32px;
-			height: 32px;
-			min-height: 32px;
-			padding-inline: 0.5rem;
 		}
 
 		.toolbar-layout-selection {

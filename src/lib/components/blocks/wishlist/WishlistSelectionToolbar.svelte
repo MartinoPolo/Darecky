@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
@@ -7,6 +8,7 @@
 	import CopyIcon from '@lucide/svelte/icons/copy';
 	import { Checkbox } from '$lib/components/base/checkbox/index.js';
 	import { Button } from '$lib/components/base/button/index.js';
+	import * as RadioGroup from '$lib/components/base/radio-group/index.js';
 	import * as DropdownMenu from '$lib/components/base/dropdown-menu/index.js';
 	import * as Sheet from '$lib/components/base/sheet/index.js';
 	import WishlistBottomSheet from './WishlistBottomSheet.svelte';
@@ -127,10 +129,11 @@
 	let mobileBulkSheetOpen = $state(false);
 	let mobileBulkTrigger = $state<HTMLButtonElement | null>(null);
 	let mobileBackButton = $state<HTMLButtonElement | null>(null);
+	let mobileOptionsContainer = $state<HTMLElement | null>(null);
 	let mobileActiveAction = $state<Exclude<MobileBulkAction, 'copy'> | null>(null);
 	let mobileInvokingAction = $state<MobileBulkAction | null>(null);
 	type PendingFocusDestination =
-		| { kind: 'radio'; target: HTMLInputElement }
+		| { kind: 'radio'; choiceId: string }
 		| { kind: 'action'; action: MobileBulkAction }
 		| { kind: 'trigger'; target: HTMLButtonElement };
 
@@ -166,13 +169,14 @@
 						? document.querySelector<HTMLButtonElement>(
 								`[data-mobile-bulk-action="${destination.action}"]`,
 							)
-						: destination?.target;
-				if (
-					target !== null &&
-					target !== undefined &&
-					target.isConnected &&
-					!target.disabled
-				) {
+						: destination?.kind === 'radio'
+							? Array.from(
+									mobileOptionsContainer?.querySelectorAll<HTMLButtonElement>(
+										'[role="radio"]',
+									) ?? [],
+								).find((choice) => choice.id === destination.choiceId)
+							: destination?.target;
+				if (target instanceof HTMLButtonElement && target.isConnected && !target.disabled) {
 					target.focus({ preventScroll: true });
 				}
 			});
@@ -210,10 +214,19 @@
 		}
 	}
 
-	function openMobileAction(action: Exclude<MobileBulkAction, 'copy'>) {
+	async function openMobileAction(action: Exclude<MobileBulkAction, 'copy'>) {
 		mobileInvokingAction = action;
 		mobileActiveAction = action;
-		requestAnimationFrame(() => mobileBackButton?.focus({ preventScroll: true }));
+		await tick();
+		if (
+			mobileBulkSheetOpen &&
+			mobileActiveAction === action &&
+			mobileBackButton !== null &&
+			mobileBackButton.isConnected &&
+			!mobileBackButton.disabled
+		) {
+			mobileBackButton.focus({ preventScroll: true });
+		}
 	}
 
 	function returnToMobileActions() {
@@ -241,10 +254,10 @@
 		onaction({ action: 'received', received });
 	}
 
-	function handleBulkRadioChange(event: Event, onchange: () => void) {
+	function handleBulkRadioChange(group: string, value: string, onchange: () => void) {
 		pendingFocusDestination = {
 			kind: 'radio',
-			target: event.currentTarget as HTMLInputElement,
+			choiceId: `${group}-${value || 'none'}`,
 		};
 		pendingFocusAction = mobileActiveAction;
 		pendingFocusCycleObserved = false;
@@ -364,23 +377,9 @@
 		></DropdownMenu.RadioGroup
 	>{/snippet}
 
-{#snippet bulkRadioChoice(
-	name: string,
-	value: string,
-	label: string,
-	checked: boolean,
-	optionDisabled: boolean,
-	onchange: () => void,
-)}
-	<WishlistSheetChoice disabledStyle={optionDisabled}>
-		<input
-			type="radio"
-			{name}
-			{value}
-			{checked}
-			disabled={optionDisabled}
-			onchange={(event) => handleBulkRadioChange(event, onchange)}
-		/>
+{#snippet bulkRadioChoice(group: string, value: string, label: string, optionDisabled: boolean)}
+	<WishlistSheetChoice for={`${group}-${value || 'none'}`} disabledStyle={optionDisabled}>
+		<RadioGroup.Item id={`${group}-${value || 'none'}`} {value} disabled={optionDisabled} />
 		<span>{label}</span>
 	</WishlistSheetChoice>
 {/snippet}
@@ -427,10 +426,24 @@
 							: m.gift_selection_received_state()}
 		</strong>
 	</div>
-	<div class="bulk-sheet-options" data-testid="selection-bulk-sheet-options">
+	<div
+		bind:this={mobileOptionsContainer}
+		class="bulk-sheet-options"
+		data-testid="selection-bulk-sheet-options"
+	>
 		{#if mobileActiveAction === 'priority'}
-			<fieldset disabled={disabled || !priorityReady}>
-				<legend class="sr-only">{m.gift_priority_label()}</legend>
+			<RadioGroup.Root
+				value={commonPriorityId === undefined
+					? MIXED_RADIO_VALUE
+					: (commonPriorityId ?? '')}
+				aria-label={m.gift_priority_label()}
+				class="gap-0"
+				disabled={disabled || !priorityReady}
+				onValueChange={(id) =>
+					handleBulkRadioChange('bulk-priority', id, () =>
+						onpriority(id === '' ? null : id),
+					)}
+			>
 				{#if commonPriorityId === undefined}<p class="bulk-sheet-mixed">
 						{m.gift_selection_mixed()}
 					</p>{/if}
@@ -438,24 +451,30 @@
 					'bulk-priority',
 					'',
 					m.gift_priority_none(),
-					commonPriorityId === null,
 					disabled || !priorityReady,
-					() => onpriority(null),
 				)}
 				{#each priorityLevels as choice (choice.id)}
 					{@render bulkRadioChoice(
 						'bulk-priority',
 						choice.id,
 						choice.label,
-						commonPriorityId === choice.id,
 						disabled || !priorityReady,
-						() => onpriority(choice.id),
 					)}
 				{/each}
-			</fieldset>
+			</RadioGroup.Root>
 		{:else if mobileActiveAction === 'category'}
-			<fieldset disabled={disabled || !categoryReady}>
-				<legend class="sr-only">{m.gift_context_category()}</legend>
+			<RadioGroup.Root
+				value={commonCategoryId === undefined
+					? MIXED_RADIO_VALUE
+					: (commonCategoryId ?? '')}
+				aria-label={m.gift_context_category()}
+				class="gap-0"
+				disabled={disabled || !categoryReady}
+				onValueChange={(id) =>
+					handleBulkRadioChange('bulk-category', id, () =>
+						oncategory(id === '' ? null : id),
+					)}
+			>
 				{#if commonCategoryId === undefined}<p class="bulk-sheet-mixed">
 						{m.gift_selection_mixed()}
 					</p>{/if}
@@ -463,47 +482,52 @@
 					'bulk-category',
 					'',
 					m.gift_category_uncategorized(),
-					commonCategoryId === null,
 					disabled || !categoryReady,
-					() => oncategory(null),
 				)}
 				{#each categories as choice (choice.id)}
 					{@render bulkRadioChoice(
 						'bulk-category',
 						choice.id,
 						choice.label,
-						commonCategoryId === choice.id,
 						disabled || !categoryReady,
-						() => oncategory(choice.id),
 					)}
 				{/each}
-			</fieldset>
+			</RadioGroup.Root>
 		{:else if mobileActiveAction === 'imageFit'}
-			<fieldset {disabled}>
-				<legend class="sr-only">{m.image_fit_label()}</legend>
+			<RadioGroup.Root
+				value={commonImageFit ?? MIXED_RADIO_VALUE}
+				aria-label={m.image_fit_label()}
+				class="gap-0"
+				{disabled}
+				onValueChange={(fit) => {
+					if (fit === 'fill' || fit === 'fit') {
+						handleBulkRadioChange('bulk-image-fit', fit, () => handleImageFit(fit));
+					}
+				}}
+			>
 				{#if commonImageFit === undefined}<p class="bulk-sheet-mixed">
 						{m.gift_selection_mixed()}
 					</p>{/if}
-				{@render bulkRadioChoice(
-					'bulk-image-fit',
-					'fill',
-					m.image_fit_fill(),
-					commonImageFit === 'fill',
-					disabled,
-					() => handleImageFit('fill'),
-				)}
-				{@render bulkRadioChoice(
-					'bulk-image-fit',
-					'fit',
-					m.image_fit_fit(),
-					commonImageFit === 'fit',
-					disabled,
-					() => handleImageFit('fit'),
-				)}
-			</fieldset>
+				{@render bulkRadioChoice('bulk-image-fit', 'fill', m.image_fit_fill(), disabled)}
+				{@render bulkRadioChoice('bulk-image-fit', 'fit', m.image_fit_fit(), disabled)}
+			</RadioGroup.Root>
 		{:else if mobileActiveAction === 'imageBackground'}
-			<fieldset {disabled}>
-				<legend class="sr-only">{m.image_background_label()}</legend>
+			<RadioGroup.Root
+				value={commonImageBackground === undefined
+					? MIXED_RADIO_VALUE
+					: (commonImageBackground ?? 'transparent')}
+				aria-label={m.image_background_label()}
+				class="gap-0"
+				{disabled}
+				onValueChange={(background) =>
+					handleBulkRadioChange('bulk-image-background', background, () =>
+						handleImageBackground(
+							background === '#ffffff' || background === '#000000'
+								? background
+								: null,
+						),
+					)}
+			>
 				{#if commonImageBackground === undefined}<p class="bulk-sheet-mixed">
 						{m.gift_selection_mixed()}
 					</p>{/if}
@@ -511,50 +535,46 @@
 					'bulk-image-background',
 					'#ffffff',
 					m.image_background_white(),
-					commonImageBackground === '#ffffff',
 					disabled,
-					() => handleImageBackground('#ffffff'),
 				)}
 				{@render bulkRadioChoice(
 					'bulk-image-background',
 					'#000000',
 					m.image_background_black(),
-					commonImageBackground === '#000000',
 					disabled,
-					() => handleImageBackground('#000000'),
 				)}
 				{@render bulkRadioChoice(
 					'bulk-image-background',
 					'transparent',
 					m.image_background_transparent(),
-					commonImageBackground === null,
 					disabled,
-					() => handleImageBackground(null),
 				)}
-			</fieldset>
+			</RadioGroup.Root>
 		{:else if mobileActiveAction === 'received'}
-			<fieldset {disabled}>
-				<legend class="sr-only">{m.gift_selection_received_state()}</legend>
+			<RadioGroup.Root
+				value={commonReceived === undefined ? MIXED_RADIO_VALUE : String(commonReceived)}
+				aria-label={m.gift_selection_received_state()}
+				class="gap-0"
+				{disabled}
+				onValueChange={(received) => {
+					if (received === 'true' || received === 'false') {
+						handleBulkRadioChange('bulk-received', received, () =>
+							handleReceived(received === 'true'),
+						);
+					}
+				}}
+			>
 				{#if commonReceived === undefined}<p class="bulk-sheet-mixed">
 						{m.gift_selection_mixed()}
 					</p>{/if}
-				{@render bulkRadioChoice(
-					'bulk-received',
-					'true',
-					m.gift_mark_received(),
-					commonReceived === true,
-					disabled,
-					() => handleReceived(true),
-				)}
+				{@render bulkRadioChoice('bulk-received', 'true', m.gift_mark_received(), disabled)}
 				{@render bulkRadioChoice(
 					'bulk-received',
 					'false',
 					m.gift_mark_unreceived(),
-					commonReceived === false,
 					disabled,
-					() => handleReceived(false),
 				)}
-			</fieldset>
+			</RadioGroup.Root>
 		{/if}
 	</div>
 {/snippet}
@@ -793,7 +813,7 @@
 		padding: 0.25rem 0.5rem;
 	}
 
-	.bulk-sheet-options fieldset {
+	.bulk-sheet-options :global([data-slot='radio-group']) {
 		min-width: 0;
 		margin: 0;
 		border: 0;

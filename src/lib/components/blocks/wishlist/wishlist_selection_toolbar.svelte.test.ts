@@ -152,19 +152,22 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		await screen.getByRole('button', { name: m.gift_selection_actions() }).click();
 		const actions = screen.getByTestId('selection-bulk-sheet-actions');
 
-		for (const [action, option, assertion] of [
+		for (const [action, focusedOption, option, assertion] of [
 			[
 				'priority',
+				'Vysoká',
 				m.gift_priority_none(),
 				() => expect(props.onpriority).toHaveBeenCalledWith(null),
 			],
 			[
 				'category',
+				'Sport',
 				m.gift_category_uncategorized(),
 				() => expect(props.oncategory).toHaveBeenCalledWith(null),
 			],
 			[
 				'imageFit',
+				m.image_fit_fit(),
 				m.image_fit_fill(),
 				() =>
 					expect(props.onaction).toHaveBeenCalledWith({
@@ -174,6 +177,7 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			],
 			[
 				'imageBackground',
+				m.image_background_black(),
 				m.image_background_transparent(),
 				() =>
 					expect(props.onaction).toHaveBeenCalledWith({
@@ -183,6 +187,7 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			],
 			[
 				'received',
+				m.gift_mark_received(),
 				m.gift_mark_unreceived(),
 				() =>
 					expect(props.onaction).toHaveBeenCalledWith({
@@ -199,6 +204,8 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 				.element(screen.getByRole('button', { name: m.gift_context_back() }))
 				.toHaveFocus();
 			expect(screen.getByTestId('selection-bulk-sheet-actions').query()).toBeNull();
+			await userEvent.keyboard('{Tab}');
+			await expect.element(screen.getByRole('radio', { name: focusedOption })).toHaveFocus();
 			await screen.getByRole('radio', { name: option }).click();
 			assertion();
 			await screen.getByRole('button', { name: m.gift_context_back() }).click();
@@ -218,6 +225,27 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		await new Promise(requestAnimationFrame);
 		await new Promise(requestAnimationFrame);
 		expect(document.activeElement).toHaveAttribute('data-mobile-bulk-action', 'copy');
+		await screen.unmount();
+	});
+
+	it('uses named library radio groups with arrow-key selection', async () => {
+		const props = { ...createProps(), commonPriorityId: 'high' };
+		const screen = await render(WishlistSelectionToolbar, props);
+		await screen.getByRole('button', { name: m.gift_selection_actions() }).click();
+		await screen
+			.getByTestId('selection-bulk-sheet-actions')
+			.element()
+			.querySelector<HTMLButtonElement>('[data-mobile-bulk-action="priority"]')!
+			.click();
+		await expect
+			.element(screen.getByRole('button', { name: m.gift_context_back() }))
+			.toHaveFocus();
+		const group = screen.getByRole('radiogroup', { name: m.gift_priority_label() });
+		const selected = group.getByRole('radio', { name: 'Vysoká' });
+		await userEvent.keyboard('{Tab}');
+		await expect.element(selected).toHaveFocus();
+		await userEvent.keyboard('{ArrowUp}');
+		expect(props.onpriority).toHaveBeenCalledWith(null);
 		await screen.unmount();
 	});
 
@@ -280,10 +308,10 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			expect(screen.getByTestId('selection-bulk-sheet-options').element()).toHaveTextContent(
 				m.gift_selection_mixed(),
 			);
-			for (const radio of sheet
-				.element()
-				.querySelectorAll<HTMLInputElement>('input[type="radio"]')) {
-				expect(radio.checked).toBe(false);
+			const radios = sheet.element().querySelectorAll<HTMLElement>('[role="radio"]');
+			expect(radios.length).toBeGreaterThan(0);
+			for (const radio of radios) {
+				expect(radio).toHaveAttribute('aria-checked', 'false');
 			}
 			await sheet.getByRole('button', { name: m.gift_context_back() }).click();
 		}
@@ -301,7 +329,7 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			.click();
 		const radio = screen
 			.getByRole('radio', { name: m.image_fit_fit() })
-			.element() as HTMLInputElement;
+			.element() as HTMLButtonElement;
 		await radio.click();
 		await screen.rerender({
 			...props,
@@ -384,9 +412,11 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			.click();
 		const options = screen.getByTestId('selection-bulk-sheet-options').element();
 		const scrollBody = options.parentElement!;
-		const firstChoice =
-			options.querySelector<HTMLInputElement>('input[type="radio"]')!.parentElement!;
-		expect(getComputedStyle(firstChoice).minHeight).toBe('48px');
+		const firstRadio = options.querySelector<HTMLElement>('[role="radio"]')!;
+		const firstChoice = firstRadio.closest('label');
+		expect(firstChoice).not.toBeNull();
+		expect(firstChoice).toHaveAttribute('for', firstRadio.id);
+		expect(getComputedStyle(firstChoice!).minHeight).toBe('48px');
 		expect(scrollBody.scrollHeight).toBeGreaterThan(scrollBody.clientHeight);
 		expect(getComputedStyle(scrollBody).overflowY).toBe('auto');
 		await expect

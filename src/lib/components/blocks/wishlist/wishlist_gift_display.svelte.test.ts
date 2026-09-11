@@ -587,6 +587,57 @@ describe('WishlistGiftDisplay keyboard reorder announcements', () => {
 });
 
 describe('WishlistGiftDisplay collection transition', () => {
+	it('immediately removes the outgoing collection from interaction and the accessibility tree', async () => {
+		const exit = deferredAnimation();
+		const enter = deferredAnimation();
+		vi.spyOn(HTMLElement.prototype, 'animate')
+			.mockReturnValueOnce(exit.animation)
+			.mockReturnValueOnce(enter.animation);
+		const oncontextactions = vi.fn(() => true);
+		const screen = await render(WishlistGiftDisplay, {
+			...defaultProps,
+			hascontextactions: () => true,
+			oncontextactions,
+		});
+		const collection = document.querySelector<HTMLElement>('[data-wishlist-gift-collection]')!;
+		const outgoingMore = collection.querySelector<HTMLButtonElement>(
+			'[data-testid="gift-more-actions"]',
+		)!;
+
+		await screen.rerender({
+			...defaultProps,
+			viewMode: 'list',
+			hascontextactions: () => true,
+			oncontextactions,
+		});
+
+		expect(collection.dataset.viewMode).toBe('card');
+		expect(collection.hasAttribute('inert')).toBe(true);
+		expect(collection.getAttribute('aria-hidden')).toBe('true');
+		outgoingMore.focus();
+		expect(document.activeElement).not.toBe(outgoingMore);
+		const moreRect = outgoingMore.getBoundingClientRect();
+		const pointerTarget = document.elementFromPoint(
+			moreRect.left + moreRect.width / 2,
+			moreRect.top + moreRect.height / 2,
+		);
+		expect(collection.contains(pointerTarget)).toBe(false);
+		expect(oncontextactions).not.toHaveBeenCalled();
+
+		exit.finish();
+		await vi.waitFor(() => expect(collection.dataset.viewMode).toBe('list'));
+		expect(collection.hasAttribute('inert')).toBe(false);
+		expect(collection.hasAttribute('aria-hidden')).toBe(false);
+		const incomingMore = collection.querySelector<HTMLButtonElement>(
+			'[data-testid="gift-more-actions"]',
+		)!;
+		incomingMore.focus();
+		expect(document.activeElement).toBe(incomingMore);
+
+		enter.finish();
+		await screen.unmount();
+	});
+
 	it('fades the retained collection out before replacing geometry, then settles the whole collection in', async () => {
 		const exit = deferredAnimation();
 		const enter = deferredAnimation();
@@ -631,10 +682,14 @@ describe('WishlistGiftDisplay collection transition', () => {
 
 		await screen.rerender({ ...defaultProps, viewMode: 'list' });
 		expect(animate).toHaveBeenCalledOnce();
+		expect(collection.hasAttribute('inert')).toBe(true);
+		expect(collection.getAttribute('aria-hidden')).toBe('true');
 		await screen.rerender({ ...defaultProps, viewMode: 'card' });
 
 		expect(staleExit.animation.cancel).toHaveBeenCalledOnce();
 		expect(collection.dataset.viewMode).toBe('card');
+		expect(collection.hasAttribute('inert')).toBe(false);
+		expect(collection.hasAttribute('aria-hidden')).toBe(false);
 		await screen.unmount();
 	});
 

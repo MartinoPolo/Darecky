@@ -4,6 +4,7 @@ import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'svelte';
 import * as m from '$lib/paraglide/messages.js';
+import { GIFT_SORT_KEYS } from '$lib/components/blocks/gift/gift_sort_options.js';
 import {
 	GIFT_GROUPING_OPTIONS,
 	GIFT_SORT_OPTIONS,
@@ -142,11 +143,37 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 					(rows[0] as HTMLElement).clientWidth,
 				);
 				for (const button of visibleButtons(toolbar)) {
-					expect(button.getBoundingClientRect().height).toBeCloseTo(32, 0);
+					if (!button.closest('[data-testid="gift-view-switcher"]')) {
+						expect(button.getBoundingClientRect().height).toBeCloseTo(32, 0);
+					}
 				}
 				await screen.unmount();
 			}
 		}
+	});
+
+	it('keeps the integrated view tray and both items 40px on mobile and 32px from sm', async () => {
+		const screen = await renderToolbar({}, 320);
+
+		for (const [viewportWidth, expectedSize] of [
+			[320, 40],
+			[800, 32],
+		] as const) {
+			await page.viewport(viewportWidth, 760);
+			await frames(1);
+			const tray = screen.getByTestId('gift-view-switcher').element() as HTMLElement;
+			const items = Array.from(
+				tray.querySelectorAll<HTMLElement>('[data-slot="toggle-group-item"]'),
+			);
+
+			expect(tray.getBoundingClientRect().height).toBe(expectedSize);
+			expect(items).toHaveLength(2);
+			for (const item of items) {
+				expect(item.getBoundingClientRect().width).toBe(expectedSize);
+				expect(item.getBoundingClientRect().height).toBe(expectedSize);
+			}
+		}
+		await screen.unmount();
 	});
 
 	it('renders exactly one Display trigger immediately after View with no toolbar Settings', async () => {
@@ -221,6 +248,68 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		expect(ongroupingchange).toHaveBeenCalledExactlyOnceWith(GIFT_GROUPING_OPTIONS.priority);
 		await expect.element(dialog).not.toBeInTheDocument();
 		await frames();
+		await screen.unmount();
+	});
+
+	it('exposes a named radio group with arrow-key selection', async () => {
+		const onsortchange = vi.fn();
+		const screen = await renderToolbar({ onsortchange });
+		await screen.getByTestId('mobile-display-trigger').click();
+		const group = screen.getByRole('radiogroup', { name: m.gift_sort_by() });
+		await expect.element(group).toBeVisible();
+		const selected = group.getByRole('radio', { name: m.gift_sort_owner_order() });
+		selected.element().focus();
+		await userEvent.keyboard('{ArrowDown}');
+		expect(onsortchange).toHaveBeenCalledWith(GIFT_SORT_KEYS[1]);
+		await screen.unmount();
+	});
+
+	it('keeps every Display section at the dynamic height of the tallest available section', async () => {
+		const initialOverrides: Partial<ComponentProps<typeof WishlistDetailToolbar>> = {
+			groupingAvailability: { priority: true, category: true },
+			categoryFilterOptions: [{ value: 'books', label: 'Knihy' }],
+			priorityFilterOptions: [{ value: 'high', label: 'Vysoká' }],
+		};
+		const screen = await renderToolbar(initialOverrides);
+		await screen.getByTestId('mobile-display-trigger').click();
+		await frames();
+		const dialog = screen.getByRole('dialog', { name: m.gift_display_options() }).element();
+		await Promise.all(
+			dialog.getAnimations({ subtree: true }).map((animation) => animation.finished),
+		);
+		const sectionButtons = [
+			screen.getByTestId('mobile-sheet-sort-switch'),
+			screen.getByTestId('mobile-sheet-grouping-switch'),
+			screen.getByTestId('mobile-sheet-filter-switch'),
+		];
+		const initialHeight = dialog.getBoundingClientRect().height;
+		expect(initialHeight).toBeLessThan(window.innerHeight * 0.8);
+
+		for (const sectionButton of sectionButtons.slice(1)) {
+			await sectionButton.click();
+			await frames(1);
+			expect(dialog.getBoundingClientRect().height).toBeCloseTo(initialHeight, 1);
+		}
+
+		const expandedCategories = Array.from({ length: 8 }, (_, index) => ({
+			value: `category-${index}`,
+			label: `Kategorie ${index}`,
+		}));
+		await screen.rerender({
+			...defaultProps,
+			...initialOverrides,
+			categoryFilterOptions: expandedCategories,
+		});
+		await frames();
+		const expandedHeight = dialog.getBoundingClientRect().height;
+		expect(expandedHeight).toBeGreaterThan(initialHeight);
+		expect(expandedHeight).toBeLessThanOrEqual(window.innerHeight * 0.8 + 1);
+
+		for (const sectionButton of sectionButtons.slice(0, 2)) {
+			await sectionButton.click();
+			await frames(1);
+			expect(dialog.getBoundingClientRect().height).toBeCloseTo(expandedHeight, 1);
+		}
 		await screen.unmount();
 	});
 
