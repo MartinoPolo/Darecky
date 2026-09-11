@@ -2,6 +2,8 @@
 	import * as Dialog from '$lib/components/base/dialog/index.js';
 	import * as Sheet from '$lib/components/base/sheet/index.js';
 	import { Button } from '$lib/components/base/button/index.js';
+	import { Label } from '$lib/components/base/label/index.js';
+	import * as Select from '$lib/components/base/select/index.js';
 	import WishlistBottomSheet from './WishlistBottomSheet.svelte';
 	import WishlistSheetBody from './WishlistSheetBody.svelte';
 	import WishlistSheetHeader from './WishlistSheetHeader.svelte';
@@ -46,6 +48,11 @@
 	const unavailable = $derived(
 		loading || submitting || selectedDestinationId === '' || destinations.length === 0,
 	);
+	const selectedDestinationLabel = $derived(
+		destinations.find((destination) => destination.id === selectedDestinationId)
+			? `${destinations.find((destination) => destination.id === selectedDestinationId)?.title} · ${destinations.find((destination) => destination.id === selectedDestinationId)?.recipientDisplayName}`
+			: m.gift_bulk_copy_choose(),
+	);
 
 	$effect(() => {
 		if (submitting) {
@@ -76,34 +83,46 @@
 		{:else if destinations.length === 0}
 			<p class="text-sm text-muted-foreground">{m.gift_bulk_copy_empty()}</p>
 		{:else}
-			<label class="grid gap-2 text-sm font-bold" for="bulk-copy-destination">
-				{m.gift_bulk_copy_destination()}
-				<select
-					id="bulk-copy-destination"
-					class="border-input bg-background min-h-11 rounded-md border px-3 py-2 font-normal"
+			<div class="grid gap-2">
+				<Label id="bulk-copy-destination-label" for="bulk-copy-destination">
+					{m.gift_bulk_copy_destination()}
+				</Label>
+				<Select.Root
+					type="single"
 					value={selectedDestinationId}
 					disabled={submitting}
-					onchange={(event) =>
-						ondestinationchange((event.currentTarget as HTMLSelectElement).value)}
+					onValueChange={(value) => ondestinationchange(value ?? '')}
 				>
-					<option value="">{m.gift_bulk_copy_choose()}</option>
-					{#each destinations as destination (destination.id)}
-						<option value={destination.id}>
-							{destination.title} · {destination.recipientDisplayName}
-						</option>
-					{/each}
-				</select>
-			</label>
+					<Select.Trigger
+						id="bulk-copy-destination"
+						data-testid="bulk-copy-destination"
+						aria-labelledby="bulk-copy-destination-label"
+						class="w-full"
+						size="lg"
+					>
+						{selectedDestinationLabel}
+					</Select.Trigger>
+					<Select.Content portalProps={{ disabled: true }}>
+						{#each destinations as destination (destination.id)}
+							<Select.Item
+								value={destination.id}
+								label={`${destination.title} · ${destination.recipientDisplayName}`}
+							/>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</div>
 		{/if}
 	</div>
 {/snippet}
 
 {#snippet actions()}
 	<div
-		class="flex shrink-0 flex-col-reverse gap-2 px-4 pb-3 sm:flex-row sm:justify-end sm:px-0 sm:pb-0"
+		class="flex shrink-0 flex-col-reverse gap-2 px-6 pb-3 sm:flex-row sm:justify-end sm:px-0 sm:pb-0"
 	>
 		<Button
 			intent="outline"
+			class="w-full sm:w-auto"
 			disabled={submitting}
 			onclick={() => (mobile && onback !== undefined ? onback() : onopenchange(false))}
 		>
@@ -112,6 +131,7 @@
 		<Button
 			bind:ref={confirmButton}
 			intent="primary"
+			class="w-full sm:w-auto"
 			disabled={unavailable}
 			onclick={onconfirm}
 		>
