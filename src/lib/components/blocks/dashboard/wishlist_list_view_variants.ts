@@ -16,8 +16,7 @@ export const wishlistListViewVariants = tv({
 		title: 'truncate font-heading text-[16px] font-semibold text-foreground',
 		subtitle: 'truncate text-xs text-muted-foreground',
 		trailing: 'flex shrink-0 items-center gap-3',
-		statusBadge:
-			'inline-flex items-center whitespace-nowrap rounded-full border-2 border-ink px-2.5 py-0.5 text-[11px] font-semibold',
+		statusBadge: 'max-w-full shrink-0',
 		giftCount: 'whitespace-nowrap text-[13px] font-bold text-muted-foreground',
 	},
 	variants: {
