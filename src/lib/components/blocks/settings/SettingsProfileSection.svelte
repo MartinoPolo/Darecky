@@ -169,7 +169,9 @@
 					</div>
 				</div>
 				{#if googleError}
-					<p class="text-xs text-destructive">{m.settings_avatar_google_error()}</p>
+					<HelpText state="error" aria-live="polite">
+						{m.settings_avatar_google_error()}
+					</HelpText>
 				{/if}
 			</div>
 

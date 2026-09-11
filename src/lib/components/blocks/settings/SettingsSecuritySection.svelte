@@ -1,13 +1,12 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
 	import * as Card from '$lib/components/base/card/index.js';
-	import { Input } from '$lib/components/base/input/index.js';
+	import { HelpText } from '$lib/components/base/help-text/index.js';
+	import AuthPasswordInput from '$lib/components/blocks/auth/AuthPasswordInput.svelte';
 	import { Field, type FieldControlContext } from '$lib/components/derived/field/index.js';
 	import { Button } from '$lib/components/base/button/index.js';
 	import { authClient } from '$lib/auth_client.js';
 	import ShieldIcon from '@lucide/svelte/icons/shield';
-	import EyeIcon from '@lucide/svelte/icons/eye';
-	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 
 	// Which control an error attaches to, so a single validation/API error can drive the
 	// matching field's error state + aria wiring instead of one generic card-bottom message.
@@ -21,8 +20,6 @@
 	let currentPassword = $state('');
 	let newPassword = $state('');
 	let confirmPassword = $state('');
-	let showCurrentPassword = $state(false);
-	let showNewPassword = $state(false);
 	let saving = $state(false);
 	let passwordError = $state('');
 	let passwordErrorField = $state<PasswordErrorField | null>(null);
@@ -102,32 +99,13 @@
 				errorMessage={currentPasswordError}
 			>
 				{#snippet children({ hasError, errorId }: FieldControlContext)}
-					<div class="relative">
-						<Input
-							id="settings-current-password"
-							size="lg"
-							type={showCurrentPassword ? 'text' : 'password'}
-							autocomplete="current-password"
-							bind:value={currentPassword}
-							state={hasError ? 'error' : 'default'}
-							aria-invalid={hasError ? true : undefined}
-							aria-describedby={errorId}
-							class="pr-11!"
-						/>
-						<button
-							class="password-toggle"
-							type="button"
-							aria-label={showCurrentPassword ? m.hide_password() : m.show_password()}
-							onclick={() => (showCurrentPassword = !showCurrentPassword)}
-							tabindex={-1}
-						>
-							{#if showCurrentPassword}
-								<EyeOffIcon class="size-4" />
-							{:else}
-								<EyeIcon class="size-4" />
-							{/if}
-						</button>
-					</div>
+					<AuthPasswordInput
+						fieldId="settings-current-password"
+						autocomplete="current-password"
+						bind:value={currentPassword}
+						{hasError}
+						errorDescribedById={errorId}
+					/>
 				{/snippet}
 			</Field>
 
@@ -138,32 +116,13 @@
 				errorMessage={newPasswordError}
 			>
 				{#snippet children({ hasError, errorId }: FieldControlContext)}
-					<div class="relative">
-						<Input
-							id="settings-new-password"
-							size="lg"
-							type={showNewPassword ? 'text' : 'password'}
-							autocomplete="new-password"
-							bind:value={newPassword}
-							state={hasError ? 'error' : 'default'}
-							aria-invalid={hasError ? true : undefined}
-							aria-describedby={errorId}
-							class="pr-11!"
-						/>
-						<button
-							class="password-toggle"
-							type="button"
-							aria-label={showNewPassword ? m.hide_password() : m.show_password()}
-							onclick={() => (showNewPassword = !showNewPassword)}
-							tabindex={-1}
-						>
-							{#if showNewPassword}
-								<EyeOffIcon class="size-4" />
-							{:else}
-								<EyeIcon class="size-4" />
-							{/if}
-						</button>
-					</div>
+					<AuthPasswordInput
+						fieldId="settings-new-password"
+						autocomplete="new-password"
+						bind:value={newPassword}
+						{hasError}
+						errorDescribedById={errorId}
+					/>
 				{/snippet}
 			</Field>
 
@@ -174,23 +133,19 @@
 				errorMessage={confirmPasswordError}
 			>
 				{#snippet children({ hasError, errorId }: FieldControlContext)}
-					<Input
-						id="settings-confirm-password"
-						size="lg"
-						type="password"
+					<AuthPasswordInput
+						fieldId="settings-confirm-password"
 						autocomplete="new-password"
 						bind:value={confirmPassword}
-						state={hasError ? 'error' : 'default'}
-						aria-invalid={hasError ? true : undefined}
-						aria-describedby={errorId}
+						{hasError}
+						errorDescribedById={errorId}
 					/>
 				{/snippet}
 			</Field>
-
 			{#if passwordSuccess}
-				<p class="text-sm text-status-success">
+				<HelpText state="success" aria-live="polite">
 					{m.settings_password_changed()}
-				</p>
+				</HelpText>
 			{/if}
 		</div>
 	</Card.Content>
@@ -204,26 +159,3 @@
 		</Button>
 	</Card.Footer>
 </Card.Root>
-
-<style>
-	.password-toggle {
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		background: none;
-		border: none;
-		color: var(--muted-foreground);
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		border-radius: var(--radius-sm);
-		transition: color var(--duration-fast);
-		line-height: 1;
-	}
-
-	.password-toggle:hover {
-		color: var(--foreground);
-	}
-</style>
