@@ -7,6 +7,10 @@
 	import { cn } from '$lib/utils.js';
 	import ActiveFilterPills from './ActiveFilterPills.svelte';
 	import { normalizeActiveFilters, type ActiveFilterItem } from './active_filters.js';
+	import {
+		FILTER_MENU_GROUP_HEADING_CLASS,
+		FILTER_MENU_OPTION_CLASS,
+	} from './filter_menu_styles.js';
 	import type { FilterDefinition, FilterFacetGroup } from './filter_menu_types.js';
 
 	interface FilterMenuProps {
@@ -54,10 +58,6 @@
 	const activeFilters = $derived(
 		suppliedActiveFilters ?? normalizeActiveFilters(definitions, facets),
 	);
-	const groupHeadingClass =
-		'pointer-events-none px-2 pb-1 pt-2 text-[0.6875rem] font-extrabold uppercase tracking-[0.08em] text-muted-foreground';
-	const filterOptionClass =
-		'min-w-0 cursor-pointer whitespace-normal break-words transition-colors hover:bg-accent hover:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_[data-slot=dropdown-menu-checkbox-item-indicator]]:size-4 [&_[data-slot=dropdown-menu-checkbox-item-indicator]]:rounded-[0.2rem] [&_[data-slot=dropdown-menu-checkbox-item-indicator]]:border-2 [&_[data-slot=dropdown-menu-checkbox-item-indicator]]:border-current';
 
 	async function clearAllFilters() {
 		onclearall();
@@ -109,13 +109,16 @@
 			class="w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)]"
 		>
 			<DropdownMenu.Group>
-				<DropdownMenu.GroupHeading class={groupHeadingClass} data-filter-group-heading>
+				<DropdownMenu.GroupHeading
+					class={FILTER_MENU_GROUP_HEADING_CLASS}
+					data-filter-group-heading
+				>
 					{menuHeading}
 				</DropdownMenu.GroupHeading>
 				{#each definitions as definition (definition.id)}
 					<DropdownMenu.CheckboxItem
 						{disabled}
-						class={filterOptionClass}
+						class={FILTER_MENU_OPTION_CLASS}
 						data-filter-option
 						bind:checked={
 							() => definition.checked, (checked) => definition.onchange(checked)
@@ -130,13 +133,16 @@
 			{#each facets.filter((facet) => facet.options.length > 0) as facet (facet.id)}
 				<DropdownMenu.Separator />
 				<DropdownMenu.Group>
-					<DropdownMenu.GroupHeading class={groupHeadingClass} data-filter-group-heading>
+					<DropdownMenu.GroupHeading
+						class={FILTER_MENU_GROUP_HEADING_CLASS}
+						data-filter-group-heading
+					>
 						{facet.label}
 					</DropdownMenu.GroupHeading>
 					{#each facet.options as option (option.value)}
 						<DropdownMenu.CheckboxItem
 							{disabled}
-							class={filterOptionClass}
+							class={FILTER_MENU_OPTION_CLASS}
 							data-filter-option
 							bind:checked={
 								() => option.checked, (checked) => option.onchange(checked)

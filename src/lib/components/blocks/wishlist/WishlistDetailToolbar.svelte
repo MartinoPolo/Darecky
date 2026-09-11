@@ -28,6 +28,8 @@
 	import GiftViewSwitcher from '$lib/components/blocks/gift/GiftViewSwitcher.svelte';
 	import {
 		ActiveFilterPills,
+		FILTER_MENU_GROUP_HEADING_CLASS,
+		FILTER_MENU_OPTION_CLASS,
 		normalizeActiveFilters,
 		type FilterDefinition,
 		type FilterFacetGroup,
@@ -220,6 +222,10 @@
 	type OpenDisplayControl = 'sort' | 'grouping' | 'filter';
 
 	let desktopDisplayTrigger = $state<HTMLButtonElement | null>(null);
+	let desktopSortTrigger = $state<HTMLElement | null>(null);
+	let desktopGroupingTrigger = $state<HTMLElement | null>(null);
+	let desktopFilterTrigger = $state<HTMLElement | null>(null);
+	let desktopOpenDisplayControl = $state<OpenDisplayControl | null>(null);
 	let mobileReorderDoneButton = $state<HTMLButtonElement | null>(null);
 	let mobileDisplayTrigger = $state<HTMLButtonElement | null>(null);
 	let mobileMoreTrigger = $state<HTMLButtonElement | null>(null);
@@ -233,6 +239,31 @@
 	let mobileSheetFocusFrame: number | null = null;
 	let mobileSheetScrollFrame: number | null = null;
 	const MOBILE_SHEET_RESTORE_FRAMES = 5;
+
+	function handleDesktopSubmenuOpenChange(control: OpenDisplayControl, open: boolean) {
+		if (open) {
+			desktopOpenDisplayControl = control;
+		} else if (desktopOpenDisplayControl === control) {
+			desktopOpenDisplayControl = null;
+		}
+	}
+
+	async function handleDesktopSubmenuEscape(control: OpenDisplayControl, event: KeyboardEvent) {
+		if (event.key !== 'Escape') {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		desktopOpenDisplayControl = null;
+		await tick();
+		const trigger =
+			control === 'sort'
+				? desktopSortTrigger
+				: control === 'grouping'
+					? desktopGroupingTrigger
+					: desktopFilterTrigger;
+		trigger?.focus();
+	}
 
 	function resetMobileSheetState() {
 		if (mobileSheetFocusFrame !== null) {
@@ -420,7 +451,11 @@
 </script>
 
 {#snippet desktopDisplayMenu()}
-	<DropdownMenu.Root>
+	<DropdownMenu.Root
+		onOpenChange={(open) => {
+			if (!open) desktopOpenDisplayControl = null;
+		}}
+	>
 		<DropdownMenu.Trigger>
 			{#snippet child({ props })}
 				<Button
@@ -448,13 +483,19 @@
 			aria-label={m.gift_display_options()}
 			preventScroll={false}
 		>
-			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+			<DropdownMenu.Sub
+				open={desktopOpenDisplayControl === 'sort'}
+				onOpenChange={(open) => handleDesktopSubmenuOpenChange('sort', open)}
+			>
+				<DropdownMenu.SubTrigger bind:ref={desktopSortTrigger}>
 					<ArrowUpDownIcon />
 					<span class="min-w-0 flex-1">{m.gift_sort_by()}</span>
 					<span class="text-muted-foreground">{GIFT_SORT_LABELS[sortOption]()}</span>
 				</DropdownMenu.SubTrigger>
-				<DropdownMenu.SubContent class="min-w-52">
+				<DropdownMenu.SubContent
+					class="min-w-52"
+					onkeydowncapture={(event) => handleDesktopSubmenuEscape('sort', event)}
+				>
 					<DropdownMenu.RadioGroup
 						value={sortOption}
 						onValueChange={(value) => onsortchange(value as GiftSortOption)}
@@ -467,13 +508,19 @@
 					</DropdownMenu.RadioGroup>
 				</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
-			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+			<DropdownMenu.Sub
+				open={desktopOpenDisplayControl === 'grouping'}
+				onOpenChange={(open) => handleDesktopSubmenuOpenChange('grouping', open)}
+			>
+				<DropdownMenu.SubTrigger bind:ref={desktopGroupingTrigger}>
 					<LayersIcon />
 					<span class="min-w-0 flex-1">{m.gift_grouping_label()}</span>
 					<span class="text-muted-foreground">{GROUPING_LABELS[grouping]()}</span>
 				</DropdownMenu.SubTrigger>
-				<DropdownMenu.SubContent class="min-w-52">
+				<DropdownMenu.SubContent
+					class="min-w-52"
+					onkeydowncapture={(event) => handleDesktopSubmenuEscape('grouping', event)}
+				>
 					<DropdownMenu.RadioGroup
 						value={grouping}
 						onValueChange={(value) => ongroupingchange(value as GiftGroupingOption)}
@@ -489,17 +536,25 @@
 					</DropdownMenu.RadioGroup>
 				</DropdownMenu.SubContent>
 			</DropdownMenu.Sub>
-			<DropdownMenu.Sub>
-				<DropdownMenu.SubTrigger>
+			<DropdownMenu.Sub
+				open={desktopOpenDisplayControl === 'filter'}
+				onOpenChange={(open) => handleDesktopSubmenuOpenChange('filter', open)}
+			>
+				<DropdownMenu.SubTrigger bind:ref={desktopFilterTrigger}>
 					<ListFilterPlusIcon />
 					<span class="min-w-0 flex-1">{m.gift_filter()}</span>
 					{#if activeFilters.length > 0}<span class="text-muted-foreground"
 							>{m.filter_active_count({ count: activeFilters.length })}</span
 						>{/if}
 				</DropdownMenu.SubTrigger>
-				<DropdownMenu.SubContent class="w-64">
+				<DropdownMenu.SubContent
+					class="w-64"
+					onkeydowncapture={(event) => handleDesktopSubmenuEscape('filter', event)}
+				>
 					{#each filterDefinitions as definition (definition.id)}
 						<DropdownMenu.CheckboxItem
+							class={FILTER_MENU_OPTION_CLASS}
+							data-filter-option
 							bind:checked={
 								() => definition.checked, (checked) => definition.onchange(checked)
 							}
@@ -509,9 +564,16 @@
 					{#each filterFacets.filter((facet) => facet.options.length > 0) as facet (facet.id)}
 						<DropdownMenu.Separator />
 						<DropdownMenu.Group>
-							<DropdownMenu.GroupHeading>{facet.label}</DropdownMenu.GroupHeading>
+							<DropdownMenu.GroupHeading
+								class={FILTER_MENU_GROUP_HEADING_CLASS}
+								data-filter-group-heading
+							>
+								{facet.label}
+							</DropdownMenu.GroupHeading>
 							{#each facet.options as option (option.value)}
 								<DropdownMenu.CheckboxItem
+									class={FILTER_MENU_OPTION_CLASS}
+									data-filter-option
 									bind:checked={
 										() => option.checked, (checked) => option.onchange(checked)
 									}

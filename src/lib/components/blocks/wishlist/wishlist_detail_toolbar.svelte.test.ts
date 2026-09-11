@@ -695,6 +695,39 @@ describe('WishlistDetailToolbar consolidated desktop display (#359)', () => {
 		await screen.unmount();
 	});
 
+	it('reuses shared filter option and group heading semantics in the nested desktop menu', async () => {
+		const screen = await renderToolbar(
+			{
+				categoryFilterOptions: [{ value: 'books', label: 'Knihy' }],
+				priorityFilterOptions: [{ value: 'high', label: 'Vysoká' }],
+			},
+			1280,
+		);
+		await frames(1);
+		await screen.getByTestId('desktop-display-trigger').click();
+		const root = page.getByRole('menu', { name: m.gift_display_options() });
+		await root.getByRole('menuitem', { name: new RegExp(m.gift_filter()) }).click();
+		const submenu = document.querySelector<HTMLElement>(
+			'[data-slot="dropdown-menu-sub-content"]',
+		)!;
+		const options = submenu.querySelectorAll<HTMLElement>('[data-filter-option]');
+		const headings = submenu.querySelectorAll<HTMLElement>('[data-filter-group-heading]');
+
+		expect(options).toHaveLength(5);
+		for (const option of options) {
+			expect(option).toHaveAttribute('role', 'menuitemcheckbox');
+			expect(option.className).toContain('cursor-pointer');
+			expect(option.className).toContain('whitespace-normal');
+			expect(option.className).toContain('data-[highlighted]:bg-accent');
+		}
+		expect(headings).toHaveLength(2);
+		for (const heading of headings) {
+			expect(heading.className).toContain('pointer-events-none');
+			expect(heading.className).toContain('uppercase');
+		}
+		await screen.unmount();
+	});
+
 	it('enters and exits desktop reorder with a dedicated visible Done action', async () => {
 		const onreordermodechange = vi.fn();
 		const onviewmodechange = vi.fn();
