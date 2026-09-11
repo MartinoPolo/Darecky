@@ -144,6 +144,12 @@
 	{/snippet}
 </Story>
 
+<Story name="Explicit loading covers the current image">
+	{#snippet template()}
+		<ImageFrame class="h-40 w-60" src={NORMAL} alt="Nahrávaný obrázek" loading />
+	{/snippet}
+</Story>
+
 <Story name="Error falls back gracefully">
 	{#snippet template()}
 		<ImageFrame class="h-40 w-60" src={BROKEN} alt="Rozbitý odkaz" fallbackEmoji="🎂" />

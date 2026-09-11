@@ -365,16 +365,29 @@ async function assertStableList(page, label) {
 			box(row),
 			box(row.getByTestId('gift-list-image')),
 		]);
-		check(
-			imageBox.width < rowBox.width * 0.5,
-			`${label}: row ${i + 1} cardified (image ${imageBox.width}/${rowBox.width})`,
-		);
+		const geometry = await row.evaluate((element) => {
+			const style = getComputedStyle(element);
+			return {
+				display: style.display,
+				borderTop: Number.parseFloat(style.borderTopWidth),
+				borderBottom: Number.parseFloat(style.borderBottomWidth),
+			};
+		});
 		check(
 			Math.abs(imageBox.width - imageBox.height) <= 1,
-			`${label}: row ${i + 1} thumbnail is not square`,
+			`${label}: row ${i + 1} image is not square`,
 		);
-		const direction = await row.evaluate((element) => getComputedStyle(element).flexDirection);
-		check(direction !== 'column', `${label}: row ${i + 1} uses column/card layout`);
+		check(
+			Math.abs(imageBox.y - rowBox.y - geometry.borderTop) <= 1,
+			`${label}: row ${i + 1} image misses the inner top edge`,
+		);
+		check(
+			Math.abs(
+				imageBox.y + imageBox.height - (rowBox.y + rowBox.height - geometry.borderBottom),
+			) <= 1,
+			`${label}: row ${i + 1} image misses the inner bottom edge`,
+		);
+		check(geometry.display === 'grid', `${label}: row ${i + 1} is not horizontal grid layout`);
 	}
 }
 

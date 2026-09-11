@@ -191,12 +191,12 @@ test.describe('issue #364 dropdown viewport placement', () => {
 
 		await closeDropdownHierarchy(page);
 		await pinTrigger(trigger, 640, 720);
-		let filterSubTrigger: Locator;
-		({ subTrigger: filterSubTrigger, submenu: menu } = await openDisplaySubmenu(
-			page,
-			/Filtrovat/,
-			{ top: 640, left: 720 },
-		));
+		const edgeAnchoredFilter = await openDisplaySubmenu(page, /Filtrovat/, {
+			top: 640,
+			left: 720,
+		});
+		const filterSubTrigger = edgeAnchoredFilter.subTrigger;
+		menu = edgeAnchoredFilter.submenu;
 		await expectDropdownViewportCap(menu, 700);
 		await expectInsideViewport(menu, 1000, 700);
 

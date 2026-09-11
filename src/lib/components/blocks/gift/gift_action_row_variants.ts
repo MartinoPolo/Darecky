@@ -2,7 +2,8 @@ import { tv } from 'tailwind-variants';
 
 export const giftActionRowVariants = tv({
 	slots: {
-		row: 'gift-action-row grid min-w-0 grid-cols-[minmax(0,1fr)] items-stretch gap-2 sm:gap-1.5',
+		row: 'gift-action-row min-w-0 gap-2 sm:gap-1.5',
+		primaryGroup: '',
 		primary: 'gift-action-slot flex min-w-0 flex-col gap-2 sm:gap-1.5',
 		secondary:
 			'gift-action-slot col-span-full row-start-1 flex min-w-0 flex-col gap-2 sm:gap-1.5',
@@ -11,13 +12,16 @@ export const giftActionRowVariants = tv({
 	variants: {
 		controlSizing: {
 			fill: {
+				row: 'grid grid-cols-[minmax(0,1fr)] items-stretch',
+				primaryGroup: 'contents',
 				primary: "[&>[data-slot='button']]:w-full [&>[data-slot='button']]:grow",
 				secondary: "[&>[data-slot='button']]:w-full [&>[data-slot='button']]:grow",
 			},
 			intrinsic: {
-				row: 'ml-auto w-fit max-w-full',
+				row: 'ml-auto flex w-fit max-w-full flex-wrap items-start justify-end',
+				primaryGroup: 'flex max-w-full flex-none items-start gap-2 sm:gap-1.5',
 				primary:
-					"max-w-full flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
+					"max-w-full shrink items-end [&>[data-slot='button']]:max-w-full [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
 				secondary:
 					"max-w-full flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
 			},

@@ -87,11 +87,81 @@
 	const priceDisplay = $derived(formatPrice(gift.price, gift.currency, gift.priceMax));
 	const priorityInfo = $derived(getPriorityDisplay(gift.priorityLabel));
 	const reserverLine = $derived(formatReserverLine(visitorGift?.reserverNames ?? []));
+
+	function synchronizeListImageSize(item: HTMLElement) {
+		const container = item.parentElement;
+		const content = item.querySelector<HTMLElement>('[data-testid="gift-list-content"]');
+		if (container === null || content === null) {
+			return;
+		}
+
+		let animationFrame = 0;
+		let destroyed = false;
+		const schedule = () => {
+			if (destroyed) {
+				return;
+			}
+			cancelAnimationFrame(animationFrame);
+			animationFrame = requestAnimationFrame(measure);
+		};
+		const reset = () => {
+			item.style.removeProperty('--gift-list-image-size');
+			item.removeAttribute('data-list-image-stacked');
+		};
+		const measure = () => {
+			animationFrame = 0;
+			reset();
+
+			const itemStyle = getComputedStyle(item);
+			const rootFontSize = Number.parseFloat(
+				getComputedStyle(document.documentElement).fontSize,
+			);
+			const contentFloorInRem = Number.parseFloat(
+				itemStyle.getPropertyValue('--gift-list-content-floor'),
+			);
+			const maximumImageSize = item.clientWidth - rootFontSize * contentFloorInRem;
+			let imageSize = item.clientHeight;
+
+			while (imageSize <= maximumImageSize) {
+				item.style.setProperty('--gift-list-image-size', `${Math.ceil(imageSize)}px`);
+				const requiredSize = item.clientHeight;
+				if (requiredSize <= imageSize + 0.5) {
+					return;
+				}
+				imageSize = requiredSize;
+			}
+
+			item.setAttribute('data-list-image-stacked', '');
+			item.style.removeProperty('--gift-list-image-size');
+		};
+
+		const resizeObserver = new ResizeObserver(schedule);
+		resizeObserver.observe(container);
+		const mutationObserver = new MutationObserver(schedule);
+		mutationObserver.observe(content, {
+			attributes: true,
+			childList: true,
+			characterData: true,
+			subtree: true,
+		});
+		document.fonts.ready.then(schedule);
+		schedule();
+
+		return {
+			destroy() {
+				destroyed = true;
+				cancelAnimationFrame(animationFrame);
+				resizeObserver.disconnect();
+				mutationObserver.disconnect();
+			},
+		};
+	}
 </script>
 
 <div class="gift-list-query-container w-full">
 	<div
 		data-testid="gift-list-item"
+		use:synchronizeListImageSize
 		class={cn(
 			'gift-list-item group relative grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors hover:bg-muted/50',
 			hasReceivedPrimary &&
@@ -136,7 +206,7 @@
 			/>
 		</div>
 
-		<!-- Content always stays beside the compact list thumbnail. The dim lives here so the
+		<!-- Content stays beside the full-height square image. The dim lives here so the
 	     centered state overlay stays crisp. -->
 		<div
 			data-testid="gift-list-content"
@@ -317,7 +387,32 @@
 	@container gift-list (width < 40rem) {
 		.gift-list-item,
 		.gift-list-item-manager-dense {
-			--gift-list-image-size: clamp(6.5rem, 32cqi, 8rem);
+			--gift-list-content-floor: 8rem;
+			--gift-list-image-size: clamp(
+				6.625rem,
+				calc(100cqi - var(--gift-list-content-floor) - 0.25rem),
+				13rem
+			);
 		}
+	}
+
+	:global(.gift-list-item[data-list-image-stacked]) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	:global(.gift-list-item[data-list-image-stacked] .gift-list-image) {
+		width: 100%;
+		height: auto;
+		border-right-width: 0;
+		border-bottom: 2px solid var(--ink);
+	}
+
+	:global(.gift-list-item[data-list-image-stacked] .gift-list-image-frame),
+	:global(
+		.gift-list-item[data-list-image-stacked]
+			.gift-list-image
+			> [data-testid='gift-reserved-veil']
+	) {
+		border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
 	}
 </style>

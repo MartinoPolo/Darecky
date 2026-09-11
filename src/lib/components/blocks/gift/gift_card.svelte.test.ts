@@ -1057,7 +1057,7 @@ describe('GiftCard footer alignment', () => {
 });
 
 describe('GiftCard mobile action row grouping', () => {
-	it('keeps Reserve alone above the grouped Received and More actions on mobile', async () => {
+	it('keeps Reserve, Received, and More in one right-aligned row when a mobile card is wide enough', async () => {
 		await page.viewport(390, 900);
 		const host = document.createElement('div');
 		host.style.width = '296px';
@@ -1084,13 +1084,60 @@ describe('GiftCard mobile action row grouping', () => {
 		const receivedRect = received.getBoundingClientRect();
 		const moreRect = more.getBoundingClientRect();
 
+		expect(reserveRect.top).toBeCloseTo(receivedRect.top, 0);
+		expect(receivedRect.top).toBeCloseTo(moreRect.top, 0);
+		expect(reserveRect.right).toBeLessThanOrEqual(receivedRect.left);
+		expect(receivedRect.right).toBeLessThanOrEqual(moreRect.left);
+		expect(moreRect.right).toBeCloseTo(rowRect.right, 0);
+	});
+
+	it('wraps Reserve above the inseparable Received and More group when intrinsic actions no longer fit', async () => {
+		await page.viewport(390, 900);
+		const host = document.createElement('div');
+		host.style.width = '296px';
+		document.body.appendChild(host);
+		fixedHosts.add(host);
+		await render(
+			GiftCardTestHost,
+			{
+				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
+				role: WISHLIST_ROLES.moderator,
+				onreceived: () => {},
+				onreserve: () => {},
+				onmore: () => {},
+			},
+			{ baseElement: host },
+		);
+
+		const footer = host.querySelector('[data-testid="gift-card-footer"]') as HTMLElement;
+		const row = host.querySelector('[data-testid="gift-action-row"]') as HTMLElement;
+		const reserve = row.querySelector('[data-testid="reserve-button"]') as HTMLElement;
+		const received = row.querySelector('[data-testid="gift-received-toggle"]') as HTMLElement;
+		const more = row.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+		const footerStyle = getComputedStyle(footer);
+		const actionGap = Number.parseFloat(getComputedStyle(row).columnGap);
+		const intrinsicRowWidth =
+			reserve.getBoundingClientRect().width +
+			received.getBoundingClientRect().width +
+			more.getBoundingClientRect().width +
+			actionGap * 2;
+		const narrowCardWidth =
+			intrinsicRowWidth +
+			Number.parseFloat(footerStyle.paddingLeft) +
+			Number.parseFloat(footerStyle.paddingRight) -
+			1;
+		host.style.width = `${narrowCardWidth}px`;
+
+		const rowRect = row.getBoundingClientRect();
+		const reserveRect = reserve.getBoundingClientRect();
+		const receivedRect = received.getBoundingClientRect();
+		const moreRect = more.getBoundingClientRect();
+
 		expect(reserveRect.bottom).toBeLessThanOrEqual(receivedRect.top);
 		expect(receivedRect.top).toBeCloseTo(moreRect.top, 0);
 		expect(receivedRect.bottom).toBeCloseTo(moreRect.bottom, 0);
 		expect(reserveRect.right).toBeCloseTo(rowRect.right, 0);
 		expect(moreRect.right).toBeCloseTo(rowRect.right, 0);
-		expect(reserveRect.width).toBeLessThan(rowRect.width);
-		expect(receivedRect.width).toBeLessThan(rowRect.width);
 	});
 
 	it('keeps Reserve, Received, and More in one right-aligned desktop row', async () => {
@@ -1241,9 +1288,6 @@ describe('GiftCard approved action geometry (issue #350)', () => {
 				expect(
 					host.querySelector('[data-testid="gift-card-image-frame"]')?.contains(reserve),
 				).toBe(false);
-				expect(reserve.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-					primary.getBoundingClientRect().top,
-				);
 				expect(primary.getBoundingClientRect().top).toBeCloseTo(
 					more.getBoundingClientRect().top,
 					0,

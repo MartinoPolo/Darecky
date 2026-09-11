@@ -152,13 +152,11 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		}
 	});
 
-	it('keeps the integrated view tray and both items 40px on mobile and 32px from sm', async () => {
+	it('keeps the integrated view tray and both items at the toolbar control height', async () => {
 		const screen = await renderToolbar({}, 320);
 
-		for (const [viewportWidth, expectedSize] of [
-			[320, 40],
-			[800, 32],
-		] as const) {
+		for (const viewportWidth of [320, 800] as const) {
+			const expectedSize = 32;
 			await page.viewport(viewportWidth, 760);
 			await frames(1);
 			const tray = screen.getByTestId('gift-view-switcher').element() as HTMLElement;

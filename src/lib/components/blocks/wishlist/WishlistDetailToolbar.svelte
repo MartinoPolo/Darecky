@@ -453,7 +453,9 @@
 {#snippet desktopDisplayMenu()}
 	<DropdownMenu.Root
 		onOpenChange={(open) => {
-			if (!open) desktopOpenDisplayControl = null;
+			if (open === false) {
+				desktopOpenDisplayControl = null;
+			}
 		}}
 	>
 		<DropdownMenu.Trigger>

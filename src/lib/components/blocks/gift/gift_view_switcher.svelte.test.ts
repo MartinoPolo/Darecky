@@ -120,7 +120,7 @@ describe('GiftViewSwitcher toggle selection (fixes: re-click deselects both item
 		await screen.unmount();
 	});
 
-	it('keeps the visible tray flush with the selected 40px mobile and 32px desktop control', async () => {
+	it('keeps the visible tray flush with the selected 32px toolbar control at every viewport', async () => {
 		await page.viewport(390, 720);
 		const screen = await render(GiftViewSwitcher, {
 			value: GIFT_VIEW_MODES.card,
@@ -132,7 +132,7 @@ describe('GiftViewSwitcher toggle selection (fixes: re-click deselects both item
 			.element() as HTMLElement;
 
 		for (const [viewportWidth, expectedSize] of [
-			[390, 40],
+			[390, 32],
 			[800, 32],
 		] as const) {
 			await page.viewport(viewportWidth, 720);

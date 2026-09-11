@@ -41,32 +41,34 @@
 			{@render secondary()}
 		</div>
 	{/if}
-	<div class={styles.primary()}>
-		{@render children?.()}
-	</div>
-	{#if onmore}
-		<Button
-			intent="outline"
-			size="icon"
-			class={styles.more()}
-			aria-label={m.gift_more_actions()}
-			data-gift-action="more"
-			data-testid="gift-more-actions"
-			onclick={(event) => {
-				event.stopPropagation();
-				onmore(event.currentTarget as HTMLButtonElement);
-			}}
-			onkeydown={(event) => {
-				if (event.key === 'ArrowDown') {
-					event.preventDefault();
+	<div class={styles.primaryGroup()}>
+		<div class={styles.primary()}>
+			{@render children?.()}
+		</div>
+		{#if onmore}
+			<Button
+				intent="outline"
+				size="icon"
+				class={styles.more()}
+				aria-label={m.gift_more_actions()}
+				data-gift-action="more"
+				data-testid="gift-more-actions"
+				onclick={(event) => {
 					event.stopPropagation();
 					onmore(event.currentTarget as HTMLButtonElement);
-				}
-			}}
-			aria-haspopup={moreSurface}
-			aria-expanded={moreOpen}><EllipsisIcon data-icon /></Button
-		>
-	{/if}
+				}}
+				onkeydown={(event) => {
+					if (event.key === 'ArrowDown') {
+						event.preventDefault();
+						event.stopPropagation();
+						onmore(event.currentTarget as HTMLButtonElement);
+					}
+				}}
+				aria-haspopup={moreSurface}
+				aria-expanded={moreOpen}><EllipsisIcon data-icon /></Button
+			>
+		{/if}
+	</div>
 </div>
 
 <style>

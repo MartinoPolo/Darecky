@@ -109,29 +109,30 @@ async function expectContainedReceivedActions(page: Page) {
 				if (!(surface instanceof HTMLElement)) {
 					throw new Error('Received action has no direct elevation surface');
 				}
-				const walker = document.createTreeWalker(surface, NodeFilter.SHOW_TEXT);
-				let node = walker.nextNode();
-				while (node !== null && (node.textContent?.trim().length ?? 0) === 0) {
-					node = walker.nextNode();
-				}
-				if (node === null) {
-					throw new Error('Received action has no text label');
-				}
 				const range = document.createRange();
-				range.selectNodeContents(node);
-				const rect = range.getBoundingClientRect();
-				return { x: rect.x, width: rect.width };
+				range.selectNodeContents(surface);
+				const contentRect = range.getBoundingClientRect();
+				const surfaceRect = surface.getBoundingClientRect();
+				return {
+					contentX: contentRect.x,
+					contentWidth: contentRect.width,
+					surfaceX: surfaceRect.x,
+					surfaceWidth: surfaceRect.width,
+				};
 			}),
 		]);
-		expect(actionBox.width).toBeGreaterThanOrEqual(40);
-		expect(actionBox.height).toBeGreaterThanOrEqual(40);
+		expect(actionBox.width).toBeGreaterThanOrEqual(32);
+		expect(actionBox.height).toBeGreaterThanOrEqual(32);
 		expect(actionBox.x).toBeGreaterThanOrEqual(itemBox.x - 0.5);
 		expect(actionBox.x + actionBox.width).toBeLessThanOrEqual(itemBox.x + itemBox.width + 0.5);
 		expect(
 			Math.abs(
-				labelBox.x -
-					actionBox.x -
-					(actionBox.x + actionBox.width - labelBox.x - labelBox.width),
+				labelBox.contentX -
+					labelBox.surfaceX -
+					(labelBox.surfaceX +
+						labelBox.surfaceWidth -
+						labelBox.contentX -
+						labelBox.contentWidth),
 			),
 		).toBeLessThanOrEqual(4);
 		expect(await receivedAction.evaluate((action) => action.scrollWidth)).toBeLessThanOrEqual(
@@ -143,8 +144,8 @@ async function expectContainedReceivedActions(page: Page) {
 			continue;
 		}
 		const moreBox = await box(moreAction);
-		expect(moreBox.width).toBeGreaterThanOrEqual(40);
-		expect(moreBox.height).toBeGreaterThanOrEqual(40);
+		expect(moreBox.width).toBeGreaterThanOrEqual(32);
+		expect(moreBox.height).toBeGreaterThanOrEqual(32);
 		const horizontallySeparated =
 			actionBox.x + actionBox.width <= moreBox.x + 0.5 ||
 			moreBox.x + moreBox.width <= actionBox.x + 0.5;
@@ -308,7 +309,7 @@ test.describe('mobile wishlist acceptance', () => {
 		await page.context().close();
 	});
 
-	test('manager list presentation remains horizontal with compact square thumbnails and contained mobile actions', async ({
+	test('manager list presentation remains horizontal with full-height square images and contained mobile actions', async ({
 		browser,
 		request,
 		baseURL,
@@ -347,9 +348,12 @@ test.describe('mobile wishlist acceptance', () => {
 					Number.parseFloat(getComputedStyle(element).borderTopWidth),
 				);
 				expect(imageBox.width).toBeCloseTo(imageBox.height, 0);
-				expect(imageBox.width).toBeLessThan(itemBox.width / 2);
-				const contentBox = await box(item.getByTestId('gift-list-content'));
 				expect(imageBox.y).toBeCloseTo(itemBox.y + border, 0);
+				expect(imageBox.y + imageBox.height).toBeCloseTo(
+					itemBox.y + itemBox.height - border,
+					0,
+				);
+				const contentBox = await box(item.getByTestId('gift-list-content'));
 				expect(contentBox.y).toBeCloseTo(imageBox.y, 0);
 				expect(contentBox.x).toBeCloseTo(imageBox.x + imageBox.width, 0);
 				expect(contentBox.x + contentBox.width).toBeLessThanOrEqual(

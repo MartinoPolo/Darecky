@@ -984,8 +984,8 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 			textRange.selectNodeContents(firstNonBlankTextNode(surface));
 			const textRect = textRange.getBoundingClientRect();
 			const surfaceRect = surface.getBoundingClientRect();
-			expect(textRect.left).toBeGreaterThanOrEqual(surfaceRect.left + 2.5);
-			expect(textRect.right).toBeLessThanOrEqual(surfaceRect.right - 2.5);
+			expect(textRect.left).toBeGreaterThanOrEqual(surfaceRect.left + 2);
+			expect(textRect.right).toBeLessThanOrEqual(surfaceRect.right - 2);
 			expectRaisedActionShadowInside(primary, item);
 			expectRaisedActionShadowInside(more, item);
 			if (viewport < 640) {
@@ -1131,10 +1131,18 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
 			const primary = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
 			const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+			);
+			const itemRect = item.getBoundingClientRect();
 			const imageRect = image.getBoundingClientRect();
+			const contentRect = content.getBoundingClientRect();
 			expect(getComputedStyle(item).display).toBe('grid');
+			expect(item.hasAttribute('data-list-image-stacked')).toBe(true);
 			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
-			expect(content.getBoundingClientRect().left).toBeCloseTo(imageRect.right, 0);
+			expect(imageRect.width).toBeCloseTo(itemRect.width - 4, 0);
+			expect(contentRect.left).toBeCloseTo(imageRect.left, 0);
+			expect(contentRect.top).toBeCloseTo(imageRect.bottom, 0);
 			expect(primary.getBoundingClientRect().height).toBeCloseTo(
 				more.getBoundingClientRect().height,
 				0,
@@ -1181,39 +1189,127 @@ describe('GiftListItem approved action geometry (issue #350)', () => {
 	});
 });
 
-describe('GiftListItem mobile list thumbnail geometry', () => {
-	it('keeps the baseline square thumbnail with content and actions to its right at 390px', async () => {
-		await page.viewport(390, 900);
-		const host = document.createElement('div');
-		host.style.width = '366px';
-		document.body.appendChild(host);
-		await render(
-			GiftListItemTestHost,
-			{
-				gift: makeVisitorGift({ myReservationId: null, reservedCount: 0 }),
-				role: WISHLIST_ROLES.visitor,
-				onreserve: () => {},
-				onmore: () => {},
-			},
-			{ baseElement: host },
-		);
+describe('GiftListItem image continuity', () => {
+	it.each([
+		{
+			label: 'visitor actions without an image',
+			width: 296,
+			gift: makeVisitorGift({
+				imageUrl: null,
+				imageMeta: null,
+				myReservationId: null,
+				reservedCount: 0,
+			}),
+			role: WISHLIST_ROLES.visitor,
+			contentMinimumHeight: undefined,
+		},
+		{
+			label: 'visitor own reservation',
+			width: 366,
+			gift: makeVisitorGift({
+				imageUrl: IMAGE_URL,
+				imageMeta: imageMeta('#ffffff'),
+				myReservationId: 'mine',
+				reservedCount: 1,
+				isFullyReserved: true,
+			}),
+			role: WISHLIST_ROLES.visitor,
+			contentMinimumHeight: undefined,
+		},
+		{
+			label: 'dense manager actions and reserver state',
+			width: 366,
+			gift: makeVisitorGift({
+				imageUrl: IMAGE_URL,
+				imageMeta: imageMeta('#ffffff'),
+				description: 'Dlouhý popis dárku se všemi důležitými podrobnostmi.',
+				links: [{ url: 'https://example.com/product' }],
+				price: 2499,
+				currency: 'CZK',
+				quantity: 3,
+				reservedCount: 1,
+				myReservationId: 'mine',
+				reserverNames: ['Alexandra Nováková'],
+			}),
+			role: WISHLIST_ROLES.moderator,
+			contentMinimumHeight: undefined,
+		},
+		{
+			label: 'mobile content taller than the stylesheet baseline cap',
+			width: 366,
+			gift: makeVisitorGift({
+				imageUrl: IMAGE_URL,
+				imageMeta: imageMeta('#ffffff'),
+				myReservationId: null,
+				reservedCount: 0,
+			}),
+			role: WISHLIST_ROLES.visitor,
+			contentMinimumHeight: 224,
+		},
+		{
+			label: 'desktop content taller than the stylesheet baseline cap',
+			width: 720,
+			gift: makeVisitorGift({
+				imageUrl: IMAGE_URL,
+				imageMeta: imageMeta('#ffffff'),
+				myReservationId: null,
+				reservedCount: 0,
+			}),
+			role: WISHLIST_ROLES.visitor,
+			contentMinimumHeight: 240,
+		},
+	])(
+		'keeps a square frame against every inner row edge for $label',
+		async ({ width, gift, role, contentMinimumHeight }) => {
+			await page.viewport(width + 24, 900);
+			const host = document.createElement('div');
+			host.style.width = `${width}px`;
+			document.body.appendChild(host);
+			await render(
+				GiftListItemTestHost,
+				{
+					gift,
+					role,
+					onreceived: () => {},
+					onreserve: () => {},
+					onunreserve: () => {},
+					onmore: () => {},
+				},
+				{ baseElement: host },
+			);
 
-		const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
-		const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
-		const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
-		const reserve = host.querySelector('[data-testid="reserve-button"]') as HTMLElement;
-		const more = host.querySelector('[data-testid="gift-more-actions"]') as HTMLElement;
-		const imageRect = image.getBoundingClientRect();
+			const item = host.querySelector('[data-testid="gift-list-item"]') as HTMLElement;
+			const image = host.querySelector('[data-testid="gift-list-image"]') as HTMLElement;
+			const imageFrame = image.querySelector('[data-testid="image-frame"]') as HTMLElement;
+			const content = host.querySelector('[data-testid="gift-list-content"]') as HTMLElement;
+			if (contentMinimumHeight !== undefined) {
+				content.style.minHeight = `${contentMinimumHeight}px`;
+				await new Promise<void>((resolve) =>
+					requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+				);
+			}
+			const itemRect = item.getBoundingClientRect();
+			const imageRect = image.getBoundingClientRect();
+			const frameRect = imageFrame.getBoundingClientRect();
+			const itemStyle = getComputedStyle(item);
+			const innerTop = itemRect.top + Number.parseFloat(itemStyle.borderTopWidth);
+			const innerBottom = itemRect.bottom - Number.parseFloat(itemStyle.borderBottomWidth);
 
-		expect(getComputedStyle(item).display).toBe('grid');
-		expect(imageRect.width).toBeGreaterThanOrEqual(104);
-		expect(imageRect.width).toBeLessThanOrEqual(128);
-		expect(imageRect.height).toBeCloseTo(imageRect.width, 0);
-		expect(content.getBoundingClientRect().left).toBeCloseTo(imageRect.right, 0);
-		expect(reserve.getBoundingClientRect().left).toBeGreaterThanOrEqual(imageRect.right);
-		expect(more.getBoundingClientRect().left).toBeGreaterThanOrEqual(imageRect.right);
-		host.remove();
-	});
+			expect(getComputedStyle(item).display).toBe('grid');
+			expect(imageRect.width).toBeCloseTo(imageRect.height, 0);
+			expect(imageRect.top).toBeCloseTo(innerTop, 0);
+			expect(imageRect.bottom).toBeCloseTo(innerBottom, 0);
+			expect(frameRect.top).toBeCloseTo(innerTop, 0);
+			expect(frameRect.bottom).toBeCloseTo(innerBottom, 0);
+			expect(content.getBoundingClientRect().left).toBeCloseTo(imageRect.right, 0);
+			for (const action of host.querySelectorAll<HTMLElement>(
+				'[data-testid="gift-list-actions"] button',
+			)) {
+				expect(action.getBoundingClientRect().left).toBeGreaterThanOrEqual(imageRect.right);
+			}
+			host.remove();
+		},
+	);
 });
 
 describe('GiftListItem desktop bordered card geometry (issue #360)', () => {

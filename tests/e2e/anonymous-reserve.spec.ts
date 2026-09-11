@@ -138,15 +138,14 @@ test.describe('Anonymous visitor reservation', () => {
 		expect(likeBounds).not.toBeNull();
 		expect(moreActionsBounds).not.toBeNull();
 		await expect(mobileListItem.getByRole('link', { name: /example\.com/ })).toBeVisible();
-		// The baseline mobile clamp is 6.5rem–8rem; allow the wider outer tolerance
-		// for browser rounding and layout-shell differences without permitting enlargement.
-		expect(imageBounds!.width).toBeGreaterThanOrEqual(104);
-		expect(imageBounds!.width).toBeLessThanOrEqual(152);
-		// 1:1 list/reservation crop (issue #189, reverting the interim 4:3 list thumb
-		// from #183): the thumb is square again, so height ≈ width via the same
-		// registry aspect the real surface renders at.
+		// The 1:1 thumb frame grows with the row and covers its complete inner height.
 		expect(imageBounds!.height).toBeCloseTo(
 			imageBounds!.width / GIFT_CROP_TARGET_SPECS.thumb.aspect,
+			0,
+		);
+		expect(imageBounds!.y).toBeCloseTo(itemBounds!.y + 2, 0);
+		expect(imageBounds!.y + imageBounds!.height).toBeCloseTo(
+			itemBounds!.y + itemBounds!.height - 2,
 			0,
 		);
 		expect(reserveBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x + imageBounds!.width);
