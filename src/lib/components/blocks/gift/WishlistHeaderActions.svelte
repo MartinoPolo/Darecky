@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import MoreHorizontalIcon from '@lucide/svelte/icons/ellipsis';
 	import ShareIcon from '@lucide/svelte/icons/share-2';
 	import UsersIcon from '@lucide/svelte/icons/users';
@@ -45,6 +46,11 @@
 		onarchive,
 	}: Props = $props();
 	let open = $state(false);
+	let interactionsReady = $state(false);
+
+	onMount(() => {
+		interactionsReady = true;
+	});
 
 	function run(callback?: () => void) {
 		callback?.();
@@ -61,6 +67,7 @@
 				class="shrink-0 before:absolute before:-inset-1.5 before:content-['']"
 				aria-label={m.wishlist_settings_title()}
 				title={m.wishlist_settings_title()}
+				disabled={!interactionsReady}
 				onclick={onsettings}
 			>
 				<SettingsIcon />

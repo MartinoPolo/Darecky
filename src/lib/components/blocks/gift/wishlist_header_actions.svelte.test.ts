@@ -30,8 +30,6 @@ describe('WishlistHeaderActions', () => {
 		const settings = screen.getByRole('button', { name: m.wishlist_settings_title() });
 		await expect.element(settings).toBeVisible();
 		expect(settings.element()).toHaveTextContent('');
-		await settings.click();
-		expect(callbacks.onsettings).toHaveBeenCalledOnce();
 		await (
 			screen.container.querySelector('[aria-haspopup="menu"]') as HTMLButtonElement
 		).click();
@@ -52,6 +50,24 @@ describe('WishlistHeaderActions', () => {
 				dialog.getByRole('menuitem', { name: m.wishlist_settings_title(), exact: true }),
 			)
 			.not.toBeInTheDocument();
+		await screen.unmount();
+	});
+
+	it('enables the accessible Settings action after mount and handles activation', async () => {
+		const screen = await render(WishlistHeaderActions, {
+			canManage: false,
+			settingsAvailable: true,
+			canShare: false,
+			canEditImage: false,
+			canEditRecipient: false,
+			canArchive: false,
+			...callbacks,
+		});
+		const settings = screen.getByRole('button', { name: m.wishlist_settings_title() });
+
+		await expect.element(settings).toBeEnabled();
+		await settings.click();
+		expect(callbacks.onsettings).toHaveBeenCalledOnce();
 		await screen.unmount();
 	});
 
