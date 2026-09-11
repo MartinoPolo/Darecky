@@ -16,3 +16,6 @@ bun.lockb
 
 # Design mockups — reference-only artifacts, not gated source
 /designs/
+
+# Paraglide compiler-owned generated output
+/src/lib/paraglide/

@@ -89,3 +89,11 @@ HANDOFF_*.md
 REVIEW.md
 .mpx/BOARD.md
 .mpx/board-files/
+
+# Local component visual-review artifacts
+/.mpx/logs/component-visual-review/
+/review/lifecycle-fix-notes.md
+/review/checks/
+
+# Local Pi scheduler state
+/.pi/subagent-schedules/
