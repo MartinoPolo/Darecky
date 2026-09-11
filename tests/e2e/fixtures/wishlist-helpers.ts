@@ -115,20 +115,28 @@ export async function addGift(
 	await expect(page.getByRole('heading', { name, level: 3 })).toBeVisible({ timeout: 10_000 });
 }
 
-/** Run the share wizard to completion, making the wishlist active/shared. */
-export async function shareWishlist(page: Page): Promise<void> {
+async function clickWishlistHeaderAction(page: Page, accessibleName: RegExp): Promise<void> {
 	const mobile = (page.viewportSize()?.width ?? 1280) < 640;
 	if (mobile) {
 		await page.getByTestId('mobile-header-more-trigger').filter({ visible: true }).click();
-		const sheet = page.getByRole('dialog', { name: 'Další akce' }).filter({ visible: true });
+		const sheet = page
+			.getByRole('dialog', { name: /^(Další akce|More actions)$/ })
+			.filter({ visible: true });
 		await expect(sheet).toBeVisible({ timeout: 5_000 });
-		await sheet.getByRole('button', { name: 'Sdílet', exact: true }).click();
+		await sheet.getByRole('button', { name: accessibleName }).click();
 	} else {
 		await page.getByTestId('desktop-header-more-trigger').filter({ visible: true }).click();
-		const menu = page.getByRole('menu', { name: 'Další akce' }).filter({ visible: true });
+		const menu = page
+			.getByRole('menu', { name: /^(Další akce|More actions)$/ })
+			.filter({ visible: true });
 		await expect(menu).toBeVisible({ timeout: 5_000 });
-		await menu.getByRole('menuitem', { name: 'Sdílet', exact: true }).click();
+		await menu.getByRole('menuitem', { name: accessibleName }).click();
 	}
+}
+
+/** Run the share wizard to completion, making the wishlist active/shared. */
+export async function shareWishlist(page: Page): Promise<void> {
+	await clickWishlistHeaderAction(page, /^(Sdílet|Share)$/);
 
 	const dialog = page.getByRole('dialog');
 	await expect(dialog).toBeVisible({ timeout: 5_000 });
@@ -150,10 +158,7 @@ export async function shareWishlist(page: Page): Promise<void> {
  * a `page.on('dialog')` handler.
  */
 export async function archiveWishlist(page: Page): Promise<void> {
-	await page
-		.getByRole('button', { name: /Archivovat seznam|Archive list/i })
-		.first()
-		.click();
+	await clickWishlistHeaderAction(page, /^(Archivovat seznam|Archive list)$/);
 
 	const dialog = page.getByRole('dialog');
 	await expect(dialog.getByText(/Archivovat tento seznam\?|Archive this list\?/)).toBeVisible({
