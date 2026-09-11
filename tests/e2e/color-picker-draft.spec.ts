@@ -89,6 +89,7 @@ test('category color is local to the picker, then staged until global Save', asy
 
 	const persistedPage = await page.context().newPage();
 	await persistedPage.goto(wishlistUrl);
+	await persistedPage.waitForLoadState('networkidle');
 	const persistedSettings = await openCategorySettings(persistedPage);
 	await expect(
 		categoryRow(persistedSettings).getByRole('button', { name: CATEGORY_NAME }),
