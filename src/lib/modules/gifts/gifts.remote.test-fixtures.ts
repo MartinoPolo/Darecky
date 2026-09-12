@@ -404,7 +404,6 @@ beforeEach(() => {
 
 export {
 	serverErrorFixture,
-	gift,
 	singleFlightRefreshFixture,
 	getGiftCategorySettingsRowsFixture,
 	dispatchNotificationFixture,
@@ -413,9 +412,6 @@ export {
 	mockDeleteObjects,
 	mockAppendGifts,
 	mockCopyGifts,
-	RECIPIENT_ID,
-	VISITOR_ID,
-	MODERATOR_ID,
 	WISHLIST_ID,
 	WISHLIST_SHORT_ID,
 	GIFT_ID,

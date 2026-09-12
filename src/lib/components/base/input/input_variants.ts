@@ -27,7 +27,6 @@ export const inputVariants = tv({
 export type InputSize = keyof typeof inputVariants.variants.size;
 export type InputState = keyof typeof inputVariants.variants.state;
 
-export const INPUT_SIZES = Object.keys(inputVariants.variants.size) as InputSize[];
 export const INPUT_STATES = Object.keys(inputVariants.variants.state) as InputState[];
 
 export type InputProps = Omit<WithoutChildren<WithElementRef<HTMLInputAttributes>>, 'size'> & {

@@ -1,17 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { bulkGiftUpdateData, isBulkPresentationAction } from './gift_bulk_update.js';
+import type { BulkUpdateGiftsInput } from './types.js';
 import { fillImageMeta } from '$lib/modules/images/editor_modes.js';
 
+const presentationActionCases = [
+	[{ action: 'priority', priorityLevelId: null, wishlistId: 'w', giftIds: ['g'] }, true],
+	[{ action: 'category', categoryId: null, wishlistId: 'w', giftIds: ['g'] }, true],
+	[{ action: 'imageFit', fit: 'fill', wishlistId: 'w', giftIds: ['g'] }, true],
+	[{ action: 'imageBackground', background: null, wishlistId: 'w', giftIds: ['g'] }, true],
+	[{ action: 'received', received: true, wishlistId: 'w', giftIds: ['g'] }, false],
+] satisfies Array<[BulkUpdateGiftsInput, boolean]>;
+
 describe('bulk gift updates', () => {
-	it.each([
-		[{ action: 'priority', priorityLevelId: null, wishlistId: 'w', giftIds: ['g'] }, true],
-		[{ action: 'category', categoryId: null, wishlistId: 'w', giftIds: ['g'] }, true],
-		[{ action: 'imageFit', fit: 'fill', wishlistId: 'w', giftIds: ['g'] }, true],
-		[{ action: 'imageBackground', background: null, wishlistId: 'w', giftIds: ['g'] }, true],
-		[{ action: 'received', received: true, wishlistId: 'w', giftIds: ['g'] }, false],
-	] as const)('classifies $0.action presentation semantics as $1', (input, expected) => {
-		expect(isBulkPresentationAction(input)).toBe(expected);
-	});
+	it.each(presentationActionCases)(
+		'classifies $0.action presentation semantics as $1',
+		(input, expected) => {
+			expect(isBulkPresentationAction(input)).toBe(expected);
+		},
+	);
 
 	it('restores each gift from its exact heterogeneous received prior-state map', () => {
 		const input = {

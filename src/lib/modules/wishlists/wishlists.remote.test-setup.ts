@@ -293,7 +293,6 @@ vi.mock('$lib/server/storage/r2.js', () => ({
 
 // ── Import the module under test (after all mocks are set up) ─────────────────
 
-import * as v from 'valibot';
 import {
 	deleteWishlist,
 	updateWishlist,
@@ -461,7 +460,6 @@ export {
 	expect,
 	beforeEach,
 	afterEach,
-	v,
 	mockDbInstance,
 	mockDeleteObjects,
 	mockDispatchNotification,
@@ -496,4 +494,3 @@ export {
 	flipRecipientToFreeTextInputSchemaFixture,
 	notificationTypeFixture,
 };
-export type { AuthContext };

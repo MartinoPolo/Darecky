@@ -2,6 +2,7 @@ import '../../../../app.css';
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
+import type { GiftForVisitor } from '$lib/modules/gifts/types.js';
 import { WISHLIST_ROLES } from '$lib/modules/wishlists/types.js';
 import * as m from '$lib/paraglide/messages.js';
 import {

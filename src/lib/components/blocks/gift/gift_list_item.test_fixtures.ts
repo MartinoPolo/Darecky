@@ -1,7 +1,7 @@
 import { render } from 'vitest-browser-svelte';
 import { expect, vi } from 'vitest';
 import type { GiftForVisitor } from '$lib/modules/gifts/types.js';
-import { WISHLIST_ROLES } from '$lib/modules/wishlists/types.js';
+import type { WISHLIST_ROLES } from '$lib/modules/wishlists/types.js';
 import { IMAGE_FIT_MODES, type ImageMetadata } from '$lib/modules/images/index.js';
 
 vi.mock('$env/dynamic/public', () => ({ env: {} }));
