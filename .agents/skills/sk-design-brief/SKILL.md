@@ -1,6 +1,8 @@
 ---
 name: sk-design-brief
-description: 'Guide creation of a design brief with component inventory and recommendations. Use when: "design brief", "create brief", "design spec", "write brief", "component spec", "UI spec"'
+description:
+    'Guide creation of a design brief with component inventory and recommendations. Use when:
+    "design brief", "create brief", "design spec", "write brief", "component spec", "UI spec"'
 argument-hint: '[component-name]'
 allowed-tools: Read, Write, Glob, Grep, Bash(gh *), Agent, WebFetch
 metadata:
@@ -11,14 +13,20 @@ metadata:
 
 # Design Brief Creation
 
-Guide the creation of a comprehensive, standalone design brief for a UI component. The brief must be complete enough that a designer (human or AI) can produce a pixel-accurate mockup without asking clarifying questions.
+Guide the creation of a comprehensive, standalone design brief for a UI component. The brief must be
+complete enough that a designer (human or AI) can produce a pixel-accurate mockup without asking
+clarifying questions.
 
 ## Philosophy
 
-1. **Context is king** — every component lives somewhere. Show WHERE it lives, WHAT surrounds it, and HOW MUCH SPACE it has. The mockup must reflect actual proportions.
-2. **Reuse over invention** — always specify which existing components to reuse (Button variants, Badge styles, etc.). Only design new primitives when no existing component fits.
-3. **Requirements-driven** — scrape every source: GitHub issues, PRDs, existing implementations. Human decisions (from grilling sessions, issue comments, PRD text) take highest priority.
-4. **Complete standalone** — the brief should be self-contained. Anyone reading it understands the full picture without needing to cross-reference other files.
+1. **Context is king** — every component lives somewhere. Show WHERE it lives, WHAT surrounds it,
+   and HOW MUCH SPACE it has. The mockup must reflect actual proportions.
+2. **Reuse over invention** — always specify which existing components to reuse (Button variants,
+   Badge styles, etc.). Only design new primitives when no existing component fits.
+3. **Requirements-driven** — scrape every source: GitHub issues, PRDs, existing implementations.
+   Human decisions (from grilling sessions, issue comments, PRD text) take highest priority.
+4. **Complete standalone** — the brief should be self-contained. Anyone reading it understands the
+   full picture without needing to cross-reference other files.
 
 ## Available UI Components
 
@@ -30,19 +38,18 @@ Guide the creation of a comprehensive, standalone design brief for a UI componen
 
 ## Process
 
-### Step 0: Read Current Design Authority
-
-First read `designs/README.md` and the current `.mpx/DECISIONS.md`. Later decisions override earlier approved scope or artifacts. If target or direction is ambiguous, ask; do not infer intent from the latest-mentioned variant. Exclude `archive/designs/` and historical briefs identified by `designs/README.md` from automatic discovery.
-
 ### Step 1: Gather ALL Requirements
 
 Before writing anything, exhaustively research the feature:
 
-1. **GitHub issues**: Search for related issues/PRDs via `gh issue list --search "<keywords>"`. Read issue bodies, comments, and linked PRDs. Human decisions in comments are highest priority.
-2. **Project docs**: Read project context, `designs/README.md`, and current `.mpx/DECISIONS.md`; later decisions override earlier approved scope and artifacts.
-3. **Existing implementation**: If any code exists for this feature, read it. Understand current state vs. desired state.
-4. **Related briefs**: Read related current briefs, excluding `archive/designs/` and briefs marked historical in `designs/README.md`.
-5. **Design system**: Read `designs/DESIGN_SYSTEM.md` if it exists, or infer the design system from `src/app.css` and existing components.
+1. **GitHub issues**: Search for related issues/PRDs via `gh issue list --search "<keywords>"`. Read
+   issue bodies, comments, and linked PRDs. Human decisions in comments are highest priority.
+2. **Project docs**: Read any project context or decision files if they exist.
+3. **Existing implementation**: If any code exists for this feature, read it. Understand current
+   state vs. desired state.
+4. **Related briefs**: Read any related design briefs under `designs/`.
+5. **Design system**: Read `designs/DESIGN_SYSTEM.md` if it exists, or infer the design system from
+   `src/app.css` and existing components.
 
 ### Step 2: Determine Surrounding Context (Critical)
 
@@ -59,7 +66,8 @@ This is the MOST IMPORTANT step. Every component exists within a visual hierarch
 
 #### What is the current state of surrounding elements?
 
-Identify which surrounding elements are already implemented/designed and should be faithfully reproduced vs. which are still being designed.
+Identify which surrounding elements are already implemented/designed and should be faithfully
+reproduced vs. which are still being designed.
 
 #### Document context explicitly in the brief:
 
@@ -93,19 +101,20 @@ For each component relevant to the feature, document:
 - **Available variants/props**
 - **Where to use it** in this design
 
-Be specific and match local APIs/stories: for example, use `Button intent='ghost' size='sm'` and `Badge tone='success'`. Do not use unsupported sizes such as `size='icon'`.
+Be specific: say "use `Button variant='ghost'` with icon-only size" NOT "add a button."
 
 ### Step 4: Research Missing Primitives
 
 If the feature needs UI patterns not in the inventory:
 
-- Spawn `mpx-context7-docs-fetcher` to check shadcn-svelte (`/huntabyte/shadcn-svelte`) and Bits UI (`/huntabyte/bits-ui`)
+- Spawn `mp-context7-docs-fetcher` to check shadcn-svelte (`/huntabyte/shadcn-svelte`) and Bits UI
+  (`/huntabyte/bits-ui`)
 - Include as "Components to Adopt" with rationale for why existing components don't suffice
 
 ### Step 5: Draft the Brief
 
-**Folder**: `designs/<component-name>/` (kebab-case)
-**File**: `designs/<component-name>/DESIGN_BRIEF_<COMPONENT_NAME>.md` (screaming snake case)
+**Folder**: `designs/<component-name>/` (kebab-case) **File**:
+`designs/<component-name>/DESIGN_BRIEF_<COMPONENT_NAME>.md` (screaming snake case)
 
 Use this structure (all sections mandatory unless marked optional):
 
@@ -120,7 +129,8 @@ Use this structure (all sections mandatory unless marked optional):
 
 ## 1. Purpose
 
-[Expanded purpose. What workflow does this enable? What's the user's mental model? What question does this UI answer at a glance?]
+[Expanded purpose. What workflow does this enable? What's the user's mental model? What question
+does this UI answer at a glance?]
 
 **Key value**: [One sentence — the elevator pitch for this component's existence]
 
@@ -134,9 +144,9 @@ The mockup **MUST** show the full viewport with all chrome elements at correct p
 
 [Describe every element visible alongside this component. Be exhaustive.]
 
-**What parent provides**: [navigation, layout shell, etc.]
-**What this component fills**: [e.g., "main content area, full width × remaining height"]
-**Must NOT include**: [e.g., "navigation chrome — that belongs to the layout"]
+**What parent provides**: [navigation, layout shell, etc.] **What this component fills**: [e.g.,
+"main content area, full width × remaining height"] **Must NOT include**: [e.g., "navigation chrome
+— that belongs to the layout"]
 
 **Mockup rendering instructions**:
 
@@ -184,11 +194,11 @@ List EVERY state this component can be in:
 
 ### Existing Components (MUST use)
 
-| Component | Variant/Props              | Usage in This Design   |
-| --------- | -------------------------- | ---------------------- |
-| Button    | `intent="ghost" size="sm"` | Toolbar action buttons |
-| Badge     | `tone="success"`           | Status indicators      |
-| [etc.]    |                            |                        |
+| Component | Variant/Props                 | Usage in This Design   |
+| --------- | ----------------------------- | ---------------------- |
+| Button    | `variant="ghost"` size="icon" | Toolbar action buttons |
+| Badge     | `variant="success"`           | Status indicators      |
+| [etc.]    |                               |                        |
 
 ### Components to Adopt (install from shadcn-svelte)
 
@@ -264,12 +274,18 @@ Reference the project's Tailwind/CSS theme from `src/app.css`:
 
 ### Key Principles for Writing the Brief
 
-1. **Specify components, not appearance**: Say "use `Button intent='ghost' size='sm'`" not "ghost-styled icon button." Reference exact variant names from the component library.
-2. **Proportions matter**: The mockup must show components at their actual proportions within the layout.
-3. **Requirements from humans beat requirements from code**: If a grilling session or issue comment says "do X," that overrides what the current code does.
-4. **Complete state enumeration**: Every interactive element needs ALL states listed. Missing states = designer invents them = inconsistency.
-5. **Container context is mandatory**: Always specify parent container. Show it in the mockup faithfully. Never let the designed component duplicate parent chrome.
-6. **Match existing implementations**: If surrounding elements are in final state, the mockup should reproduce them accurately.
+1. **Specify components, not appearance**: Say "use `Button variant='ghost'` size='icon'" not
+   "ghost-styled icon button." Reference exact variant names from the component library.
+2. **Proportions matter**: The mockup must show components at their actual proportions within the
+   layout.
+3. **Requirements from humans beat requirements from code**: If a grilling session or issue comment
+   says "do X," that overrides what the current code does.
+4. **Complete state enumeration**: Every interactive element needs ALL states listed. Missing states
+   = designer invents them = inconsistency.
+5. **Container context is mandatory**: Always specify parent container. Show it in the mockup
+   faithfully. Never let the designed component duplicate parent chrome.
+6. **Match existing implementations**: If surrounding elements are in final state, the mockup should
+   reproduce them accurately.
 7. **Explain WHY, not just WHAT**: For every requirement, explain the user benefit.
 
 ### Step 6: Label Dependent Issues
@@ -288,9 +304,11 @@ After saving the brief, find implementation issues that depend on this design an
     gh label create "Design needed" --color "FBCA04" --description "Design must be completed before implementation"
     ```
 
-2. **Find dependent issues**. Search for open issues that reference this component or are sub-issues of the design's parent PRD:
+2. **Find dependent issues**. Search for open issues that reference this component or are sub-issues
+   of the design's parent PRD:
     - `gh issue list --search "<component-name>" --state open --json number,title,labels`
-    - If a PRD issue number is known: `gh issue view <prd-number> --json subIssues -q '.subIssues[].number'`
+    - If a PRD issue number is known:
+      `gh issue view <prd-number> --json subIssues -q '.subIssues[].number'`
 
 3. **Add the label** to each implementation issue that cannot proceed without this design:
 

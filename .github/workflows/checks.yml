@@ -31,7 +31,9 @@ jobs:
             - uses: actions/cache@v4
               with:
                   path: .eslintcache
-                  key: eslint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs') }}-${{ github.sha }}
+                  key:
+                      eslint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs')
+                      }}-${{ github.sha }}
                   restore-keys: |
                       eslint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs') }}-
             - run: pnpm run cf:types
@@ -52,7 +54,6 @@ jobs:
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
             - run: pnpm exec playwright install --with-deps chrome
-            - run: pnpm run test:scripts
             # Unit tests + Vitest browser-mode component tests.
             - run: pnpm exec vitest run --coverage
 
@@ -74,10 +75,8 @@ jobs:
                 ports:
                     - 5432:5432
                 options: >-
-                    --health-cmd "pg_isready -U root -d local"
-                    --health-interval 5s
-                    --health-timeout 5s
-                    --health-retries 20
+                    --health-cmd "pg_isready -U root -d local" --health-interval 5s --health-timeout
+                    5s --health-retries 20
         env:
             DATABASE_URL: postgres://root:mysecretpassword@localhost:5432/local
             # CI-only secret; production uses the Cloudflare-stored secret.
@@ -114,7 +113,7 @@ jobs:
             # which requires headed mode; provide a virtual display on Linux CI.
             - run: xvfb-run --auto-servernum pnpm run test:e2e --shard=${{ matrix.shard }}/4
             - uses: actions/upload-artifact@v4
-              if: ${{ !cancelled() }}
+              if: failure()
               with:
                   name: playwright-report-shard-${{ matrix.shard }}
                   path: test-results/

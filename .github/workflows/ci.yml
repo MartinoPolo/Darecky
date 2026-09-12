@@ -28,8 +28,7 @@ jobs:
 
     performance-report:
         if: >-
-            github.event_name == 'pull_request' &&
-            (startsWith(github.head_ref, 'perf/') ||
+            github.event_name == 'pull_request' && (startsWith(github.head_ref, 'perf/') ||
             contains(github.event.pull_request.labels.*.name, 'performance-report'))
         continue-on-error: true
         runs-on: ubuntu-latest
@@ -44,10 +43,8 @@ jobs:
                 ports:
                     - 5432:5432
                 options: >-
-                    --health-cmd "pg_isready -U root -d local"
-                    --health-interval 5s
-                    --health-timeout 5s
-                    --health-retries 20
+                    --health-cmd "pg_isready -U root -d local" --health-interval 5s --health-timeout
+                    5s --health-retries 20
         env:
             DATABASE_URL: postgres://root:mysecretpassword@localhost:5432/local
             # CI-only secret; production uses the Cloudflare-stored secret.
@@ -102,17 +99,26 @@ jobs:
               run: pnpm run db:migrate
             - name: Collect base production diagnostics
               continue-on-error: true
-              run: node performance-head/scripts/production-performance.mjs collect --project performance-base --output performance-reports/base.json --port 8401 --commit ${{ github.event.pull_request.base.sha }} --runs 5
+              run:
+                  node performance-head/scripts/production-performance.mjs collect --project
+                  performance-base --output performance-reports/base.json --port 8401 --commit ${{
+                  github.event.pull_request.base.sha }} --runs 5
             - name: Apply head database migrations
               continue-on-error: true
               working-directory: performance-head
               run: pnpm run db:migrate
             - name: Collect head production diagnostics
               continue-on-error: true
-              run: node performance-head/scripts/production-performance.mjs collect --project performance-head --output performance-reports/head.json --port 8402 --commit ${{ github.event.pull_request.head.sha }} --runs 5
+              run:
+                  node performance-head/scripts/production-performance.mjs collect --project
+                  performance-head --output performance-reports/head.json --port 8402 --commit ${{
+                  github.event.pull_request.head.sha }} --runs 5
             - name: Compare production diagnostics
               continue-on-error: true
-              run: node performance-head/scripts/production-performance.mjs compare --base performance-reports/base.json --head performance-reports/head.json --output performance-reports/summary.md
+              run:
+                  node performance-head/scripts/production-performance.mjs compare --base
+                  performance-reports/base.json --head performance-reports/head.json --output
+                  performance-reports/summary.md
             - name: Upload performance reports
               if: always()
               uses: actions/upload-artifact@v4

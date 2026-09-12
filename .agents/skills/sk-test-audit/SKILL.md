@@ -1,6 +1,8 @@
 ---
 name: sk-test-audit
-description: 'Audit and improve the test suite — flag low-value tests, identify anti-patterns, and clean up. Use when: "audit tests", "test quality", "review tests", "test cleanup", "improve tests"'
+description:
+    'Audit and improve the test suite — flag low-value tests, identify anti-patterns, and clean up.
+    Use when: "audit tests", "test quality", "review tests", "test cleanup", "improve tests"'
 argument-hint: '[scope: unit | storybook | e2e | all]'
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 metadata:
@@ -11,7 +13,8 @@ metadata:
 
 # Test Suite Audit
 
-Audit and improve the test suite. Default scope is `all`; pass `unit`, `storybook`, or `e2e` to narrow.
+Audit and improve the test suite. Default scope is `all`; pass `unit`, `storybook`, or `e2e` to
+narrow.
 
 ## Judging Rules
 
@@ -27,21 +30,28 @@ Load these into context before evaluating any test.
 
 ### Anti-Patterns (flag for removal)
 
-1. **Constant-shape tests**: asserting keys/values of `as const satisfies Record` objects — TypeScript already enforces this
-2. **CSS class assertions**: asserting exact Tailwind classes, `tv()` output, animation classes, or `classList.contains()` checks — breaks on any design change. Test observable behavior instead (visibility, aria attributes, computed styles)
-3. **Type-check tests**: verifying that a TypeScript interface is importable/usable — the compiler does this
+1. **Constant-shape tests**: asserting keys/values of `as const satisfies Record` objects —
+   TypeScript already enforces this
+2. **CSS class assertions**: asserting exact Tailwind classes, `tv()` output, animation classes, or
+   `classList.contains()` checks — breaks on any design change. Test observable behavior instead
+   (visibility, aria attributes, computed styles)
+3. **Type-check tests**: verifying that a TypeScript interface is importable/usable — the compiler
+   does this
 4. **Mock-what-you-own**: mocking internal collaborators instead of system boundaries
 5. **Call-count assertions**: `toHaveBeenCalledTimes(1)` on internal methods
 6. **Test-only code**: functions defined inline in test files, tested as if production code
 7. **No-op function tests**: testing functions that currently return input unchanged
-8. **Magic-number counts**: `array.length === 15` on growing collections — use `toBeGreaterThan(0)` or dynamic checks
+8. **Magic-number counts**: `array.length === 15` on growing collections — use `toBeGreaterThan(0)`
+   or dynamic checks
 9. **Duplicate tests**: identical inputs and expectations with different names
 
 ### Mocking Rules
 
-Mock at system boundaries only (external APIs, time, randomness, file system). Never mock what you own. If you need to mock your own code, the design is wrong.
+Mock at system boundaries only (external APIs, time, randomness, file system). Never mock what you
+own. If you need to mock your own code, the design is wrong.
 
-Decision rule: "Can I swap this dependency in production for a different provider?" If yes → mock. If no → test the real thing.
+Decision rule: "Can I swap this dependency in production for a different provider?" If yes → mock.
+If no → test the real thing.
 
 ## Process
 
@@ -72,10 +82,9 @@ Split test files into groups of 10-15. For each group, spawn an Agent that:
 
 Use this prompt template for each reviewer agent:
 
-> You are auditing test quality. Read each file IN FULL and its source module.
-> For each file report: File, Test count, Verdict (KEEP/REMOVE/IMPROVE), Issues, Value assessment.
-> Rules: [paste judging rules above]
-> Files: [list of 10-15 files]
+> You are auditing test quality. Read each file IN FULL and its source module. For each file report:
+> File, Test count, Verdict (KEEP/REMOVE/IMPROVE), Issues, Value assessment. Rules: [paste judging >
+> rules above] Files: [list of 10-15 files]
 
 For storybook, check:
 

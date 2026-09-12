@@ -11,8 +11,7 @@ production domain setup.
 - DMARC is still external DNS work: add `_dmarc.prejemesi.cz` as a TXT record in Cloudflare.
 - Receiving is disabled in Resend; the app only sends transactional emails.
 - Signup email verification is enabled in BetterAuth.
-- Critical notification emails are dispatched from app events through
-  `notification_dispatcher.ts`.
+- Critical notification emails are dispatched from app events through `notification_dispatcher.ts`.
 
 ## Service: Resend (free tier)
 
@@ -41,10 +40,10 @@ Plenty for dev and early production. Pro ($20/mo) drops the daily cap and raises
 - `src/lib/server/email.ts`
     - `sendEmail({ to, subject, html, text?, idempotencyKey? })` – wraps Resend, handles the
       `{ data, error }` response, **throws on failure**, and **logs instead of sending when
-      `RESEND_API_KEY` is unset** (same optional-service fallback as R2 storage).
-      It always sends a plain-text alternative, either caller-supplied or generated from HTML.
-    - `renderActionEmailParts({ heading, body, buttonLabel, url })` – shared HTML + text
-      template. User-controlled text is escaped before embedding in the HTML email.
+      `RESEND_API_KEY` is unset** (same optional-service fallback as R2 storage). It always sends a
+      plain-text alternative, either caller-supplied or generated from HTML.
+    - `renderActionEmailParts({ heading, body, buttonLabel, url })` – shared HTML + text template.
+      User-controlled text is escaped before embedding in the HTML email.
 - `src/lib/server/auth.ts` – the three better-auth stubs now send real emails:
     - `sendResetPassword` (password reset)
     - `sendVerificationEmail` (email verification)
@@ -54,9 +53,10 @@ Plenty for dev and early production. Pro ($20/mo) drops the daily cap and raises
 
 ### 1. Create a Resend account + API key
 
-1. Sign up at <https://resend.com> (free, no card). Use the email you'll test with –
-   sandbox only delivers there.
-2. Dashboard → **API Keys** → **Create API Key** (name `prejemesi-dev`, **Sending access**, domain **All**).
+1. Sign up at <https://resend.com> (free, no card). Use the email you'll test with – sandbox only
+   delivers there.
+2. Dashboard → **API Keys** → **Create API Key** (name `prejemesi-dev`, **Sending access**, domain
+   **All**).
 3. Copy the `re_...` key (shown once).
 
 ### 2. Configure `.env`
@@ -71,8 +71,8 @@ Restart the dev server after editing `.env` so Vite reloads it.
 ### 3. Test the slice
 
 1. `pnpm run dev`
-2. From the login UI, request a **password reset** using your **Resend
-   account email** (the only deliverable sandbox recipient).
+2. From the login UI, request a **password reset** using your **Resend account email** (the only
+   deliverable sandbox recipient).
 3. Server console prints `[Email] Sent "..." (id=...)` on success. Check the inbox.
 
 Troubleshooting:
@@ -82,9 +82,8 @@ Troubleshooting:
 
 ### 4. Production domain
 
-Already done for `prejemesi.cz`. If the domain is ever recreated, add the Resend DNS
-records in Cloudflare and keep receiving disabled unless inbound email is intentionally
-needed.
+Already done for `prejemesi.cz`. If the domain is ever recreated, add the Resend DNS records in
+Cloudflare and keep receiving disabled unless inbound email is intentionally needed.
 
 Also add a DMARC record in Cloudflare DNS:
 

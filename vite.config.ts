@@ -125,7 +125,7 @@ export default defineConfig({
 	server: {
 		...development.appServer,
 		strictPort: true,
-		open: isVitest || process.env.BROWSER === 'none' ? false : development.appOrigin,
+		open: isVitest ? false : development.appOrigin,
 		watch: {
 			ignored: ['**/.mpx/**', './*.html'],
 		},

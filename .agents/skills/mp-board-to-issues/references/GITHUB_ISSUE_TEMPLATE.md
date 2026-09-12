@@ -28,4 +28,5 @@ For HITL issues, prepend only this block:
 > - [Specific question that needs answering before or during implementation]
 ```
 
-Omit optional sections when they add no value. Acceptance criteria must describe observable behavior, not implementation details. All created issues are assigned to `@me`.
+Omit optional sections when they add no value. Acceptance criteria must describe observable
+behavior, not implementation details. All created issues are assigned to `@me`.

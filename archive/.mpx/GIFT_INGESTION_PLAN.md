@@ -7,16 +7,22 @@ Implementation must happen in a separate worktree based on `dev`.
 ## Settled direction
 
 - Build a purpose-specific, append-only production gift-ingestion workflow.
-- A project skill accepts product URLs, gathers metadata and images, writes a versioned JSON manifest, runs a dry-run, and invokes a fixed CLI.
-- The CLI calls a narrowly scoped application endpoint. It never receives Neon or R2 credentials and never generates SQL.
-- CSV and manual batch entry remain supported and gain image URL and quantity fields as a reviewed fallback.
+- A project skill accepts product URLs, gathers metadata and images, writes a versioned JSON
+  manifest, runs a dry-run, and invokes a fixed CLI.
+- The CLI calls a narrowly scoped application endpoint. It never receives Neon or R2 credentials and
+  never generates SQL.
+- CSV and manual batch entry remain supported and gain image URL and quantity fields as a reviewed
+  fallback.
 - Manual, CSV/batch, and automated gift creation all use one transactional domain service.
-- New-gift notifications become one global, in-app-only digest per recipient per rolling 24-hour window.
-- The skill must not use the `sk-` prefix. Use `.agents/skills/add-gifts/SKILL.md` unless a better non-`sk` name is chosen during implementation.
+- New-gift notifications become one global, in-app-only digest per recipient per rolling 24-hour
+  window.
+- The skill must not use the `sk-` prefix. Use `.agents/skills/add-gifts/SKILL.md` unless a better
+  non-`sk` name is chosen during implementation.
 
 ## Notification semantics
 
-Use a global rolling 24-hour digest per recipient, covering gifts added manually, through CSV/batch import, or through automated ingestion.
+Use a global rolling 24-hour digest per recipient, covering gifts added manually, through CSV/batch
+import, or through automated ingestion.
 
 - The first eligible gift opens a hidden digest window.
 - Additional gifts during the next 24 hours join that digest, across all followed wishlists.
@@ -25,8 +31,10 @@ Use a global rolling 24-hour digest per recipient, covering gifts added manually
 - A one-wishlist digest links directly to that wishlist.
 - A multi-wishlist digest links to `/followed` and displays a per-wishlist breakdown.
 - Keep this notification in-app only. The existing `NEW_GIFT_ADDED` event is already in-app only.
-- A `visibleAt` timestamp makes delayed visibility possible without a scheduled Worker. If email or push digests are added later, introduce a durable scheduler then.
-- Preserve the existing audience rule: active followers at gift-add time, excluding the actor and linked recipient, and respecting the existing new-gift notification preference.
+- A `visibleAt` timestamp makes delayed visibility possible without a scheduled Worker. If email or
+  push digests are added later, introduce a durable scheduler then.
+- Preserve the existing audience rule: active followers at gift-add time, excluding the actor and
+  linked recipient, and respecting the existing new-gift notification preference.
 - Existing singular notification rows remain readable and visible.
 
 Example copy:
@@ -46,9 +54,12 @@ Extract insertion behavior from:
 The transport-independent service must:
 
 - Validate that the wishlist is mutable; draft and active are allowed, archived is rejected.
-- Lock the wishlist while allocating append order so concurrent `MAX(sortOrder) + 1` operations cannot collide.
+- Lock the wishlist while allocating append order so concurrent `MAX(sortOrder) + 1` operations
+  cannot collide.
 - Insert one or many gifts atomically.
-- Accept normalized concrete fields: name, description, multiple links, price range, currency, external image URL, R2 image key, image metadata, quantity, concrete priority, and ingestion provenance where applicable.
+- Accept normalized concrete fields: name, description, multiple links, price range, currency,
+  external image URL, R2 image key, image metadata, quantity, concrete priority, and ingestion
+  provenance where applicable.
 - Append only; it must expose no update or delete behavior.
 - Coalesce notification changes in the same database transaction.
 - Preserve recipient/správce authorization in the remote wrappers.
@@ -143,7 +154,8 @@ Importer changes:
 - Show an image thumbnail during review.
 - Persist automatic image framing; do not import crop/focal JSON.
 - Preserve current row and payload limits.
-- Add server-side canonical-link duplicate warnings while retaining explicit user override in the UI.
+- Add server-side canonical-link duplicate warnings while retaining explicit user override in the
+  UI.
 - Continue supporting multiple link columns.
 
 ## Phase 5 — Versioned ingestion manifest
@@ -192,7 +204,8 @@ Security controls:
 - Accept no arbitrary SQL and no arbitrary destination wishlist.
 - Disable the endpoint when its secret/configuration is absent.
 
-A later generalization may replace the fixed target with hashed, revocable capability tokens scoped to individual wishlists and `gift:create` only.
+A later generalization may replace the fixed target with hashed, revocable capability tokens scoped
+to individual wishlists and `gift:create` only.
 
 ## Phase 7 — Idempotency and audit
 
@@ -260,7 +273,8 @@ Document the operational contract in `docs/PRODUCTION_GIFT_INGESTION.md`.
 
 ## Phase 9 — Durable R2 image mirroring
 
-External `imageUrl` support may ship first, but durable R2 mirroring should follow because retailer images can disappear, block hotlinking, or track visitors.
+External `imageUrl` support may ship first, but durable R2 mirroring should follow because retailer
+images can disappear, block hotlinking, or track visitors.
 
 Recommended protocol:
 
@@ -274,7 +288,8 @@ Recommended protocol:
 
 Use automatic image framing by default; imported crop metadata is unnecessary.
 
-Default image policy is all-or-nothing. A later explicit `--allow-missing-images` mode may create gifts without a mirrored image, but the result must report every omission.
+Default image policy is all-or-nothing. A later explicit `--allow-missing-images` mode may create
+gifts without a mirrored image, but the result must report every omission.
 
 ## Phase 10 — Metadata-gathering skill
 
@@ -294,11 +309,13 @@ Skill workflow:
 6. Preserve the supplied URL as the primary link.
 7. Write the versioned JSON manifest.
 8. Invoke the CLI dry-run.
-9. Apply automatically only when the user explicitly requested production insertion, wishlist identity matches, no ambiguous product/image remains, and no idempotency conflict exists.
+9. Apply automatically only when the user explicitly requested production insertion, wishlist
+   identity matches, no ambiguous product/image remains, and no idempotency conflict exists.
 10. Otherwise stop with a targeted HITL decision.
 11. Report created gift IDs, skipped duplicates, image provenance, and omitted metadata.
 
-The skill must never read or print the ingestion token directly; credential loading belongs to the fixed CLI.
+The skill must never read or print the ingestion token directly; credential loading belongs to the
+fixed CLI.
 
 ## Phase 11 — Tests and verification
 
@@ -377,4 +394,6 @@ Before starting any server, read that worktree's `.worktree-ports.json` and use 
 
 After compacting the conversation, instruct the coding agent:
 
-> Read `.mpx/GIFT_INGESTION_PLAN.md` completely, create the specified worktree and branch from `dev`, and implement the approved plan there. Preserve production data and follow the phased rollout and verification requirements.
+> Read `.mpx/GIFT_INGESTION_PLAN.md` completely, create the specified worktree and branch from
+> `dev`, and implement the approved plan there. Preserve production data and follow the phased
+> rollout and verification requirements.
