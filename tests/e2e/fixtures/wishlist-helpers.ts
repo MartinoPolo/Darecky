@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { waitForAppHydration } from './auth-helpers.js';
 
 /**
  * Shared wishlist/gift interaction helpers for E2E specs.
@@ -17,13 +18,29 @@ export async function waitForDialogOverlayRemoval(page: Page): Promise<void> {
 	await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCount(0, { timeout: 5_000 });
 }
 
+export async function waitForDialogMotionToSettle(dialog: Locator): Promise<void> {
+	await expect(dialog).toBeVisible();
+	await dialog.evaluate(() => document.fonts.ready.then(() => undefined));
+	await expect
+		.poll(() =>
+			dialog.evaluate(
+				(element) =>
+					element
+						.getAnimations()
+						.filter(
+							(animation) =>
+								animation.playState === 'running' &&
+								animation.effect?.getComputedTiming().endTime !== Infinity,
+						).length,
+			),
+		)
+		.toBe(0);
+}
+
 export async function openDialogFromTrigger(trigger: Locator, dialog: Locator): Promise<void> {
-	await expect(async () => {
-		if (!(await dialog.isVisible())) {
-			await trigger.click();
-		}
-		await expect(dialog).toBeVisible({ timeout: 2_000 });
-	}).toPass({ timeout: 20_000 });
+	await waitForAppHydration(trigger.page());
+	await trigger.click();
+	await expect(dialog).toBeVisible();
 }
 
 export async function openCreateWishlistDialog(page: Page): Promise<Locator> {

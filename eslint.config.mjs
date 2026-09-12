@@ -29,6 +29,8 @@ export default [
 			'scripts/**',
 			'.claude/worktrees/**',
 			'.mpx/logs/component-visual-review/**',
+			'.mpx/logs/e2e-audit/**',
+			'.test-audit/**',
 			'review/checks/**',
 		],
 	},

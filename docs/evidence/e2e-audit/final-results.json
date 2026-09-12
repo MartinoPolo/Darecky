@@ -1,0 +1,2606 @@
+{
+	"baselineCommit": "2115834",
+	"command": "playwright test --workers=2 --retries=0",
+	"database": "freshly migrated and seeded disposable local database",
+	"wallTimeSeconds": 683.5,
+	"stats": {
+		"startTime": "2026-09-12T18:47:26.244Z",
+		"duration": 682180.948,
+		"expected": 185,
+		"skipped": 0,
+		"unexpected": 0,
+		"flaky": 0
+	},
+	"tests": [
+		{
+			"file": "global-setup.spec.ts",
+			"line": 23,
+			"title": "warmup: compile all route modules",
+			"project": "setup",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 21814
+				}
+			]
+		},
+		{
+			"file": "admin-release-reservation.spec.ts",
+			"line": 58,
+			"title": "releases a signed-in gifter reservation from a gift card and frees the capacity",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 17361
+				}
+			]
+		},
+		{
+			"file": "admin-release-reservation.spec.ts",
+			"line": 128,
+			"title": "renders no release control for a signed-in visitor who is not the administrator",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 15697
+				}
+			]
+		},
+		{
+			"file": "admin-release-reservation.spec.ts",
+			"line": 172,
+			"title": "does not grant release or reservation visibility to an administrator who is the recipient",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 13472
+				}
+			]
+		},
+		{
+			"file": "anonymous-reserve.spec.ts",
+			"line": 68,
+			"title": "anonymous visitor can view and reserve on shared wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10162
+				}
+			]
+		},
+		{
+			"file": "anonymous-reserve.spec.ts",
+			"line": 220,
+			"title": "wishlist auth links preserve the English route prefix",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9977
+				}
+			]
+		},
+		{
+			"file": "anonymous-reserve.spec.ts",
+			"line": 267,
+			"title": "register from reservation returns to the wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9445
+				}
+			]
+		},
+		{
+			"file": "anonymous-reserve.spec.ts",
+			"line": 312,
+			"title": "login from reservation returns to the wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 12222
+				}
+			]
+		},
+		{
+			"file": "appearance-depth.spec.ts",
+			"line": 6,
+			"title": "desktop depth selection synchronizes and persists through navigation and reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7123
+				}
+			]
+		},
+		{
+			"file": "appearance-reactivity.spec.ts",
+			"line": 88,
+			"title": "image assigned in settings updates the /my-lists card without a reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7232
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 19,
+			"title": "register with valid credentials redirects to my-lists",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1319
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 33,
+			"title": "login with valid credentials",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2517
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 53,
+			"title": "login with invalid credentials shows error",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2470
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 65,
+			"title": "unauthenticated user redirected from app routes to login",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 720
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 70,
+			"title": "register page shows password strength indicator",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1444
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 76,
+			"title": "magic-link sign-in is unavailable in either locale",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1600
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 108,
+			"title": "password sign-in rejects a missing Turnstile token",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 13
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 108,
+			"title": "registration rejects a missing Turnstile token",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 21
+				}
+			]
+		},
+		{
+			"file": "auth.spec.ts",
+			"line": 108,
+			"title": "password reset request rejects a missing Turnstile token",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 18
+				}
+			]
+		},
+		{
+			"file": "color-picker-draft.spec.ts",
+			"line": 31,
+			"title": "category color is local to the picker, then staged until global Save",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 16352
+				}
+			]
+		},
+		{
+			"file": "control-heights.spec.ts",
+			"line": 13,
+			"title": "login controls share the 38px standalone-form step",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1655
+				}
+			]
+		},
+		{
+			"file": "control-heights.spec.ts",
+			"line": 28,
+			"title": "create-list controls share the 38px standalone-form step",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3633
+				}
+			]
+		},
+		{
+			"file": "create-wishlist-accordion.spec.ts",
+			"line": 20,
+			"title": "description + palette chosen at creation persist and show on the new wishlist page",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4381
+				}
+			]
+		},
+		{
+			"file": "create-wishlist-accordion.spec.ts",
+			"line": 71,
+			"title": "untouched accordion creates a list with defaults and no description",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4407
+				}
+			]
+		},
+		{
+			"file": "create-wishlist-validation.spec.ts",
+			"line": 21,
+			"title": "inline errors appear only after submit/edit and clear when valid",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3544
+				}
+			]
+		},
+		{
+			"file": "dashboard.spec.ts",
+			"line": 7,
+			"title": "shows empty state for new user",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2284
+				}
+			]
+		},
+		{
+			"file": "dashboard.spec.ts",
+			"line": 19,
+			"title": "create wishlist via modal and see it on dashboard",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4636
+				}
+			]
+		},
+		{
+			"file": "dashboard.spec.ts",
+			"line": 40,
+			"title": "view mode switcher works",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4924
+				}
+			]
+		},
+		{
+			"file": "dropdown-viewport.spec.ts",
+			"line": 122,
+			"title": "stationary constrained filter stays stable and full-height when the viewport can contain it",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5778
+				}
+			]
+		},
+		{
+			"file": "dropdown-viewport.spec.ts",
+			"line": 173,
+			"title": "filter remains contained through inner scroll, edge anchoring, and resize",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6271
+				}
+			]
+		},
+		{
+			"file": "dropdown-viewport.spec.ts",
+			"line": 226,
+			"title": "genuinely oversized filter scrolls internally and keeps keyboard endpoints reachable",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4599
+				}
+			]
+		},
+		{
+			"file": "dropdown-viewport.spec.ts",
+			"line": 264,
+			"title": "submenu corners and nested Sort keyboard selection retain viewport geometry and dismissal",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6291
+				}
+			]
+		},
+		{
+			"file": "elevation-motion.spec.ts",
+			"line": 48,
+			"title": "account menu opens through native activation and its owner remains anchored",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3083
+				}
+			]
+		},
+		{
+			"file": "elevation-motion.spec.ts",
+			"line": 72,
+			"title": "raised button remains reachable and stationary through a held lower-edge press",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4302
+				}
+			]
+		},
+		{
+			"file": "elevation-motion.spec.ts",
+			"line": 140,
+			"title": "representative elevated surfaces stay at rest with reduced motion",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7951
+				}
+			]
+		},
+		{
+			"file": "error-states.spec.ts",
+			"line": 10,
+			"title": "registering with existing email shows error",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3446
+				}
+			]
+		},
+		{
+			"file": "error-states.spec.ts",
+			"line": 30,
+			"title": "settings page shows user profile",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 855
+				}
+			]
+		},
+		{
+			"file": "error-states.spec.ts",
+			"line": 52,
+			"title": "user can update their name in settings",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4906
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 33,
+			"title": "creates gift with name only (minimal fields)",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5982
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 48,
+			"title": "creates gift with supplied description, price, and link",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6278
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 84,
+			"title": "normalizes partial URL (no protocol)",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5336
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 110,
+			"title": "preserves http:// prefix without double-prepending",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5921
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 144,
+			"title": "uploads image successfully",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5387
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 190,
+			"title": "upload does not block form if skipped",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5105
+				}
+			]
+		},
+		{
+			"file": "gift-creation.spec.ts",
+			"line": 214,
+			"title": "new gift appears without page reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6602
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 27,
+			"title": "owner can edit a gift name on unshared wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4978
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 60,
+			"title": "edit modal pre-populates all fields from the gift",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6109
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 125,
+			"title": "editing a gift preserves its priority on save (regression: silent priority wipe)",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5196
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 168,
+			"title": "switching between two gifts shows correct data each time",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7769
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 201,
+			"title": "owner can delete a gift on unshared wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5514
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 236,
+			"title": "shared list shows the shared status chip; pre-share gifts stay fully editable during the grace window",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7209
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 279,
+			"title": "owner can archive a wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7246
+				}
+			]
+		},
+		{
+			"file": "gift-crud-archive.spec.ts",
+			"line": 298,
+			"title": "archived wishlist is read-only for visitors",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10347
+				}
+			]
+		},
+		{
+			"file": "gift-detail-mobile-scroll.spec.ts",
+			"line": 23,
+			"title": "image column scrolls, tiles follow the stage, and Save remains available",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5722
+				}
+			]
+		},
+		{
+			"file": "gift-detail-natural-image.spec.ts",
+			"line": 14,
+			"title": "visitor detail view renders the full uncropped photo at its natural aspect",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9652
+				}
+			]
+		},
+		{
+			"file": "gift-detail-post188.spec.ts",
+			"line": 228,
+			"title": "received recipient state stays private and centered in card and list views",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 16630
+				}
+			]
+		},
+		{
+			"file": "gift-detail-post188.spec.ts",
+			"line": 289,
+			"title": "moderator, reserver, and foreign visitor keep overlay parity through receipt",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 24102
+				}
+			]
+		},
+		{
+			"file": "gift-detail-post188.spec.ts",
+			"line": 358,
+			"title": "edited-after-share line appears on both the editor and the visitor detail view",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11919
+				}
+			]
+		},
+		{
+			"file": "gift-image-background.spec.ts",
+			"line": 37,
+			"title": "defaults to dotted Transparent and persists explicit black",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11636
+				}
+			]
+		},
+		{
+			"file": "gift-reorder.spec.ts",
+			"line": 32,
+			"title": "card drag preview stays stable while the pointer rests on a gift boundary",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10648
+				}
+			]
+		},
+		{
+			"file": "gift-reorder.spec.ts",
+			"line": 92,
+			"title": "gift order persists after card drag and rapid list keyboard moves",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10461
+				}
+			]
+		},
+		{
+			"file": "gift-reorder.spec.ts",
+			"line": 190,
+			"title": "reorder keeps its order and keyboard controls while switching Grid to List and back",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10669
+				}
+			]
+		},
+		{
+			"file": "gift-reorder.spec.ts",
+			"line": 315,
+			"title": "latest gift order survives immediate reopen, no-op entry, a second reorder, and reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11404
+				}
+			]
+		},
+		{
+			"file": "header-control-spacing.spec.ts",
+			"line": 5,
+			"title": "authenticated 320px navbar keeps every action visible with touch-sized targets",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 991
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 39,
+			"title": "a signed-in user landing on `/` is redirected to the overview",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 937
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 56,
+			"title": "renders all four category rows for a multi-role user",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 830
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 75,
+			"title": "a category row links through to its full page",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2282
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 89,
+			"title": "the Nedávné row is capped at six cards and carries no view-all card",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1775
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 107,
+			"title": "a new user with no lists sees the onboarding hero instead of rows",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1399
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 124,
+			"title": "Next moves a visible wishlist card and enables Previous",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3509
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 171,
+			"title": "an overflowing shelf shows the right-edge fade until scrolled to the end",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6679
+				}
+			]
+		},
+		{
+			"file": "home-overview.spec.ts",
+			"line": 219,
+			"title": "opening a wishlist records a visit that surfaces in Nedávné",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3325
+				}
+			]
+		},
+		{
+			"file": "hover-stability.spec.ts",
+			"line": 22,
+			"title": "focused gift consumers retain nested hit targets at 1/soft",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 23091
+				}
+			]
+		},
+		{
+			"file": "hover-stability.spec.ts",
+			"line": 81,
+			"title": "visitor detail sticker, link row, and circular close retain hit targets at 1/soft",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10665
+				}
+			]
+		},
+		{
+			"file": "hover-stability.spec.ts",
+			"line": 128,
+			"title": "focused dashboard card and depth choice at 1/soft",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 20699
+				}
+			]
+		},
+		{
+			"file": "hover-stability.spec.ts",
+			"line": 172,
+			"title": "stationary lower-edge pointer does not oscillate Display at real zoom/depth combinations",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 30842
+				}
+			]
+		},
+		{
+			"file": "hover-stability.spec.ts",
+			"line": 240,
+			"title": "bottom-to-top traversal has one contiguous hover interval for representative elevated consumers",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 57097
+				}
+			]
+		},
+		{
+			"file": "image-crop-wishlist.spec.ts",
+			"line": 77,
+			"title": "mobile wishlist page applies one 12px page gutter",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4674
+				}
+			]
+		},
+		{
+			"file": "image-crop-wishlist.spec.ts",
+			"line": 100,
+			"title": "three slots (no banner), stage tracks slot aspect, crop persists and reaches real surfaces",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10884
+				}
+			]
+		},
+		{
+			"file": "image-crop.spec.ts",
+			"line": 121,
+			"title": "stage matches each target aspect, previews are honest, crop reaches the card surface",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10717
+				}
+			]
+		},
+		{
+			"file": "import-wizard-validation.spec.ts",
+			"line": 104,
+			"title": "navbar import refreshes the home overview in place",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3733
+				}
+			]
+		},
+		{
+			"file": "import-wizard-validation.spec.ts",
+			"line": 24,
+			"title": "inline title error blocks Confirm and never renders ****",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3044
+				}
+			]
+		},
+		{
+			"file": "landing-demo-likes.spec.ts",
+			"line": 40,
+			"title": "liking and unliking persist for this browser independently of the shared count",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4510
+				}
+			]
+		},
+		{
+			"file": "landing-demo-likes.spec.ts",
+			"line": 57,
+			"title": "a like explains the counter once per session",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9015
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 80,
+			"title": "is server-rendered and sits between the hero and how-it-works",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2193
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 118,
+			"title": "mobile pair shows the same gift reserved for the gifter and clean for Petra",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 928
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 143,
+			"title": "mobile role toggle keeps the reservation invisible to Petra",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3739
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 194,
+			"title": "desktop split view leaves the recipient pane untouched by a reservation",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4040
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 235,
+			"title": "each pane is flanked by its polaroid without breaking the panes alignment",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 903
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 262,
+			"title": "the visible pane brings its own polaroid on narrow screens",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3020
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 279,
+			"title": "reserving and unreserving fires no network mutation",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3279
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 301,
+			"title": "a reload resets the demo",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3897
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 314,
+			"title": "the demo wishlist can be retinted with the palette switcher",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3234
+				}
+			]
+		},
+		{
+			"file": "landing-demo.spec.ts",
+			"line": 335,
+			"title": "renders Czech at / and English at /en",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1604
+				}
+			]
+		},
+		{
+			"file": "landing.spec.ts",
+			"line": 4,
+			"title": "uses the locale landing URL for canonical and OpenGraph metadata",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1309
+				}
+			]
+		},
+		{
+			"file": "landing.spec.ts",
+			"line": 21,
+			"title": "publishes one alternate URL for each supported landing locale and x-default",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1236
+				}
+			]
+		},
+		{
+			"file": "landing.spec.ts",
+			"line": 38,
+			"title": "shows hero and navigation",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 675
+				}
+			]
+		},
+		{
+			"file": "landing.spec.ts",
+			"line": 45,
+			"title": "CTA navigates to register",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1187
+				}
+			]
+		},
+		{
+			"file": "landing.spec.ts",
+			"line": 51,
+			"title": "login link navigates to login",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 1173
+				}
+			]
+		},
+		{
+			"file": "landing.spec.ts",
+			"line": 57,
+			"title": "feature sections are visible",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 711
+				}
+			]
+		},
+		{
+			"file": "likes-followers.spec.ts",
+			"line": 18,
+			"title": "visitor can like and unlike a gift on a shared wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7966
+				}
+			]
+		},
+		{
+			"file": "likes-followers.spec.ts",
+			"line": 65,
+			"title": "like count is visible to non-owners after liking",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7645
+				}
+			]
+		},
+		{
+			"file": "likes-followers.spec.ts",
+			"line": 107,
+			"title": "owner does not see like buttons on their own wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4850
+				}
+			]
+		},
+		{
+			"file": "likes-followers.spec.ts",
+			"line": 128,
+			"title": "logged-in user auto-follows a wishlist on first visit and it appears on /followed",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9210
+				}
+			]
+		},
+		{
+			"file": "likes-followers.spec.ts",
+			"line": 168,
+			"title": "user can unfollow a wishlist from /followed page",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9915
+				}
+			]
+		},
+		{
+			"file": "likes-followers.spec.ts",
+			"line": 218,
+			"title": "unfollowed wishlists appear when \"Opuštěné\" toggle is enabled",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10408
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-sheets-visitor.spec.ts",
+			"line": 21,
+			"title": "visitor normal state is one-row, bounded and non-action card space opens detail",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10888
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-sheets-visitor.spec.ts",
+			"line": 58,
+			"title": "visitor can cancel their own reservation after the owner archives the wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11351
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-sheets.spec.ts",
+			"line": 17,
+			"title": "manager toolbar and dedicated sheets preserve geometry, masking, stacking, scroll and focus",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 15035
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-states.spec.ts",
+			"line": 22,
+			"title": "visitor card space cannot activate Like; only the Like button changes state",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9517
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-states.spec.ts",
+			"line": 56,
+			"title": "partial own reservation and received cards keep exact compact state anatomy",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 15374
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-states.spec.ts",
+			"line": 116,
+			"title": "recipient face has no reservation, Like, Purchased or structural action trace",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11985
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist-states.spec.ts",
+			"line": 173,
+			"title": "selection replacement and reorder expose one checkbox, 40px grip and keyboard move",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8340
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist.spec.ts",
+			"line": 17,
+			"title": "320/360/390 card geometry keeps the approved gutter, hero, grid and bounds",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7870
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist.spec.ts",
+			"line": 163,
+			"title": "manager list presentation remains horizontal with full-height square images and contained mobile actions",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10184
+				}
+			]
+		},
+		{
+			"file": "mobile-wishlist.spec.ts",
+			"line": 273,
+			"title": "English Card and List received actions wrap within manager items at every mobile width",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11842
+				}
+			]
+		},
+		{
+			"file": "moderator.spec.ts",
+			"line": 27,
+			"title": "manager can open správci management from the responsive hero actions",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2657
+				}
+			]
+		},
+		{
+			"file": "moderator.spec.ts",
+			"line": 44,
+			"title": "owner can generate moderator invite link",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4271
+				}
+			]
+		},
+		{
+			"file": "moderator.spec.ts",
+			"line": 70,
+			"title": "another user can accept moderator invite and becomes moderator",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 18142
+				}
+			]
+		},
+		{
+			"file": "moderator.spec.ts",
+			"line": 142,
+			"title": "recipient self-promote shows in-panel disclosure and the loud visitor trust warning",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5089
+				}
+			]
+		},
+		{
+			"file": "moderator.spec.ts",
+			"line": 201,
+			"title": "recipient rename via the header pencil reflects in the wishlist banner without reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3906
+				}
+			]
+		},
+		{
+			"file": "motion-strategy.spec.ts",
+			"line": 160,
+			"title": "filter insertion and received flight preserve identity and settle cleanly",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10168
+				}
+			]
+		},
+		{
+			"file": "motion-strategy.spec.ts",
+			"line": 306,
+			"title": "reorder mode keeps stable toolbar regions in place, including mobile replacement controls",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6674
+				}
+			]
+		},
+		{
+			"file": "motion-strategy.spec.ts",
+			"line": 451,
+			"title": "rapid card/list switching commits the latest mode and reduced motion skips transforms",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4903
+				}
+			]
+		},
+		{
+			"file": "notification-gift-deep-link.spec.ts",
+			"line": 17,
+			"title": "notification gift marker is consumed once and only fresh valid markers reopen the gift",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8599
+				}
+			]
+		},
+		{
+			"file": "performance-budget.spec.ts",
+			"line": 150,
+			"title": "landing page requests no authenticated app code and stays within budget",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4246
+				}
+			]
+		},
+		{
+			"file": "performance-budget.spec.ts",
+			"line": 166,
+			"title": "login page requests no authenticated app code and stays within budget",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3962
+				}
+			]
+		},
+		{
+			"file": "performance-budget.spec.ts",
+			"line": 182,
+			"title": "hover intent preloads the login route code from the landing page",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6257
+				}
+			]
+		},
+		{
+			"file": "recipient-no-reservations.spec.ts",
+			"line": 15,
+			"title": "recipient view hides reservation info after visitor reserves",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 13485
+				}
+			]
+		},
+		{
+			"file": "request-budgets.spec.ts",
+			"line": 59,
+			"title": "wishlist view: at most 3 dynamic requests, no metadata refetch, no dashboards",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5839
+				}
+			]
+		},
+		{
+			"file": "request-budgets.spec.ts",
+			"line": 89,
+			"title": "home overview: no hydration overview request or category fallback",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 816
+				}
+			]
+		},
+		{
+			"file": "request-budgets.spec.ts",
+			"line": 112,
+			"title": "gift creation: exactly 1 dynamic request, list updates via single-flight",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4024
+				}
+			]
+		},
+		{
+			"file": "request-budgets.spec.ts",
+			"line": 152,
+			"title": "reservation: exactly 1 dynamic request, reserved state via single-flight",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8599
+				}
+			]
+		},
+		{
+			"file": "request-budgets.spec.ts",
+			"line": 196,
+			"title": "upload authorization: exactly 1 dynamic request for the whole upload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3344
+				}
+			]
+		},
+		{
+			"file": "reserved-band-ordering.spec.ts",
+			"line": 63,
+			"title": "gifter sees the own-reservation band first and foreign reserved gifts sunk last",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 15704
+				}
+			]
+		},
+		{
+			"file": "reserved-band-ordering.spec.ts",
+			"line": 134,
+			"title": "recipient sees no band structure — owner order intact",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11664
+				}
+			]
+		},
+		{
+			"file": "reserved-band-ordering.spec.ts",
+			"line": 172,
+			"title": "a visitor with no reservation of their own sees neither band header",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10098
+				}
+			]
+		},
+		{
+			"file": "reserved-band-ordering.spec.ts",
+			"line": 207,
+			"title": "Display keeps priority grouping unavailable without prioritized gifts",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3363
+				}
+			]
+		},
+		{
+			"file": "settings-global-save.spec.ts",
+			"line": 17,
+			"title": "tablet layout keeps horizontal tabs, fixed scrolling content, and Save on every tab",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3468
+				}
+			]
+		},
+		{
+			"file": "settings-global-save.spec.ts",
+			"line": 55,
+			"title": "one global Save persists Details, Categories, Appearance, and Image/Crops",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5020
+				}
+			]
+		},
+		{
+			"file": "settings-global-save.spec.ts",
+			"line": 109,
+			"title": "guarded Save and continue persists the draft before closing",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3610
+				}
+			]
+		},
+		{
+			"file": "visitor-no-reserver-names.spec.ts",
+			"line": 29,
+			"title": "visitor sees the reserved indicator but never the reserver name",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 11728
+				}
+			]
+		},
+		{
+			"file": "visitor-no-reserver-names.spec.ts",
+			"line": 85,
+			"title": "moderator sees the reserver name on the same wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 15612
+				}
+			]
+		},
+		{
+			"file": "wishlist-delete.spec.ts",
+			"line": 7,
+			"title": "recipient can delete an unshared list from settings, and it disappears from /my-lists without reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3822
+				}
+			]
+		},
+		{
+			"file": "wishlist-delete.spec.ts",
+			"line": 48,
+			"title": "non-manager never sees the delete affordance",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8226
+				}
+			]
+		},
+		{
+			"file": "wishlist-delete.spec.ts",
+			"line": 71,
+			"title": "a shared wishlist shows the archive notice instead of a delete button",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6427
+				}
+			]
+		},
+		{
+			"file": "wishlist-for-someone.spec.ts",
+			"line": 19,
+			"title": "header shows „Pro {recipient}\" + „Spravuje {creator}\" and the creator can reserve",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5849
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-bulk.spec.ts",
+			"line": 30,
+			"title": "mobile bulk hierarchy fits all actions and restores focus through every nested level",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7451
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-bulk.spec.ts",
+			"line": 159,
+			"title": "mobile bulk priority succeeds for one and multiple selected gifts",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6801
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-bulk.spec.ts",
+			"line": 197,
+			"title": "all six mobile bulk actions refresh and persist on a shared list for one and multiple gifts",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 27520
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-bulk.spec.ts",
+			"line": 330,
+			"title": "mobile bulk actions expose mixed received state and apply a common value",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6627
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-hidden-selection.spec.ts",
+			"line": 18,
+			"title": "bulk hidden-selection confirmation preserves exact received state on undo",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 12021
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 15,
+			"title": "mobile More uses a Sheet in card and list views and returns focus on Escape",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7990
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 51,
+			"title": "selection survives responsive reflow while normal controls remain replaced",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5432
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 81,
+			"title": "mobile toolbar starts an empty selection from deterministic SSR markup",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4949
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 121,
+			"title": "mobile long press opens Sheet drill-in and selection toolbar Actions row",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6639
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 157,
+			"title": "mobile movement beyond the tolerance cancels a pending long press",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3879
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 184,
+			"title": "mobile scroll cancels a pending long press",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4763
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions-mobile.spec.ts",
+			"line": 203,
+			"title": "mobile long press beginning on a card control does not open the actions Sheet",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5604
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions.spec.ts",
+			"line": 13,
+			"title": "desktop contextual selection works in both supported card and list views",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5613
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions.spec.ts",
+			"line": 57,
+			"title": "desktop More uses a menu in card and list views with truthful state and focus lifecycle",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 9279
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions.spec.ts",
+			"line": 138,
+			"title": "language and palette popovers close when their selected choice is reselected",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5181
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions.spec.ts",
+			"line": 174,
+			"title": "wide touch long press uses the shared Sheet while desktop More remains a menu",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7275
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions.spec.ts",
+			"line": 201,
+			"title": "gift card footer follows nested radii and keeps the action shadow and touch hit inside",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5285
+				}
+			]
+		},
+		{
+			"file": "wishlist-gift-actions.spec.ts",
+			"line": 249,
+			"title": "list view persists on the local device after reload",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 7063
+				}
+			]
+		},
+		{
+			"file": "wishlist-metadata.spec.ts",
+			"line": 8,
+			"title": "seeded bearer-link wishlist blocks indexing without breaking social unfurls",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 774
+				}
+			]
+		},
+		{
+			"file": "wishlist-metadata.spec.ts",
+			"line": 52,
+			"title": "wishlist response blocks indexing directly for /w/xmas2026/settings",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 445
+				}
+			]
+		},
+		{
+			"file": "wishlist-metadata.spec.ts",
+			"line": 52,
+			"title": "wishlist response blocks indexing directly for /en/w/xmas2026",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 416
+				}
+			]
+		},
+		{
+			"file": "wishlist-metadata.spec.ts",
+			"line": 52,
+			"title": "wishlist response blocks indexing directly for /en/w/xmas2026/settings",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 342
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-access.spec.ts",
+			"line": 13,
+			"title": "manager import and export actions live in settings instead of the toolbar",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4618
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-access.spec.ts",
+			"line": 53,
+			"title": "non-owner cannot use the settings action and cannot edit via direct URL",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8453
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-access.spec.ts",
+			"line": 94,
+			"title": "archived wishlist cannot be edited from the settings UI",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 5755
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-details.spec.ts",
+			"line": 8,
+			"title": "owner can edit title, description, and event date, and changes persist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8106
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-details.spec.ts",
+			"line": 91,
+			"title": "new custom category is available in Add gift without reloading",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4567
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-details.spec.ts",
+			"line": 128,
+			"title": "custom category labels can be swapped atomically and persist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 8692
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-details.spec.ts",
+			"line": 194,
+			"title": "zero-use category removal skips confirmation and persists",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3850
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings-details.spec.ts",
+			"line": 228,
+			"title": "confirmed category removal leaves its assigned gift uncategorized",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 10419
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings.spec.ts",
+			"line": 7,
+			"title": "real gift numeric fields suppress spinners and wheel only while focused",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2889
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings.spec.ts",
+			"line": 71,
+			"title": "short viewport keeps settings content scrollable and its stable footer visible",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2769
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings.spec.ts",
+			"line": 115,
+			"title": "Image/Crops overflow and body scrolling leave pinned tab geometry unchanged",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3950
+				}
+			]
+		},
+		{
+			"file": "wishlist-settings.spec.ts",
+			"line": 171,
+			"title": "dirty Escape then Continue editing preserves the visible draft and later reopen",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 6251
+				}
+			]
+		},
+		{
+			"file": "wishlist.spec.ts",
+			"line": 13,
+			"title": "shows draft status chip and single share action for unshared wishlist",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 2797
+				}
+			]
+		},
+		{
+			"file": "wishlist.spec.ts",
+			"line": 44,
+			"title": "view switcher switches between card and list",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 3023
+				}
+			]
+		},
+		{
+			"file": "wishlist.spec.ts",
+			"line": 62,
+			"title": "stationary pointer below hero settings does not hover or move Display",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4012
+				}
+			]
+		},
+		{
+			"file": "wishlist.spec.ts",
+			"line": 104,
+			"title": "first share visits methods before success and reopen starts at methods",
+			"project": "chromium",
+			"status": "expected",
+			"attempts": [
+				{
+					"retry": 0,
+					"status": "passed",
+					"durationMilliseconds": 4921
+				}
+			]
+		}
+	]
+}

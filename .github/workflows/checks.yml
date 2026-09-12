@@ -114,7 +114,7 @@ jobs:
             # which requires headed mode; provide a virtual display on Linux CI.
             - run: xvfb-run --auto-servernum pnpm run test:e2e --shard=${{ matrix.shard }}/4
             - uses: actions/upload-artifact@v4
-              if: failure()
+              if: ${{ !cancelled() }}
               with:
                   name: playwright-report-shard-${{ matrix.shard }}
                   path: test-results/

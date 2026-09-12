@@ -90,8 +90,10 @@ REVIEW.md
 .mpx/BOARD.md
 .mpx/board-files/
 
-# Local component visual-review artifacts
+# Local audit and component visual-review artifacts
 /.mpx/logs/component-visual-review/
+/.mpx/logs/e2e-audit/
+/.test-audit/
 /review/lifecycle-fix-notes.md
 /review/checks/
 

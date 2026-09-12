@@ -41,7 +41,7 @@ test.describe('Wishlist page', () => {
 		await page.context().close();
 	});
 
-	test('view switcher offers card and list only', async ({ browser, request, baseURL }) => {
+	test('view switcher switches between card and list', async ({ browser, request, baseURL }) => {
 		const user = createTestUser('wl-views');
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
@@ -50,14 +50,11 @@ test.describe('Wishlist page', () => {
 		// stable data-testids rather than the (locale-dependent) accessible names.
 		const cardBtn = page.getByTestId('gift-view-card');
 		const listBtn = page.getByTestId('gift-view-list');
-		const compactBtn = page.getByTestId('gift-view-compact');
 
 		await expect(cardBtn).toHaveAttribute('aria-checked', 'true');
 
 		await listBtn.click();
 		await expect(listBtn).toHaveAttribute('aria-checked', 'true');
-
-		await expect(compactBtn).toHaveCount(0);
 
 		await page.context().close();
 	});

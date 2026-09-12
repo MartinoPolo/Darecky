@@ -111,15 +111,39 @@ export async function setRealBrowserZoom(
 	return metrics;
 }
 
+async function prepareRestingControl(page: Page, control: Locator) {
+	await page.mouse.move(1, 1);
+	await expect(control).toBeVisible();
+	await control.scrollIntoViewIfNeeded();
+	await page.evaluate(() => document.fonts.ready.then(() => undefined));
+	await expect
+		.poll(() =>
+			control.evaluate((element) => {
+				const animations = element.getAnimations({ subtree: true });
+				for (
+					let ancestor = element.parentElement;
+					ancestor;
+					ancestor = ancestor.parentElement
+				) {
+					animations.push(...ancestor.getAnimations());
+				}
+				return animations.filter(
+					(animation) =>
+						animation.playState !== 'finished' &&
+						animation.playState !== 'idle' &&
+						animation.effect?.getComputedTiming().endTime !== Infinity,
+				).length;
+			}),
+		)
+		.toBe(0);
+}
+
 export async function stationaryLowerEdge(
 	page: Page,
 	control: Locator,
 	controlName: string,
 ): Promise<StationaryEvidence> {
-	await page.mouse.move(1, 1);
-	await expect(control).toBeVisible();
-	await control.scrollIntoViewIfNeeded();
-	await page.waitForTimeout(250);
+	await prepareRestingControl(page, control);
 	const box = await control.boundingBox();
 	expect(box).not.toBeNull();
 	const restingAfter = await control.evaluate((element) => {
@@ -273,32 +297,7 @@ export async function stationaryLowerEdge(
 }
 
 export async function bottomToTopSweep(page: Page, control: Locator, controlName: string) {
-	await page.mouse.move(1, 1);
-	await expect(control).toBeVisible();
-	await control.scrollIntoViewIfNeeded();
-	await page.evaluate(() => document.fonts.ready.then(() => undefined));
-	await expect
-		.poll(() =>
-			control.evaluate((element) => {
-				let running = 0;
-				for (
-					let ancestor: Element | null = element;
-					ancestor;
-					ancestor = ancestor.parentElement
-				) {
-					running += ancestor
-						.getAnimations()
-						.filter(
-							(animation) =>
-								animation.playState !== 'finished' &&
-								animation.playState !== 'idle' &&
-								animation.effect?.getComputedTiming().endTime !== Infinity,
-						).length;
-				}
-				return running;
-			}),
-		)
-		.toBe(0);
+	await prepareRestingControl(page, control);
 	const box = await control.boundingBox();
 	expect(box).not.toBeNull();
 	const afterHeight = await control.evaluate((element) => {
@@ -323,8 +322,11 @@ export async function bottomToTopSweep(page: Page, control: Locator, controlName
 	const states: Array<{ y: number; hovered: boolean }> = [];
 	for (let y = lowerBoundary; y >= box!.y + 0.5; y -= 1) {
 		await page.mouse.move(x, y);
-		await page.waitForTimeout(20);
-		states.push({ y, hovered: await control.evaluate((element) => element.matches(':hover')) });
+		const hovered = await control.evaluate(async (element) => {
+			await new Promise<void>((resolveFrame) => requestAnimationFrame(() => resolveFrame()));
+			return element.matches(':hover');
+		});
+		states.push({ y, hovered });
 	}
 	const interveningUnhovered = states.filter(({ hovered }) => !hovered);
 	return {

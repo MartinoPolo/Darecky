@@ -13,8 +13,8 @@ import {
  *
  * The visitor/gifter view splits gifts into bands: the viewer's own reservations pin to the top
  * under „Vaše rezervace", available gifts follow, and foreign fully-reserved gifts sink to the
- * bottom. The recipient (owner) sees no reservation data, so no bands appear. The priority-grouping
- * toggle only exists once the list has a prioritized gift.
+ * bottom. The recipient (owner) sees no reservation data, so no bands appear. Priority grouping
+ * remains unavailable when the loaded list has no prioritized gifts.
  *
  * Ordering is asserted in LIST view (single column) so a card's vertical position is a faithful
  * proxy for its render order — the card grid is multi-column, where same-row cards share a `y`.
@@ -204,7 +204,7 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		await visitorPage.context().close();
 	});
 
-	test('priority-grouping toggle is absent until the list has a prioritized gift', async ({
+	test('Display keeps priority grouping unavailable without prioritized gifts', async ({
 		browser,
 		request,
 		baseURL,
@@ -214,13 +214,13 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		await createWishlistAndNavigate(ownerPage, 'Grouping Toggle List');
 		await addGift(ownerPage, 'Unprioritized Gift');
 
-		// Open Display → Filter — the grouping toggle must not be offered yet.
-		const filterMenu = await openDesktopDisplaySubmenu(ownerPage, /Filtrovat|Filter/);
+		const groupingMenu = await openDesktopDisplaySubmenu(ownerPage, /Seskupení|Grouping/);
 		await expect(
-			filterMenu.getByRole('menuitemcheckbox', {
-				name: /Seskupit podle priority|Group by priority/,
-			}),
-		).toHaveCount(0);
+			groupingMenu.getByRole('menuitemradio', { name: /Podle priority|By priority/ }),
+		).toBeDisabled();
+		await expect(
+			groupingMenu.getByRole('menuitemradio', { name: /Bez seskupení|No grouping/ }),
+		).toHaveAttribute('aria-checked', 'true');
 		await ownerPage.keyboard.press('Escape');
 
 		await ownerPage.context().close();

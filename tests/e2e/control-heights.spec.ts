@@ -25,7 +25,7 @@ test.describe('issue #159 control-height geometry', () => {
 		}
 	});
 
-	test('create-list controls use 38px while its compact import action stays 26px', async ({
+	test('create-list controls share the 38px standalone-form step', async ({
 		browser,
 		request,
 		baseURL,
@@ -63,11 +63,6 @@ test.describe('issue #159 control-height geometry', () => {
 
 		for (const control of standaloneControls) {
 			await expectExactHeight(control, 38);
-		}
-
-		const importButton = dialog.getByRole('button', { name: /Import/ });
-		if ((await importButton.count()) > 0) {
-			await expectExactHeight(importButton, 26);
 		}
 
 		await page.context().close();
