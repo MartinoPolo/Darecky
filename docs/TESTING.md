@@ -38,8 +38,6 @@ For repeated narrow runs, explicitly opt into an **already controlled** server w
 - Establish positive preconditions before asserting absence: a privacy test must first prove a visitor successfully reserved. Shared global counters must not be asserted as fixed totals or isolated deltas in concurrent E2E.
 - Screenshots are not automatically assertions. Keep required sheet-inventory/hover acceptance evidence and failure diagnostics, but avoid repeated diagnostic screenshot matrices in unrelated persistence tests. Preserve the real-zoom hover matrix and the shared mobile-sheet contract required by `DECISIONS.md`.
 
-See [E2E audit](E2E_AUDIT.md) for the reviewed baseline, removals, measured timings, and remaining risks.
-
 The ingestion endpoint depends on the `GIFT_INGESTION_RATE_LIMIT` Workers binding. `pnpm preview`
 uses local Wrangler, which simulates this binding from `wrangler.jsonc`. The normal Vite-backed e2e
 server remains supported for application tests, but intentionally has no Workers binding; if ingestion
