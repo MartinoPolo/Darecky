@@ -1,5 +1,7 @@
 # Design Brief – Wishlist Page
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant 2 – E-commerce grid)
 > **Refined mockup**: `designs/wishlist-page/refined.html`
 > **Summary**: `designs/wishlist-page/SUMMARY.md`

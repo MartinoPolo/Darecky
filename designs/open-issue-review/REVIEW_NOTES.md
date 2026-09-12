@@ -1,5 +1,7 @@
 # Open-issue design review
 
+> **Snapshot warning:** Status and approval assertions below capture the original review snapshot, not the current implementation. Later `.mpx/DECISIONS.md` entries take precedence; do not assume every item remains pending.
+
 ## Scope and status
 
 Design-only review of the open GitHub backlog. No production code, data, migrations, or deployment changes are authorized by this review. Settings and command controls are approved and their scoped design phases are finalized; gift geometry Variant C is also approved and finalized. None is a verified production fix.

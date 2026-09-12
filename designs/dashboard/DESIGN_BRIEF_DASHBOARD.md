@@ -1,5 +1,7 @@
 # Design Brief – Přejeme si Dashboard
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant 3 cards + Variant 2 list ref)
 > **Refined mockup**: `designs/dashboard/refined.html`
 > **Summary**: `designs/dashboard/SUMMARY.md`
@@ -188,7 +190,7 @@ Shadow md: standard card elevation
 
 ## Visual References
 
-- `designs/style-exploration/direction-a-honey.html` – fidelity target, component patterns, nav shell
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-a-honey.html` is historical provenance only.
 - `designs/tokens.css` – all spacing, typography, motion tokens
 - `src/app.css` – final color values (sage green primary, dark/light variables)
 

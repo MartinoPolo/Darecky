@@ -1,5 +1,7 @@
 # Gift Detail Modal v2 – Design Summary
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 **Base**: Variant A | **Refined**: 2026-06-03
 
 ## Refinements Applied

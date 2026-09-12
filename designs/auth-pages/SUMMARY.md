@@ -1,5 +1,7 @@
 # Auth Pages – Refined Summary
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 Variant 2 – Split Screen · Light mode only · 2026-05-30
 
 ---

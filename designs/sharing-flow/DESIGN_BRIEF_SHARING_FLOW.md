@@ -1,5 +1,7 @@
 # Design Brief – Sharing Flow
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant 2 – Multi-step wizard)
 > **Refined mockup**: `designs/sharing-flow/refined.html`
 > **Summary**: `designs/sharing-flow/SUMMARY.md`
@@ -167,7 +169,7 @@ The owner never sees reservation state, so the background wishlist cards always 
 
 ## Visual References
 
-- `designs/style-exploration/direction-a-honey.html` – fidelity and component language reference
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-a-honey.html` is historical provenance only.
 - `designs/tokens.css` – full token vocabulary
 - `src/app.css` – actual production color tokens (use these, not Direction A colors)
 - App primary = sage green `oklch(52.7% 0.154 150.069deg)` – warm-cool neutral feel, not aggressive

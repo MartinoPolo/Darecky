@@ -30,14 +30,18 @@ Guide the creation of a comprehensive, standalone design brief for a UI componen
 
 ## Process
 
+### Step 0: Read Current Design Authority
+
+First read `designs/README.md` and the current `.mpx/DECISIONS.md`. Later decisions override earlier approved scope or artifacts. If target or direction is ambiguous, ask; do not infer intent from the latest-mentioned variant. Exclude `archive/designs/` and historical briefs identified by `designs/README.md` from automatic discovery.
+
 ### Step 1: Gather ALL Requirements
 
 Before writing anything, exhaustively research the feature:
 
 1. **GitHub issues**: Search for related issues/PRDs via `gh issue list --search "<keywords>"`. Read issue bodies, comments, and linked PRDs. Human decisions in comments are highest priority.
-2. **Project docs**: Read any project context or decision files if they exist.
+2. **Project docs**: Read project context, `designs/README.md`, and current `.mpx/DECISIONS.md`; later decisions override earlier approved scope and artifacts.
 3. **Existing implementation**: If any code exists for this feature, read it. Understand current state vs. desired state.
-4. **Related briefs**: Read any related design briefs under `designs/`.
+4. **Related briefs**: Read related current briefs, excluding `archive/designs/` and briefs marked historical in `designs/README.md`.
 5. **Design system**: Read `designs/DESIGN_SYSTEM.md` if it exists, or infer the design system from `src/app.css` and existing components.
 
 ### Step 2: Determine Surrounding Context (Critical)
@@ -89,13 +93,13 @@ For each component relevant to the feature, document:
 - **Available variants/props**
 - **Where to use it** in this design
 
-Be specific: say "use `Button variant='ghost'` with icon-only size" NOT "add a button."
+Be specific and match local APIs/stories: for example, use `Button intent='ghost' size='sm'` and `Badge tone='success'`. Do not use unsupported sizes such as `size='icon'`.
 
 ### Step 4: Research Missing Primitives
 
 If the feature needs UI patterns not in the inventory:
 
-- Spawn `mp-context7-docs-fetcher` to check shadcn-svelte (`/huntabyte/shadcn-svelte`) and Bits UI (`/huntabyte/bits-ui`)
+- Spawn `mpx-context7-docs-fetcher` to check shadcn-svelte (`/huntabyte/shadcn-svelte`) and Bits UI (`/huntabyte/bits-ui`)
 - Include as "Components to Adopt" with rationale for why existing components don't suffice
 
 ### Step 5: Draft the Brief
@@ -180,11 +184,11 @@ List EVERY state this component can be in:
 
 ### Existing Components (MUST use)
 
-| Component | Variant/Props                 | Usage in This Design   |
-| --------- | ----------------------------- | ---------------------- |
-| Button    | `variant="ghost"` size="icon" | Toolbar action buttons |
-| Badge     | `variant="success"`           | Status indicators      |
-| [etc.]    |                               |                        |
+| Component | Variant/Props              | Usage in This Design   |
+| --------- | -------------------------- | ---------------------- |
+| Button    | `intent="ghost" size="sm"` | Toolbar action buttons |
+| Badge     | `tone="success"`           | Status indicators      |
+| [etc.]    |                            |                        |
 
 ### Components to Adopt (install from shadcn-svelte)
 
@@ -260,7 +264,7 @@ Reference the project's Tailwind/CSS theme from `src/app.css`:
 
 ### Key Principles for Writing the Brief
 
-1. **Specify components, not appearance**: Say "use `Button variant='ghost'` size='icon'" not "ghost-styled icon button." Reference exact variant names from the component library.
+1. **Specify components, not appearance**: Say "use `Button intent='ghost' size='sm'`" not "ghost-styled icon button." Reference exact variant names from the component library.
 2. **Proportions matter**: The mockup must show components at their actual proportions within the layout.
 3. **Requirements from humans beat requirements from code**: If a grilling session or issue comment says "do X," that overrides what the current code does.
 4. **Complete state enumeration**: Every interactive element needs ALL states listed. Missing states = designer invents them = inconsistency.

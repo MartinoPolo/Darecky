@@ -31,7 +31,7 @@ Inside the phone, top to bottom:
 
 1. Existing 56px app navigation with menu, gift shortcut, Přejeme si logo, add action, notifications, and avatar.
 2. A refined compact wishlist hero that keeps the wishlist photo but removes the large ruled-notepad treatment. The hero must show recipient, title, lifecycle/count metadata, and a single role-aware overflow/settings action instead of wrapping labeled action buttons.
-3. The selected compact mobile toolbar direction from `designs/mobile-wishlist-toolbar/variants/variant-b.html`: icon-only browsing controls, maximum two rows, minimum 40px targets. The gift-view switcher must control the rendered cards/list.
+3. The current wishlist command structure from `.mpx/DECISIONS.md` and `designs/wishlist-command-review/`: one **Display** control in the command row, **Settings** in the hero, and **Add** as the primary action. The separate layout switcher controls cards/list; Display contains sorting, grouping, and filtering. Toolbar redesign remains outside this brief; only gift density is under review.
 4. The gift collection under design. Show enough realistic gifts to demonstrate all state and action combinations while scrolling.
 
 The role switcher must update hero actions, gift visibility, card actions, and privacy-sensitive reservation information. The collection must include available, partially reserved, fully reserved, reserved by the current visitor, reserved by someone else, purchased-by-current-visitor, received, liked, no-price, no-image, and long-title examples. Use realistic Czech product names, prices, and labels.
@@ -298,7 +298,7 @@ Reference `designs/tokens.css` via `<link rel="stylesheet" href="../../tokens.cs
 
 ## 10. Visual References
 
-- **Selected mobile toolbar**: `designs/mobile-wishlist-toolbar/variants/variant-b.html`.
+- **Current command structure (scoped reference)**: `.mpx/DECISIONS.md` and `designs/wishlist-command-review/`; use one Display control, hero Settings, and primary Add. The archived toolbar mockup is historical provenance only and is not a current requirement.
 - **Current collection screenshot**: `designs/mobile-wishlist-density/current-mobile-wishlist.png`.
 - **Current oversized hero screenshot**: `designs/mobile-wishlist-density/current-mobile-wishlist-hero.png`.
 - **Current wishlist card implementation**: `src/lib/components/blocks/gift/GiftCard.svelte`.

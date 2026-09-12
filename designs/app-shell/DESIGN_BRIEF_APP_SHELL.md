@@ -1,5 +1,7 @@
 # Design Brief – App Shell / Navigation
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant 1)
 > **Refined mockup**: `designs/app-shell/refined.html`
 > **Summary**: `designs/app-shell/SUMMARY.md`
@@ -177,8 +179,8 @@ From `tokens.css` and `app.css`:
 
 ## Visual References
 
-- `designs/style-exploration/direction-a-honey.html` – component anatomy and token usage pattern
-- `designs/style-exploration/direction-b-sage.html` – sage green color direction (primary color for this shell)
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-a-honey.html` is historical provenance only.
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-b-sage.html` is historical provenance only.
 - `designs/tokens.css` – authoritative spacing, radius, shadow values
 
 ---

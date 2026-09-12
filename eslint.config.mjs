@@ -32,6 +32,7 @@ export default [
 			'.mpx/logs/e2e-audit/**',
 			'.test-audit/**',
 			'review/checks/**',
+			'archive/**',
 		],
 	},
 	...tseslint.configs.recommended,

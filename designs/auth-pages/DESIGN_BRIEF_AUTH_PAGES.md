@@ -1,5 +1,7 @@
 # Design Brief – Auth Pages
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant 2 – Split screen)
 > **Refined mockup**: `designs/auth-pages/refined.html`
 > **Summary**: `designs/auth-pages/SUMMARY.md`

@@ -2,12 +2,14 @@
 
 Settled architectural and design decisions for Přejeme si.
 
+Use the current contract together with entries that explicitly revise it; superseded text and rejected alternatives are historical rationale, not additional requirements. Mockups illustrate only the aspects accepted here and never override later privacy, behavior, or geometry decisions. `AGENTS.md` and active deployment runbooks govern operational safety. Material under `archive/` is excluded from routine implementation context.
+
 ## Product & Domain
 
 ### Owner never sees reservation state
 
-Decided: 2026-05-29
-What: The wishlist owner cannot see which gifts are reserved, who reserved them, or any reservation counts.
+Decided: 2026-05-29 — Re-keyed to the recipient role by "Recipient replaces owner" below. Explicit disclosed self-promotion is the exception defined in Roles & Permissions; ordinary recipient management rights or admin status do not waive privacy.
+What: The protected recipient view cannot see which gifts are reserved, who reserved them, or any reservation counts.
 Why: The surprise element is the core product differentiator — the owner should be genuinely surprised by their gifts.
 Rejected: Partial visibility (e.g., showing counts but not names) — still leaks info and weakens the surprise.
 
@@ -142,7 +144,7 @@ Rejected: Email lookup at creation; shipping linking inside the first release (d
 ### Migration: existing lists become self-recipient
 
 Decided: 2026-07-08
-What: Existing wishlists map losslessly: former owner → linked recipient; `ownerIsModerator = true` → recipient-also-správce (disclosure banner kept, reworded „Obdarovaný je zároveň správcem"). Additive columns; renames via raw SQL (Drizzle push is interactive).
+What: Existing wishlists map losslessly: former owner → linked recipient; `ownerIsModerator = true` → recipient-also-správce (disclosure banner kept, reworded „Obdarovaný je zároveň správcem"). Additive columns and explicit rename migrations preserve existing rows. Production migration procedures are governed by `AGENTS.md` and `docs/DEPLOYMENT.md`, never by `drizzle-kit push`.
 Why: Production data must be preserved; the old model is a strict subset of the new one.
 
 ### UI terminology: obdarovaný / správce; code keeps moderator
@@ -406,7 +408,7 @@ Rejected: Flat file structure (doesn't scale), feature-based routes (couples dom
 ### Component tiers: base / derived / blocks
 
 Decided: 2026-05-30
-What: Three tiers — `base/` (shadcn-managed primitives, do not edit), `derived/` (reusable wrappers combining base components), `blocks/` (feature-level composed UI like WishlistCard, GiftDetailModal).
+What: Three tiers — `base/` (shadcn-managed primitives; changes require an explicitly approved exception, such as the stationary elevation owner/surface contract below), `derived/` (reusable wrappers combining base components), `blocks/` (feature-level composed UI like WishlistCard, GiftDetailModal).
 Why: Clear ownership and abstraction layers. Matches Grovekeeper's proven pattern with naming aligned to the user's preference.
 Rejected: Two tiers only (blocks get mixed with primitives), four tiers (over-engineered for this app's complexity).
 
@@ -488,6 +490,8 @@ Replaced because: availability filtering is the highest-value visitor action and
 
 ## Design — UI Review (2026-05-30)
 
+These early reviews retain structural rationale. Anime Sky and subsequent product, privacy, navigation, control, and crop decisions supersede their old styling and copy. See `designs/README.md` before consulting the referenced mockups.
+
 ### App Shell: Top navbar for desktop
 
 Decided: 2026-05-30
@@ -499,7 +503,7 @@ Reference: `designs/app-shell/variant-1.html` (primary), `variant-2.html` (dropd
 ### App Shell: Logo with custom icon + dimmed TLD
 
 Decided: 2026-05-30
-What: Custom logo icon + "prejemesi" text + dimmed TLD suffix (e.g., ".cz") with visible gap between name and TLD. Both logo and text are links to the home/default page. Domain TBD — prejemesi.cz unavailable, may change name or TLD.
+What: Custom logo icon + "prejemesi" text + dimmed `.cz` suffix with visible gap between name and TLD. Both logo and text link to the home/default page. The production domain is prejemesi.cz; the original domain-availability note is obsolete.
 Why: The visual gap between name and suffix is distinctive. Linking both provides easy home navigation.
 
 ### App Shell: Nav items as links + dropdown triggers
@@ -607,8 +611,8 @@ Rejected: Hero-centric (variant 1), social proof (variant 4), minimalist (varian
 ### Sharing Flow: Multi-step wizard
 
 Decided: 2026-05-30
-What: Sharing uses a multi-step wizard (variant 2): Step 1 confirm lock → Step 2 choose sharing method → Step 3 success. Final step includes clear text: "Od tohoto momentu můžete seznam pouze prohlížet, přidávat nová přání, přidat moderátora nebo seznam sdílet."
-Why: The sharing-locks-editing consequence is important enough to warrant explicit confirmation and clear post-share guidance.
+What: Sharing uses a multi-step wizard (variant 2): Step 1 confirm consequences → Step 2 choose sharing method → Step 3 success. Consequence copy follows the current per-field post-share editing and scoped grace-window decisions above; the original blanket-lock wording is superseded.
+Why: Sharing consequences warrant explicit confirmation and accurate post-share guidance.
 Reference: `designs/sharing-flow/variant-2.html`.
 Rejected: Single modal (variant 1), side sheet (variant 3), tabbed card (variant 4), bottom sheet (variant 5).
 
@@ -648,7 +652,7 @@ Why: Reduces design work by 50%. OKLCH token system produces good dark mode auto
 ### V1: Single release, all features
 
 Decided: 2026-05-30
-What: All 16 core features ship in a single V1 release. No MVP/phased rollout within V1.
+What: The original V1 release grouped its core features together. No MVP/phased rollout within V1.
 Why: Features are interconnected (sharing depends on gifts, notifications depend on reservations). Phasing would ship an incomplete product.
 Rejected: MVP subset first (would leave holes in the core loop).
 
@@ -662,15 +666,15 @@ Rejected: Czech slugs (`/prihlaseni`, `/moje-seznamy`).
 ### Wishlist creation as modal
 
 Decided: 2026-05-30
-What: Creating a wishlist opens a modal with minimal fields: title (required), event date (optional), theme (optional, default preset). After creation, redirects to the wishlist page. Description, images, and custom theme are edited on the wishlist page itself.
+What: Creating a wishlist opens a modal with minimal fields: title (required), event date (optional), and palette (optional, default palette). Recipient choice is defined below. After creation, redirects to the wishlist page. Description and images are edited on the wishlist page itself; the later unified palette decision retires custom single-color themes.
 Why: Fast creation flow — the modal keeps context, and most fields are optional at creation time.
 Rejected: Separate page (`/new-list`), multi-step wizard (over-engineered for 1-3 fields).
 
 ### Creation modal: recipient choice as top segmented control
 
 Decided: 2026-07-08
-What: The create-wishlist modal gains a two-option segmented control at the top, above the title field: „Pro mě" (default) / „Pro někoho jiného". Selecting „Pro někoho jiného" reveals a required, autofocused „Jméno obdarovaného" text input (trimmed, max 100 chars) plus one muted helper line: „Seznam budete spravovat vy a uvidíte rezervace. Volbu nelze později změnit." No title auto-fill from the recipient name; no email/linking fields.
-Why: The recipient defines the list's identity, so it is decided first. A segmented control fits a binary, glanceable choice; the „Pro mě" default keeps the common path at zero added friction. The helper line covers the two non-obvious consequences (creator = správce with full visibility; choice immutable).
+What: The create-wishlist modal gains a two-option segmented control at the top, above the title field: „Pro mě" (default) / „Pro někoho jiného". Selecting „Pro někoho jiného" reveals a required, autofocused „Jméno obdarovaného" text input (trimmed, max 100 chars) plus a muted helper explaining that the creator manages the list and sees reservations. The original blanket immutability copy is superseded by the linked-recipient reassignment and claim-token decisions above. No title auto-fill from the recipient name; no email/linking fields.
+Why: The recipient defines the list's identity, so it is decided first. A segmented control fits a binary, glanceable choice; the „Pro mě" default keeps the common path at zero added friction. The helper explains the creator's správce role and reservation visibility without contradicting the later guarded reassignment/linking workflows.
 Rejected: Select/radio group (heavier for two options); recipient field at the bottom (frames the title wrong); title auto-fill „Vánoce pro Rosie" (too magical); email lookup in the modal (claim-token follow-up covers linking).
 
 ## Authentication Flow
@@ -686,7 +690,7 @@ Rejected: Auth page redirect (friction), prompt before viewing (blocks browsing)
 
 Decided: 2026-05-30
 What: When a user registers with an email that matches anonymous reservations, those reservations are automatically linked to the new account.
-Why: Preserves the anonymous user's actions without manual claim flow. Email is the natural linking key.
+Why: Preserves the anonymous user's reservations without a manual reservation-claim flow. Email is the natural linking key. This is distinct from the recipient account-linking claim token, which assigns a wishlist recipient rather than claiming reservations.
 Rejected: Manual claim flow (too complex for V1), no linking (reservations orphaned).
 
 ### Password reset in V1
@@ -887,7 +891,7 @@ Rejected: Importing taken rows as anonymous reservations (revisit only if mid-gi
 
 Decided: 2026-06-03
 What: Replace `gift.url` with `gift.links: { url, label? }[]` (jsonb), max 10 per gift. `links[0]` is primary (drives the domain chip, OG tags, "Bez odkazu"). Label optional, defaults to the domain. Reservations and likes remain per-gift.
-Why: Real wishlists offer alternatives ("nebo tohle"). jsonb matches the existing imageMeta/imageSlots pattern and avoids a join on every gift fetch. App is in development → no back-compat shim.
+Why: Real wishlists offer alternatives ("nebo tohle"). jsonb matches the existing imageMeta/imageSlots pattern and avoids a join on every gift fetch. The original migration was scoped before production. This historical rationale does not authorize destructive changes to current production data; follow `AGENTS.md` and `docs/DEPLOYMENT.md` for migrations.
 Rejected: Separate `giftLink` table (join per fetch, heavier); keeping a single `url` (too limiting).
 
 ### Gift card: piece count beside title (role-conditional), links stacked at bottom
@@ -937,7 +941,7 @@ Rejected: Parallel per-surface image components (drift risk, duplicated crop log
 ### Focal point + zoom as canonical crop representation; cropRect persisted for editor restore only
 
 Decided: 2026-06-02
-What: The persisted crop value for any image slot is `{ x, y, zoom }` (focal point in percent + zoom ≥ 1). A normalized `cropRect` (0–1) is also persisted alongside it, but solely so the crop editor can restore the exact region the user drew. Only focal point + zoom is used for rendering.
+What: The persisted crop value for any image slot is `{ x, y, zoom }` (focal point in percent). A normalized `cropRect` is also persisted alongside it, but solely so the crop editor can restore the exact region the user drew. Only focal point + zoom is used for rendering. The original zoom ≥ 1 and bounded-rect limits are superseded by the manual zoom-out-to-contain decision below.
 Why: Focal point + zoom is resolution- and aspect-ratio-independent — it produces correct framing regardless of which slot ratio is being rendered. A raw cropRect breaks when rendered at a different aspect ratio.
 Rejected: Persisting cropRect only (breaks rendering at different slot aspect ratios).
 
@@ -978,7 +982,7 @@ Rejected: Keeping the radio picker alongside clickable tiles (duplicated control
 ### Separated token responsibilities: bg-theme / wishlist tokens / frame-fill
 
 Decided: 2026-06-02
-What: Three distinct token layers — `data-bg-theme` attribute controls app-shell background tint; `--wishlist-*` tokens express wishlist color identity on the wishlist page; `--frame-fill` controls the background behind letterboxed images. Each is set and scoped independently.
+What: The original `data-bg-theme` and wishlist-theme namespaces are superseded by the unified palette system below. Preserve the separation of responsibilities: a wishlist's palette applies to its surface, the viewer's palette applies elsewhere, and `--frame-fill` controls letterboxed image fill.
 Why: Each concern is independently themeable and must not leak into the others (e.g., wishlist accent color must not affect the app shell).
 Rejected: Shared token namespace (cross-contamination between app shell and wishlist themes).
 
@@ -1031,7 +1035,7 @@ Rejected: Making the bordered preview literally re-derive `auto` at its own box 
 ### Visual base: anime-sky-final mockup
 
 Decided: 2026-07-10
-What: The whole app redesign is based on `designs/redesign-2026/anime-sky-final.html` — ink borders, hard offset "sticker" shadows, notebook motifs, DynaPuff display + Geist body, playful rotations, spring-lift hovers. Pre-redesign mockup references (designs/app-shell, dashboard, landing-page, …) remain valid for layout/structure; their visual style is superseded.
+What: The whole app redesign is based on `designs/redesign-2026/sky-final/anime-sky-final.html` — ink borders, hard offset "sticker" shadows, notebook motifs, DynaPuff display + Geist body, playful rotations, spring-lift hovers. Pre-redesign mockup references (designs/app-shell, dashboard, landing-page, …) remain valid for layout/structure; their visual style is superseded.
 Why: Chosen from the redesign-2026 anime variants after iteration (banner padding, mint-style cards, dimmed reserved gifts, retuned hue-saturated dark mode).
 Rejected: Other redesign-2026 variants (anime-mint, original anime-sky, brutalism, terracotta, modern, …).
 

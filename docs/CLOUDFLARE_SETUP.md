@@ -31,24 +31,16 @@ all plans), R2 (10 GB), Neon (free, ~300–800ms cold start after idle), Resend
 
 ---
 
-## 2. What's done vs. what you must do
+## 2. Code configuration and account-side verification
 
-**Already wired (no action):** adapter, wrangler config, Hyperdrive/R2 code
-paths, `app.d.ts` platform types, `cf:types` + `preview` scripts, `.env`
-gitignored (only `.env.example` tracked), `prepare:false` for the pooler.
+The repository contains the adapter, Wrangler configuration, Hyperdrive/R2 code paths,
+platform types, scripts, and local environment template. Treat these as configuration
+references, not evidence of current dashboard or deployed state.
 
-**Provisioning status:**
-
-1. Neon DB + Hyperdrive: done
-2. R2 bucket + `images.prejemesi.cz`: done
-3. Production secrets/vars in Cloudflare: done
-4. Deploy script: done
-5. Production migration against Neon: done
-6. Custom domain + `ORIGIN`: done
-7. Resend domain verification + `RESEND_API_KEY`: done
-8. Production auth hardening: done
-9. Production site hygiene: done
-10. Google OAuth redirect URIs: pending only if Google login is used
+Before a release, verify the target Cloudflare account has the expected Neon/Hyperdrive and
+R2 resources, Worker variables and secrets, custom domains, Resend credentials, authentication
+settings, and site-hygiene behavior. Verify Google OAuth redirect URIs when Google login is used.
+Follow [`DEPLOYMENT.md`](./DEPLOYMENT.md) for exact-SHA production reconciliation and approval.
 
 ---
 
@@ -205,13 +197,9 @@ through Hyperdrive, `db:push`, or seeding.
 Follow the gated `dev` → `production` release procedure in `docs/DEPLOYMENT.md`, including
 the production database gate and explicit GitHub environment approval.
 
-Current production Cloudflare resources:
-
-- Worker: `prejemesi`
-- Custom domains: `prejemesi.cz`, `www.prejemesi.cz`
-- Hyperdrive: `prejemesi-db` / `d7f44cea901644ab84ea75b59b9f3118`
-- R2 bucket: `prejemesi-images`
-- R2 custom domain: `images.prejemesi.cz`
+Expected production resource names are defined by `wrangler.jsonc` and the commands above.
+Verify the Worker, routes, Hyperdrive binding, R2 bucket, and image domain in the target account
+rather than assuming a previously observed dashboard state still applies.
 
 ### I. Custom domain
 
@@ -226,7 +214,8 @@ that's `RESEND_API_KEY`. Until verified you can use the sandbox
 `onboarding@resend.dev` (the default fallback), but it only sends to your own
 address.
 
-Current production sender: `Přejeme si <noreply@prejemesi.cz>`.
+The intended production sender is `Přejeme si <noreply@prejemesi.cz>`; verify the deployed
+`EMAIL_FROM` value and Resend domain status before relying on it.
 
 DMARC is not managed by the app. Add this Cloudflare DNS TXT record:
 
@@ -244,10 +233,8 @@ In Google Cloud console add the authorized redirect URI:
 
 ### L. Production auth hardening
 
-`src/lib/server/auth.ts` is production-hardened:
-
-- `requireEmailVerification: true`
-- `sendOnSignUp: true`
+Review `src/lib/server/auth.ts` for the intended email-verification settings, then verify the
+built production configuration and exercise signup before declaring the deployment hardened.
 
 ### M. Production site hygiene
 
@@ -276,8 +263,8 @@ In Google Cloud console add the authorized redirect URI:
 
 ```powershell
 pnpm db:start   # docker compose: postgres:17 on :5432
-pnpm db:push    # create schema
-pnpm db:seed    # test accounts (martin@test.cz etc., pwd: password123)
+pnpm db:migrate # apply committed migrations
+pnpm db:seed    # populate only this disposable local database; personas live in seed.ts
 pnpm dev
 ```
 
@@ -344,13 +331,9 @@ state, approval, and deployed Worker identity remain auditable.
 
 ---
 
-## Quick reference – code-side changes (no account access needed)
+## Quick reference
 
-These can be applied in a commit without any Cloudflare login:
-
-1. Confirm the `deploy` script in `package.json`
-2. Uncomment/template the `hyperdrive` + `vars` blocks in `wrangler.jsonc`
-3. Flip the two production auth flags in `src/lib/server/auth.ts`
-4. Review the generated `drizzle/` baseline before running it against Neon
-
-Account-side steps (Neon, Hyperdrive create, secrets, domains) require your login.
+Use `package.json`, `wrangler.jsonc`, `src/lib/server/auth.ts`, and the committed `drizzle/`
+history as code-side references. Do not assume they prove account-side resources or a deployed
+version. Neon, Hyperdrive, secrets, domains, and provider dashboards require authenticated
+verification; production changes follow [`DEPLOYMENT.md`](./DEPLOYMENT.md).

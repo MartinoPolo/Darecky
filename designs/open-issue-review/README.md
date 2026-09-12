@@ -1,5 +1,7 @@
 # Approved design handoff
 
+> **Snapshot warning:** Status and approval assertions below capture the original review snapshot, not the current implementation. Later `.mpx/DECISIONS.md` entries take precedence; do not assume every item remains pending.
+
 Open `index.html` directly in a browser after checking out this branch. No development server, database, seed command or machine-specific image cache is required. Canonical compiled CSS, fonts and the referenced specimen photos are bundled under `assets/`.
 
 ## Authoritative artifacts
