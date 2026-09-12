@@ -1,18 +1,33 @@
 import { defineConfig, devices } from '@playwright/test';
-import { resolveDevelopmentEnvironment } from './src/lib/config/mpx_development.js';
+import { loadEnv } from 'vite';
 import {
-	automatedServerEnvironment,
-	sharedChromeLaunchOptions,
-} from './scripts/browser-automation.mjs';
+	resolveDatabaseUrl,
+	resolveDevelopmentEnvironment,
+} from './src/lib/config/mpx_development.js';
+import { sharedChromeLaunchOptions } from './scripts/browser-automation.mjs';
+import { resolvePlaywrightServer } from './scripts/playwright-environment.mjs';
 
-const development = resolveDevelopmentEnvironment(process.env);
+const environment = { ...loadEnv('development', process.cwd(), ''), ...process.env };
+const development = resolveDevelopmentEnvironment(environment);
 const devServerPort = development.appPort;
-const devServerCommand = process.env.CI ? 'pnpm exec vite dev' : 'pnpm run dev';
+const databaseUrl = resolveDatabaseUrl(environment);
+if (!databaseUrl) {
+	throw new Error(
+		'Prepare a seeded local E2E database and set DATABASE_URL before running Playwright.',
+	);
+}
+const server = resolvePlaywrightServer({
+	environment,
+	applicationOrigin: development.appOrigin,
+	baseUrl: development.playwrightBaseUrl,
+	databaseUrl,
+});
 
 export default defineConfig({
 	testDir: 'tests/e2e',
 	fullyParallel: true,
-	retries: 1,
+	retries: process.env.CI ? 1 : 0,
+	reporter: [['list'], ['json', { outputFile: 'test-results/results.json' }]],
 	timeout: 60_000,
 	preserveOutput: process.env.UPDATE_HOVER_EVIDENCE === '1' ? 'always' : 'failures-only',
 	expect: { timeout: 10_000 },
@@ -27,29 +42,15 @@ export default defineConfig({
 		actionTimeout: 15_000,
 		navigationTimeout: 30_000,
 	},
-	webServer: {
-		// No `--` separator: pnpm forwards it verbatim and vite would treat the flags as positionals.
-		// CI already provisions PostgreSQL as a service; bypass `predev` there to avoid
-		// starting a second Docker database on the occupied service port.
-		command: `${devServerCommand} --port ${devServerPort} --strictPort`,
-		port: devServerPort,
-		// Cold Vite/Paraglide startup can exceed Playwright's 60-second default on Windows.
-		timeout: 120_000,
-		// Never reuse a server that may lack the controlled local E2E environment.
-		reuseExistingServer: false,
-		env: {
-			...automatedServerEnvironment,
-			// Local E2E signing only; this deterministic fallback is not a production secret.
-			AUTH_SECRET:
-				process.env.AUTH_SECRET ??
-				'local-e2e-only-auth-secret-never-use-in-production-2026',
-			// Keep Better Auth aligned with the localhost URL used by Playwright.
-			ORIGIN: development.appOrigin,
-			// The app administrator is env-based (`isAppAdmin`), so the admin-only specs
-			// (revert-to-draft #150, release reservation #213) need a known operator address.
-			ADMIN_EMAILS: 'tomas@test.cz',
-		},
-	},
+	webServer: server.external
+		? undefined
+		: {
+				command: `pnpm dev:agent --port ${devServerPort} --strictPort`,
+				port: devServerPort,
+				timeout: 120_000,
+				reuseExistingServer: false,
+				env: server.environment,
+			},
 	projects: [
 		{
 			name: 'setup',
@@ -57,6 +58,7 @@ export default defineConfig({
 		},
 		{
 			name: 'chromium',
+			testIgnore: /global-setup\.spec\.ts/,
 			use: { ...devices['Desktop Chrome'] },
 			dependencies: ['setup'],
 		},
