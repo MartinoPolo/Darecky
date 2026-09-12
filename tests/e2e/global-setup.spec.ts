@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
-import { registerViaApi, createAuthenticatedContext } from './fixtures/auth-helpers.js';
+import {
+	registerViaApi,
+	createAuthenticatedContext,
+	waitForAppHydration,
+} from './fixtures/auth-helpers.js';
 
 // Cold compilation needs a larger budget than navigation in the warmed application.
 test.use({ navigationTimeout: 90_000 });
@@ -22,22 +26,33 @@ test('warmup: compile all route modules', async ({ page, request, browser, baseU
 	}
 
 	await page.goto('/');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	await waitForAppHydration(page, { timeout: 45_000 });
 	await page.goto('/register');
+	await expect(
+		page.getByRole('heading', { name: /Vytvořte si účet|Create an account/ }),
+	).toBeVisible();
+	await waitForAppHydration(page, { timeout: 45_000 });
 	await page.goto('/login');
+	await expect(page.getByRole('heading', { name: /Přihlašte se|Log in/ })).toBeVisible();
+	await waitForAppHydration(page, { timeout: 45_000 });
 
 	const user = createTestUser('warmup');
 	const cookies = await registerViaApi(request, baseURL, user);
 	const ctx = await createAuthenticatedContext(browser, cookies, baseURL);
-	const authPage = await ctx.newPage();
+	try {
+		const authPage = await ctx.newPage();
 
-	await authPage.goto('/my-lists');
-	// Generous timeout: the first cold compile of the authenticated shell (Navbar +
-	// dashboard + gift/bits-ui component trees) can far exceed the default expect
-	// timeout. Locale-agnostic: the app serves cs at `/` and en at `/en` (base locale
-	// en), so a fresh context's default locale can be either – match both.
-	await expect(authPage.getByRole('heading', { name: /Moje seznamy|My lists/ })).toBeVisible({
-		timeout: 45_000,
-	});
-
-	await ctx.close();
+		await authPage.goto('/my-lists');
+		// Generous timeout: the first cold compile of the authenticated shell (Navbar +
+		// dashboard + gift/bits-ui component trees) can far exceed the default expect
+		// timeout. Locale-agnostic: the app serves cs at `/` and en at `/en` (base locale
+		// en), so a fresh context's default locale can be either – match both.
+		await expect(authPage.getByRole('heading', { name: /Moje seznamy|My lists/ })).toBeVisible({
+			timeout: 45_000,
+		});
+		await waitForAppHydration(authPage, { timeout: 45_000 });
+	} finally {
+		await ctx.close();
+	}
 });

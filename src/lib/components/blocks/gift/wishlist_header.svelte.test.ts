@@ -55,7 +55,26 @@ describe('WishlistHeader responsive presentation', () => {
 		await expect.element(screen.getByTestId('wishlist-banner')).not.toBeVisible();
 		await expect
 			.element(screen.getByRole('button', { name: m.gift_more_actions() }))
-			.toHaveStyle({ width: '40px', height: '40px' });
+			.toHaveStyle({ width: '32px', height: '32px' });
+		await screen.unmount();
+	});
+
+	it('opens hero More with the shared inset Wishlist bottom-sheet geometry', async () => {
+		await page.viewport(390, 720);
+		const screen = await render(WishlistHeader, baseProps);
+		await screen.getByRole('button', { name: m.gift_more_actions() }).click();
+		const dialog = screen.getByRole('dialog', { name: m.gift_more_actions() }).element();
+		const rect = dialog.getBoundingClientRect();
+		const style = getComputedStyle(dialog);
+
+		expect(dialog).toHaveAttribute('data-side', 'bottom');
+		expect(rect.left).toBeCloseTo(8, 0);
+		expect(rect.right).toBeCloseTo(382, 0);
+		expect(style.bottom).toBe('0px');
+		expect(parseFloat(style.borderTopLeftRadius)).toBeGreaterThan(0);
+		expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
+		expect(parseFloat(style.borderLeftWidth)).toBeGreaterThan(0);
+		expect(parseFloat(style.borderRightWidth)).toBeGreaterThan(0);
 		await screen.unmount();
 	});
 
@@ -73,6 +92,55 @@ describe('WishlistHeader responsive presentation', () => {
 		);
 		expect(hero.element().contains(archivedNotice.element())).toBe(false);
 		expect(hero.element().contains(privacyNotice.element())).toBe(false);
+		await screen.unmount();
+	});
+
+	it('reserves desktop copy space for hero actions at the 640px breakpoint', async () => {
+		await page.viewport(640, 720);
+		const screen = await render(WishlistHeader, baseProps);
+		const banner = screen.getByTestId('wishlist-banner').element();
+		const actions = banner.querySelector(
+			'.desktop-header-actions [data-testid="wishlist-header-actions"]',
+		) as HTMLElement;
+		const title = screen.getByRole('heading', { level: 1, name: baseProps.title }).element();
+		const recipient = Array.from(banner.querySelectorAll('strong')).find(
+			(element) => element.textContent === baseProps.recipientDisplayName,
+		) as HTMLElement;
+		const actionsBox = actions.getBoundingClientRect();
+		for (const content of [title, recipient]) {
+			const box = content.getBoundingClientRect();
+			const overlaps =
+				box.left < actionsBox.right &&
+				box.right > actionsBox.left &&
+				box.top < actionsBox.bottom &&
+				box.bottom > actionsBox.top;
+			expect(overlaps).toBe(false);
+		}
+		await screen.unmount();
+	});
+
+	it('exposes desktop management workflows only through the hero More menu', async () => {
+		await page.viewport(1280, 720);
+		const screen = await render(WishlistHeader, baseProps);
+		const banner = screen.getByTestId('wishlist-banner').element();
+		const visibleButtons = Array.from(
+			banner.querySelectorAll<HTMLButtonElement>('button'),
+		).filter((button) => button.getClientRects().length > 0);
+
+		expect(
+			visibleButtons.filter(
+				(button) => button.getAttribute('aria-label') === m.gift_more_actions(),
+			),
+		).toHaveLength(1);
+		for (const label of [
+			m.wishlist_share_label(),
+			m.wishlist_moderators_label(),
+			m.wishlist_archive_label(),
+		]) {
+			expect(
+				visibleButtons.some((button) => button.getAttribute('aria-label') === label),
+			).toBe(false);
+		}
 		await screen.unmount();
 	});
 

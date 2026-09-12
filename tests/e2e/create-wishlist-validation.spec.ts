@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { openCreateWishlistDialog } from './fixtures/wishlist-helpers.js';
 
 /**
  * Required-field validation UX for the create-wishlist dialog.
@@ -26,11 +27,7 @@ test.describe('Create-wishlist dialog required-field validation', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
-		await page.getByRole('button', { name: 'Vytvořit seznam' }).first().click();
-
-		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible({ timeout: 5_000 });
+		const dialog = await openCreateWishlistDialog(page);
 
 		const titleInput = dialog.locator('#wishlist-title');
 		const titleError = dialog.locator('#wishlist-title-error');

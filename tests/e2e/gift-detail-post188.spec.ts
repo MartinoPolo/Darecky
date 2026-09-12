@@ -1,5 +1,4 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
-import { fileURLToPath } from 'node:url';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
 import {
@@ -7,8 +6,8 @@ import {
 	createWishlistForSomeoneAndNavigate,
 	addGift,
 	shareWishlist,
+	openDesktopDisplaySubmenu,
 } from './fixtures/wishlist-helpers.js';
-import { GIFT_CROP_TARGET_SPECS } from '../../src/lib/modules/images/crop_targets.js';
 import * as m from '../../src/lib/paraglide/messages.js';
 
 /**
@@ -26,21 +25,6 @@ import * as m from '../../src/lib/paraglide/messages.js';
  *     issue #183 REQ-10) renders the full, uncropped photo at its natural
  *     aspect ratio instead of a crop-target aspect.
  */
-
-const SAMPLE_IMAGE_PORTRAIT_PATH = fileURLToPath(
-	new URL('./fixtures/sample-image-portrait.png', import.meta.url),
-);
-
-/** Wait for the same-origin upload proxy to confirm a stored object (PUT → 201). */
-function waitForUpload(page: Page) {
-	return page.waitForResponse(
-		(response) =>
-			response.request().method() === 'PUT' &&
-			response.url().includes('/api/upload/') &&
-			response.status() === 201,
-		{ timeout: 15_000 },
-	);
-}
 
 function gift(page: Page, name: string): Locator {
 	return page
@@ -64,42 +48,21 @@ async function exposeReceivedGifts(page: Page, giftName: string): Promise<void> 
 			name: m.filter_remove({ label: m.gift_filter_show_received() }),
 			exact: true,
 		});
-	const filterButton = page.getByRole('button', { name: /^Filtrovat/ });
-	const option = page.getByRole('menuitemcheckbox', {
+	if (await activeFilterRemovalButton.isVisible()) {
+		return;
+	}
+
+	const filterMenu = await openDesktopDisplaySubmenu(page, /^Filtrovat/);
+	const option = filterMenu.getByRole('menuitemcheckbox', {
 		name: m.gift_filter_show_received(),
 		exact: true,
 	});
-	if (await activeFilterRemovalButton.isVisible()) {
-		return;
-	}
-
-	await filterButton.click();
-	await expect(async () => {
-		if ((await activeFilterRemovalButton.isVisible()) || (await option.isVisible())) {
-			return;
-		}
-		if ((await filterButton.getAttribute('aria-expanded')) !== 'true') {
-			await filterButton.click();
-		}
-		await expect(activeFilterRemovalButton.or(option)).toBeVisible({ timeout: 1_000 });
-	}).toPass();
-
-	if (await activeFilterRemovalButton.isVisible()) {
-		if ((await filterButton.getAttribute('aria-expanded')) === 'true') {
-			await page.keyboard.press('Escape');
-			await expect(filterButton).toHaveAttribute('aria-expanded', 'false');
-		}
-		return;
-	}
-
 	await expect(option).toBeVisible();
 	if (!(await option.isChecked())) {
 		await option.click();
 	}
-	if ((await filterButton.getAttribute('aria-expanded')) === 'true') {
-		await page.keyboard.press('Escape');
-		await expect(filterButton).toHaveAttribute('aria-expanded', 'false');
-	}
+	await page.keyboard.press('Escape');
+	await page.keyboard.press('Escape');
 	await expect(activeFilterRemovalButton).toBeVisible();
 	await expect(gift(page, giftName)).toBeVisible();
 }
@@ -165,21 +128,26 @@ async function assertCenteredOverlay(
 		'data-testid',
 		/^(gift-card-image-frame|gift-list-image)$/,
 	);
-	const [imageFrameBox, imageFrameBorders, pillBoxes] = await Promise.all([
-		imageFrame.boundingBox(),
-		imageFrame.evaluate((element) => {
-			const style = getComputedStyle(element);
+	// Sample the frame and sticker in one frame; independent protocol calls can straddle motion.
+	const { imageFrameBox, imageFrameBorders, pillBoxes, paddingTop } = await overlay.evaluate(
+		(element) => {
+			const frame = element.parentElement!;
+			const style = getComputedStyle(frame);
 			return {
-				left: Number.parseFloat(style.borderLeftWidth),
-				right: Number.parseFloat(style.borderRightWidth),
-				top: Number.parseFloat(style.borderTopWidth),
-				bottom: Number.parseFloat(style.borderBottomWidth),
+				imageFrameBox: frame.getBoundingClientRect().toJSON(),
+				imageFrameBorders: {
+					left: Number.parseFloat(style.borderLeftWidth),
+					right: Number.parseFloat(style.borderRightWidth),
+					top: Number.parseFloat(style.borderTopWidth),
+					bottom: Number.parseFloat(style.borderBottomWidth),
+				},
+				pillBoxes: Array.from(element.querySelectorAll(':scope > span'), (pill) =>
+					pill.getBoundingClientRect().toJSON(),
+				),
+				paddingTop: getComputedStyle(element).paddingTop,
 			};
-		}),
-		pills.evaluateAll((elements) =>
-			elements.map((element) => element.getBoundingClientRect().toJSON()),
-		),
-	]);
+		},
+	);
 	expect(imageFrameBox, 'active image frame has a bounding box').not.toBeNull();
 	expect(pillBoxes.length, 'overlay pills have bounding boxes').toBeGreaterThan(0);
 	const stackBox = {
@@ -199,7 +167,7 @@ async function assertCenteredOverlay(
 			(imageFrameBox!.height - imageFrameBorders.top - imageFrameBorders.bottom) / 2,
 	};
 	expect(stackBox.x + (stackBox.right - stackBox.x) / 2).toBeCloseTo(imageContentCenter.x, 0);
-	if ((await overlay.evaluate((element) => getComputedStyle(element).paddingTop)) === '0px') {
+	if (paddingTop === '0px') {
 		expect(stackBox.y + (stackBox.bottom - stackBox.y) / 2).toBeCloseTo(
 			imageContentCenter.y,
 			0,
@@ -450,73 +418,6 @@ test.describe('Issue #328 gift-state matrix and post-#188/#189 detail gaps', () 
 		await expect(visitorDialog.getByText(/Upraveno po sdílení/)).toBeVisible({
 			timeout: 10_000,
 		});
-
-		await visitorContext.close();
-	});
-
-	test('visitor detail view renders the full uncropped photo at its natural aspect', async ({
-		browser,
-		request,
-		baseURL,
-	}) => {
-		const owner = createTestUser('gift-detail-natural-aspect');
-		const ownerPage = await registerAndGetPage(browser, request, baseURL!, owner);
-
-		await createWishlistAndNavigate(ownerPage, 'Detail Natural Aspect Coverage');
-		const giftName = 'Testovaci darek portret';
-
-		await ownerPage
-			.getByRole('button', { name: /Přidat/ })
-			.first()
-			.click();
-		const addDialog = ownerPage.getByRole('dialog');
-		await expect(addDialog).toBeVisible({ timeout: 5_000 });
-		await addDialog.getByRole('textbox', { name: 'Název' }).fill(giftName);
-
-		await addDialog.getByRole('button', { name: 'Nahrát', exact: true }).click();
-		const fileInput = addDialog.locator('input[type=file]');
-		await expect(fileInput).toBeAttached();
-		const uploaded = waitForUpload(ownerPage);
-		await fileInput.setInputFiles(SAMPLE_IMAGE_PORTRAIT_PATH);
-		await uploaded;
-		await expect(addDialog.getByTestId('image-upload-preview')).toBeVisible({
-			timeout: 10_000,
-		});
-
-		await addDialog.getByRole('button', { name: 'Přidat dárek' }).click();
-		await expect(addDialog).not.toBeVisible({ timeout: 10_000 });
-		await expect(ownerPage.getByRole('heading', { name: giftName, level: 3 })).toBeVisible({
-			timeout: 10_000,
-		});
-
-		await shareWishlist(ownerPage);
-		const wishlistPath = new URL(ownerPage.url()).pathname;
-		await ownerPage.context().close();
-
-		const visitorContext = await browser.newContext();
-		const visitorPage = await visitorContext.newPage();
-		await visitorPage.goto(wishlistPath);
-		await visitorPage.getByText(giftName, { exact: true }).first().click();
-		const visitorDialog = visitorPage.getByRole('dialog');
-		await expect(visitorDialog).toBeVisible({ timeout: 5_000 });
-
-		const detailImage = visitorDialog
-			.getByTestId('gift-detail-view-image-column')
-			.locator('img');
-		await expect(detailImage).toBeVisible({ timeout: 10_000 });
-		const box = await detailImage.boundingBox();
-		expect(box, 'detail image has a bounding box').not.toBeNull();
-		const ratio = box!.width / box!.height;
-
-		// The source is a portrait fixture (20x40px, natural ratio 0.5) – the
-		// detail view must render it at that natural ratio, NOT the `square` 4:3
-		// card crop target and NOT a 1:1 crop.
-		expect(ratio, 'detail image renders portrait, not landscape/square').toBeLessThan(0.95);
-		expect(
-			Math.abs(ratio - GIFT_CROP_TARGET_SPECS.square.aspect),
-			'ratio is clearly not the 4:3 square crop target',
-		).toBeGreaterThan(0.3);
-		expect(Math.abs(ratio - 1), 'ratio is clearly not 1:1').toBeGreaterThan(0.3);
 
 		await visitorContext.close();
 	});

@@ -4,6 +4,7 @@ import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'svelte';
 import * as m from '$lib/paraglide/messages.js';
+import { GIFT_SORT_KEYS } from '$lib/components/blocks/gift/gift_sort_options.js';
 import {
 	GIFT_GROUPING_OPTIONS,
 	GIFT_SORT_OPTIONS,
@@ -41,7 +42,6 @@ const defaultProps: ComponentProps<typeof WishlistDetailToolbar> = {
 	onsortchange: () => {},
 	onfilterchange: () => {},
 	ongroupingchange: () => {},
-	onsettings: () => {},
 	onunfollow: () => {},
 	onaddgift: () => {},
 	onbatchadd: () => {},
@@ -76,6 +76,29 @@ async function frames(count = 2) {
 	}
 }
 
+async function waitForStableGeometry(root: Element) {
+	const requiredStableFrames = 2;
+	const maximumFrames = 60;
+	let previousBounds: DOMRect | null = null;
+	let stableFrames = 0;
+
+	for (let frame = 0; frame < maximumFrames; frame += 1) {
+		await frames(1);
+		const bounds = root.getBoundingClientRect();
+		const isStable =
+			previousBounds !== null &&
+			bounds.x === previousBounds.x &&
+			bounds.y === previousBounds.y &&
+			bounds.width === previousBounds.width &&
+			bounds.height === previousBounds.height;
+		stableFrames = isStable ? stableFrames + 1 : 0;
+		if (stableFrames >= requiredStableFrames) {
+			return;
+		}
+		previousBounds = bounds;
+	}
+}
+
 function visibleButtons(root: Element) {
 	return Array.from(root.querySelectorAll<HTMLButtonElement>('button')).filter(
 		(button) => button.getClientRects().length > 0,
@@ -84,12 +107,32 @@ function visibleButtons(root: Element) {
 
 function expectBottomSheet(dialog: Element) {
 	expect(dialog).toHaveAttribute('data-side', 'bottom');
+	const rect = dialog.getBoundingClientRect();
 	const style = getComputedStyle(dialog);
 	expect(style.bottom).toBe('0px');
-	expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
-	expect(parseFloat(style.borderLeftWidth)).toBeGreaterThan(0);
-	expect(parseFloat(style.borderRightWidth)).toBeGreaterThan(0);
+	expect(rect.left).toBeCloseTo(window.innerWidth - rect.right, 1);
+	expect(rect.left).toBeGreaterThan(0);
+	expect(style.borderLeftWidth).toBe(style.borderRightWidth);
+	expect(style.borderLeftWidth).toBe(style.borderTopWidth);
+	expect(style.borderTopLeftRadius).toBe(style.borderTopRightRadius);
 	expect(parseFloat(style.borderTopLeftRadius)).toBeGreaterThan(0);
+	const header = dialog.querySelector<HTMLElement>('[data-slot="sheet-header"]')!;
+	const headerStyle = getComputedStyle(header);
+	expect(header.getBoundingClientRect().width).toBeCloseTo(
+		rect.width - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth),
+		1,
+	);
+	expect(headerStyle.paddingLeft).toBe('16px');
+	expect(headerStyle.paddingRight).toBe('56px');
+	expect(headerStyle.paddingTop).toBe('12px');
+	expect(headerStyle.paddingBottom).toBe('12px');
+	expect(parseFloat(headerStyle.borderBottomWidth)).toBeCloseTo(1, 1);
+	const body = header.nextElementSibling as HTMLElement;
+	const bodyStyle = getComputedStyle(body);
+	expect(bodyStyle.paddingLeft).toBe('8px');
+	expect(bodyStyle.paddingRight).toBe('8px');
+	expect(bodyStyle.paddingTop).toBe('8px');
+	expect(bodyStyle.paddingBottom).toBe('8px');
 }
 
 describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
@@ -110,7 +153,6 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 			{ isAuthenticated: true },
 			{ canManage: true, role: WISHLIST_ROLES.recipient },
 			{ canManage: true, role: WISHLIST_ROLES.moderator },
-			{ adminSettingsAvailable: true },
 		];
 		for (const width of [320, 360, 390]) {
 			for (const capabilities of capabilitySets) {
@@ -124,37 +166,59 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 					(rows[0] as HTMLElement).clientWidth,
 				);
 				for (const button of visibleButtons(toolbar)) {
-					expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(40);
+					if (!button.closest('[data-testid="gift-view-switcher"]')) {
+						expect(button.getBoundingClientRect().height).toBeCloseTo(32, 0);
+					}
 				}
 				await screen.unmount();
 			}
 		}
 	});
 
-	it('renders exactly one Display trigger below sm and keeps View, Settings, and Add gift direct', async () => {
+	it('keeps the integrated view tray and both items at the toolbar control height', async () => {
+		const screen = await renderToolbar({}, 320);
+
+		for (const viewportWidth of [320, 800] as const) {
+			const expectedSize = 32;
+			await page.viewport(viewportWidth, 760);
+			await frames(1);
+			const tray = screen.getByTestId('gift-view-switcher').element() as HTMLElement;
+			const items = Array.from(
+				tray.querySelectorAll<HTMLElement>('[data-slot="toggle-group-item"]'),
+			);
+
+			expect(tray.getBoundingClientRect().height).toBe(expectedSize);
+			expect(items).toHaveLength(2);
+			for (const item of items) {
+				expect(item.getBoundingClientRect().width).toBe(expectedSize);
+				expect(item.getBoundingClientRect().height).toBe(expectedSize);
+			}
+		}
+		await screen.unmount();
+	});
+
+	it('renders exactly one Display trigger immediately after View with no toolbar Settings', async () => {
 		const screen = await renderToolbar({
 			canManage: true,
 			role: WISHLIST_ROLES.moderator,
 		});
 		const toolbar = screen.getByTestId('wishlist-toolbar').element();
+		const row = toolbar.querySelector('[data-mobile-toolbar-row]')!;
+		const view = row.querySelector('[data-testid="gift-view-switcher"]')!;
+		const display = row.querySelector('[data-testid="mobile-display-trigger"]')!;
 		expect(toolbar.querySelectorAll('[data-testid="mobile-display-trigger"]')).toHaveLength(1);
+		expect(view.nextElementSibling?.contains(display)).toBe(true);
 		expect(toolbar.querySelector('[data-testid="mobile-sort-trigger"]')).toBeNull();
 		expect(toolbar.querySelector('[data-testid="mobile-grouping-trigger"]')).toBeNull();
 		expect(toolbar.querySelector('[data-testid="mobile-filter-trigger"]')).toBeNull();
-		expect(toolbar.querySelectorAll('[data-testid="gift-view-switcher"]')).toHaveLength(1);
-		const settings = screen
-			.getByRole('button', { name: m.wishlist_settings_title() })
-			.element();
+		await expect
+			.element(screen.getByRole('button', { name: m.wishlist_settings_title() }))
+			.not.toBeInTheDocument();
 		const add = screen
 			.getByRole('button', { name: m.wishlist_detail_add_gift_label() })
 			.element();
-		await expect.element(settings).toBeVisible();
 		await expect.element(add).toBeVisible();
 		expect(visibleButtons(toolbar).at(-1)).toBe(add);
-		expect(
-			getComputedStyle(add.querySelector(':scope > .elevation-surface') as HTMLElement)
-				.backgroundColor,
-		).not.toBe('rgba(0, 0, 0, 0)');
 		await screen.unmount();
 	});
 
@@ -185,9 +249,11 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 				(selector) => selector.element().getAttribute('aria-pressed') === 'true',
 			),
 		).toHaveLength(1);
-		await expect
-			.element(screen.getByRole('radio', { name: m.gift_sort_owner_order() }))
-			.toBeChecked();
+		const selectedSort = screen
+			.getByRole('radio', { name: m.gift_sort_owner_order() })
+			.element();
+		await expect.element(selectedSort).toBeChecked();
+		expect(getComputedStyle(selectedSort.parentElement!).minHeight).toBe('48px');
 
 		await selectors[1].click();
 		expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
@@ -203,6 +269,66 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 		expect(ongroupingchange).toHaveBeenCalledExactlyOnceWith(GIFT_GROUPING_OPTIONS.priority);
 		await expect.element(dialog).not.toBeInTheDocument();
 		await frames();
+		await screen.unmount();
+	});
+
+	it('exposes a named radio group with arrow-key selection', async () => {
+		const onsortchange = vi.fn();
+		const screen = await renderToolbar({ onsortchange });
+		await screen.getByTestId('mobile-display-trigger').click();
+		const group = screen.getByRole('radiogroup', { name: m.gift_sort_by() });
+		await expect.element(group).toBeVisible();
+		const selected = group.getByRole('radio', { name: m.gift_sort_owner_order() });
+		selected.element().focus();
+		await userEvent.keyboard('{ArrowDown}');
+		expect(onsortchange).toHaveBeenCalledWith(GIFT_SORT_KEYS[1]);
+		await screen.unmount();
+	});
+
+	it('keeps every Display section at the dynamic height of the tallest available section', async () => {
+		const initialOverrides: Partial<ComponentProps<typeof WishlistDetailToolbar>> = {
+			groupingAvailability: { priority: true, category: true },
+			categoryFilterOptions: [{ value: 'books', label: 'Knihy' }],
+			priorityFilterOptions: [{ value: 'high', label: 'Vysoká' }],
+		};
+		const screen = await renderToolbar(initialOverrides);
+		await screen.getByTestId('mobile-display-trigger').click();
+		await frames();
+		const dialog = screen.getByRole('dialog', { name: m.gift_display_options() }).element();
+		await waitForStableGeometry(dialog);
+		const sectionButtons = [
+			screen.getByTestId('mobile-sheet-sort-switch'),
+			screen.getByTestId('mobile-sheet-grouping-switch'),
+			screen.getByTestId('mobile-sheet-filter-switch'),
+		];
+		const initialHeight = dialog.getBoundingClientRect().height;
+		expect(initialHeight).toBeLessThan(window.innerHeight * 0.8);
+
+		for (const sectionButton of sectionButtons.slice(1)) {
+			await sectionButton.click();
+			await frames(1);
+			expect(dialog.getBoundingClientRect().height).toBeCloseTo(initialHeight, 1);
+		}
+
+		const expandedCategories = Array.from({ length: 8 }, (_, index) => ({
+			value: `category-${index}`,
+			label: `Kategorie ${index}`,
+		}));
+		await screen.rerender({
+			...defaultProps,
+			...initialOverrides,
+			categoryFilterOptions: expandedCategories,
+		});
+		await frames();
+		const expandedHeight = dialog.getBoundingClientRect().height;
+		expect(expandedHeight).toBeGreaterThan(initialHeight);
+		expect(expandedHeight).toBeLessThanOrEqual(window.innerHeight * 0.8 + 1);
+
+		for (const sectionButton of sectionButtons.slice(0, 2)) {
+			await sectionButton.click();
+			await frames(1);
+			expect(dialog.getBoundingClientRect().height).toBeCloseTo(expandedHeight, 1);
+		}
 		await screen.unmount();
 	});
 
@@ -236,9 +362,7 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 			await screen.getByTestId('mobile-display-trigger').click();
 			await frames();
 			const dialog = screen.getByRole('dialog', { name: m.gift_display_options() }).element();
-			await Promise.all(
-				dialog.getAnimations({ subtree: true }).map((animation) => animation.finished),
-			);
+			await waitForStableGeometry(dialog);
 			const scroll = screen.getByTestId('mobile-sheet-scroll').element() as HTMLElement;
 			const switcher = screen.getByTestId('mobile-sheet-switcher').element() as HTMLElement;
 			const sectionButtons = [
@@ -306,289 +430,5 @@ describe('WishlistDetailToolbar mobile command surfaces (#340)', () => {
 			expect(switcher.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
 			await screen.unmount();
 		}
-	});
-
-	it('preserves all filter gates, facet choices, row activation, and reset semantics', async () => {
-		const onfilterchange = vi.fn();
-		const onsortchange = vi.fn();
-		const ongroupingchange = vi.fn();
-		const screen = await renderToolbar({
-			isAuthenticated: true,
-			onfilterchange,
-			onsortchange,
-			ongroupingchange,
-			sortOption: GIFT_SORT_OPTIONS.name,
-			grouping: GIFT_GROUPING_OPTIONS.priority,
-			filters: { ...defaultFilters, withLinkOnly: true, categoryValues: ['books'] },
-			categoryFilterOptions: [{ value: 'books', label: 'Knihy' }],
-			priorityFilterOptions: [{ value: 'high', label: 'Vysoká' }],
-		});
-		const trigger = screen.getByTestId('mobile-display-trigger').element();
-		expect(trigger.querySelector('[data-filter-count]')).toHaveTextContent('2');
-		const badge = trigger.querySelector('[data-filter-count]')!;
-		expect(getComputedStyle(badge).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
-		await screen.getByTestId('mobile-display-trigger').click();
-		await screen.getByTestId('mobile-sheet-filter-switch').click();
-		await expect
-			.element(screen.getByRole('checkbox', { name: m.gift_filter_available_only() }))
-			.toBeVisible();
-		await expect
-			.element(screen.getByRole('checkbox', { name: m.gift_filter_liked() }))
-			.toBeVisible();
-		await expect.element(screen.getByRole('checkbox', { name: 'Knihy' })).toBeChecked();
-		await expect.element(screen.getByRole('checkbox', { name: 'Vysoká' })).toBeVisible();
-		const withLink = screen
-			.getByRole('checkbox', { name: m.gift_filter_with_link() })
-			.element();
-		await (withLink.parentElement!.querySelector('span') as HTMLElement).click();
-		expect(onfilterchange).toHaveBeenCalledExactlyOnceWith({
-			...defaultFilters,
-			categoryValues: ['books'],
-		});
-		await userEvent.keyboard('{Escape}');
-		await frames();
-		await screen.getByTestId('mobile-more-trigger').click();
-		await screen.getByRole('button', { name: m.gift_display_reset_tooltip() }).click();
-		expect(onfilterchange).toHaveBeenLastCalledWith(defaultFilters);
-		expect(onsortchange).toHaveBeenCalledWith(GIFT_SORT_OPTIONS.ownerOrder);
-		expect(ongroupingchange).toHaveBeenCalledWith(GIFT_GROUPING_OPTIONS.none);
-		await screen.unmount();
-	});
-
-	it('keeps recipient privacy gates in the combined filter sheet', async () => {
-		const screen = await renderToolbar({
-			canManage: true,
-			role: WISHLIST_ROLES.recipient,
-			isAuthenticated: true,
-		});
-		await screen.getByTestId('mobile-display-trigger').click();
-		await screen.getByTestId('mobile-sheet-filter-switch').click();
-		await expect
-			.element(screen.getByRole('checkbox', { name: m.gift_filter_available_only() }))
-			.not.toBeInTheDocument();
-		await expect
-			.element(screen.getByRole('checkbox', { name: m.gift_filter_liked() }))
-			.not.toBeInTheDocument();
-		await expect
-			.element(screen.getByRole('checkbox', { name: m.gift_filter_with_link() }))
-			.toBeVisible();
-		await screen.unmount();
-	});
-
-	it('puts only eligible lower-priority actions in More and dispatches them', async () => {
-		const callbacks = {
-			onrecipientviewpreviewchange: vi.fn(),
-			onselectionstart: vi.fn(),
-			onreordermodechange: vi.fn(),
-			onbatchadd: vi.fn(),
-		};
-		const screen = await renderToolbar({
-			...callbacks,
-			canManage: true,
-			role: WISHLIST_ROLES.moderator,
-		});
-		await screen.getByTestId('mobile-more-trigger').click();
-		const more = screen.getByRole('dialog', { name: m.wishlist_more_actions() });
-		await expect.element(more).toBeVisible();
-		expectBottomSheet(more.element());
-		await expect
-			.element(more.getByRole('button', { name: m.recipient_view_preview_turn_on() }))
-			.toBeVisible();
-		await expect
-			.element(more.getByRole('button', { name: m.gift_selection_toolbar() }))
-			.toBeVisible();
-		await expect
-			.element(more.getByRole('button', { name: m.gift_reorder_action() }))
-			.toBeVisible();
-		await expect
-			.element(more.getByRole('button', { name: m.batch_add_toolbar_label() }))
-			.toBeVisible();
-		await expect
-			.element(more.getByRole('button', { name: m.wishlist_detail_unfollow() }))
-			.not.toBeInTheDocument();
-		await userEvent.keyboard('{Escape}');
-		await frames();
-		await expect.element(screen.getByTestId('mobile-more-trigger')).toHaveFocus();
-		await screen.getByTestId('mobile-more-trigger').click();
-		await screen
-			.getByRole('dialog', { name: m.wishlist_more_actions() })
-			.getByRole('button', { name: m.gift_selection_toolbar() })
-			.click();
-		expect(callbacks.onselectionstart).toHaveBeenCalledOnce();
-		await screen.unmount();
-	});
-
-	it('exposes visitor-only preview and unfollow in More without management actions', async () => {
-		const onunfollow = vi.fn();
-		const screen = await renderToolbar({ isAuthenticated: true, onunfollow });
-		await screen.getByTestId('mobile-more-trigger').click();
-		const more = screen.getByRole('dialog', { name: m.wishlist_more_actions() });
-		await expect
-			.element(more.getByRole('button', { name: m.wishlist_detail_unfollow() }))
-			.toBeVisible();
-		await expect
-			.element(more.getByRole('button', { name: m.gift_selection_toolbar() }))
-			.not.toBeInTheDocument();
-		await more.getByRole('button', { name: m.wishlist_detail_unfollow() }).click();
-		expect(onunfollow).toHaveBeenCalledOnce();
-		await screen.unmount();
-	});
-
-	it('restores Display focus, scroll, width, and toolbar geometry after Escape', async () => {
-		const screen = await renderToolbar({}, 390);
-		const trigger = screen.getByTestId('mobile-display-trigger').element() as HTMLButtonElement;
-		const toolbar = screen.getByTestId('wishlist-toolbar').element() as HTMLElement;
-		document.body.style.minHeight = '200vh';
-		window.scrollTo(0, 17);
-		await frames(1);
-		const before = toolbar.getBoundingClientRect();
-		const scrollBefore = window.scrollY;
-		await trigger.click();
-		const dialog = screen.getByRole('dialog', { name: m.gift_display_options() });
-		await userEvent.keyboard('{Tab}');
-		expect(dialog.element().contains(document.activeElement)).toBe(true);
-		await userEvent.keyboard('{Escape}');
-		await frames(5);
-		expect(document.activeElement).toBe(trigger);
-		expect(window.scrollY).toBe(scrollBefore);
-		const after = toolbar.getBoundingClientRect();
-		expect(after.width).toBeCloseTo(before.width, 1);
-		expect(after.height).toBeCloseTo(before.height, 1);
-		expect(document.documentElement.scrollWidth).toBe(document.documentElement.clientWidth);
-		await screen.unmount();
-	});
-
-	it('keeps the mobile layout switcher enabled in reorder without overflowing at 320px', async () => {
-		const onreordermodechange = vi.fn();
-		const onviewmodechange = vi.fn();
-		const screen = await renderToolbar(
-			{
-				canManage: true,
-				role: WISHLIST_ROLES.moderator,
-				reorderMode: true,
-				onreordermodechange,
-				onviewmodechange,
-			},
-			320,
-		);
-		const row = screen
-			.getByTestId('wishlist-toolbar-mobile')
-			.element()
-			.querySelector('[data-mobile-toolbar-row]')!;
-		expect(row).toHaveTextContent(m.gift_reorder_mode_label());
-		const listMode = screen.getByRole('radio', { name: m.gift_view_list() });
-		expect(listMode.element()).not.toBeDisabled();
-		await listMode.click();
-		expect(onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
-		expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
-		const done = screen
-			.getByRole('button', { name: m.gift_reorder_done() })
-			.element() as HTMLButtonElement;
-		expect(done.getBoundingClientRect().height).toBeGreaterThanOrEqual(40);
-		expect(done.getBoundingClientRect().right).toBeCloseTo(
-			row.getBoundingClientRect().right,
-			1,
-		);
-		await done.click();
-		expect(onreordermodechange).toHaveBeenCalledWith(false);
-		await screen.unmount();
-	});
-
-	it('clears open mobile sheets when crossing the sm breakpoint', async () => {
-		const screen = await renderToolbar();
-		await screen.getByTestId('mobile-display-trigger').click();
-		await expect
-			.element(screen.getByRole('dialog', { name: m.gift_display_options() }))
-			.toBeVisible();
-		await page.viewport(640, 760);
-		await frames();
-		await expect
-			.element(screen.getByRole('dialog', { name: m.gift_display_options() }))
-			.not.toBeInTheDocument();
-		await screen.unmount();
-	});
-});
-
-describe('WishlistDetailToolbar desktop preservation (#340)', () => {
-	afterEach(async () => {
-		for (const host of hosts) {
-			host.remove();
-		}
-		hosts.clear();
-		await page.viewport(1280, 760);
-	});
-
-	it('keeps separate labeled display controls, persistence callbacks, and 32px sizing', async () => {
-		const callbacks = {
-			onviewmodechange: vi.fn(),
-			onsortchange: vi.fn(),
-			ongroupingchange: vi.fn(),
-		};
-		const screen = await renderToolbar(
-			{
-				...callbacks,
-				canManage: true,
-				role: WISHLIST_ROLES.moderator,
-				groupingAvailability: { priority: true, category: true },
-			},
-			1280,
-		);
-		await frames(1);
-		await expect.element(screen.getByTestId('mobile-display-trigger')).not.toBeInTheDocument();
-		const sort = screen.getByRole('button', {
-			name: `${m.gift_sort_by()}: ${m.gift_sort_owner_order()}`,
-		});
-		const grouping = screen.getByRole('button', {
-			name: `${m.gift_grouping_label()}: ${m.gift_grouping_none()}`,
-		});
-		const filter = screen.getByRole('button', { name: m.gift_filter() });
-		for (const control of [sort, grouping, filter]) {
-			await expect.element(control).toBeVisible();
-			expect(control.element().getBoundingClientRect().height).toBeCloseTo(32, 0);
-		}
-		await sort.click();
-		await page.getByRole('option', { name: m.gift_sort_name() }).click();
-		expect(callbacks.onsortchange).toHaveBeenCalledWith(GIFT_SORT_OPTIONS.name);
-		await grouping.click();
-		await page.getByRole('option', { name: m.gift_grouping_priority() }).click();
-		expect(callbacks.ongroupingchange).toHaveBeenCalledWith(GIFT_GROUPING_OPTIONS.priority);
-		await screen.getByTestId(`gift-view-${GIFT_VIEW_MODES.list}`).click();
-		expect(callbacks.onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
-		await screen.unmount();
-	});
-
-	it('keeps the desktop layout switcher enabled in reorder', async () => {
-		const onviewmodechange = vi.fn();
-		const screen = await renderToolbar(
-			{
-				canManage: true,
-				role: WISHLIST_ROLES.moderator,
-				reorderMode: true,
-				onviewmodechange,
-			},
-			1280,
-		);
-		const listMode = screen.getByRole('radio', { name: m.gift_view_list() });
-		expect(listMode.element()).not.toBeDisabled();
-		await listMode.click();
-		expect(onviewmodechange).toHaveBeenCalledWith(GIFT_VIEW_MODES.list);
-		await screen.unmount();
-	});
-
-	it('keeps the desktop management hierarchy and capability gates unchanged', async () => {
-		const screen = await renderToolbar(
-			{ canManage: true, role: WISHLIST_ROLES.recipient },
-			1280,
-		);
-		const actions = screen.getByTestId('wishlist-toolbar-actions').element();
-		const names = visibleButtons(actions).map(
-			(button) => button.getAttribute('aria-label') ?? button.textContent?.trim(),
-		);
-		expect(names).toEqual([
-			m.wishlist_settings_title(),
-			m.batch_add_toolbar_label(),
-			m.wishlist_detail_add_gift_label(),
-		]);
-		await screen.unmount();
 	});
 });

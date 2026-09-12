@@ -2,12 +2,12 @@ import { tv } from 'tailwind-variants';
 
 export const imageFrameVariants = tv({
 	slots: {
-		root: 'relative block overflow-hidden bg-[var(--frame-fill)]',
-		image: 'block size-full',
+		root: 'relative isolate block overflow-hidden bg-[var(--frame-fill)]',
+		image: 'relative z-10 block size-full',
 		fallback: 'flex size-full flex-col items-center justify-center gap-2 text-center',
 		fallbackIcon: 'text-4xl leading-none text-primary',
 		fallbackLabel: 'text-xs text-muted-foreground',
-		skeleton: 'absolute inset-0 z-10 size-full rounded-none',
+		skeleton: 'absolute inset-0 z-0 size-full rounded-none',
 	},
 	variants: {
 		/** Concrete fit applied to the image (after `auto` has been resolved). */
@@ -27,11 +27,18 @@ export const imageFrameVariants = tv({
 			},
 			false: {},
 		},
+		// Ordinary load progress is a backdrop so an SSR-painted image stays visible
+		// before hydration resolves it. Explicit parent loading remains a true cover.
+		loadingOverlay: {
+			true: { skeleton: 'z-20' },
+			false: {},
+		},
 	},
 	defaultVariants: {
 		fit: 'cover-crop',
 		shape: 'square',
 		interactive: false,
+		loadingOverlay: false,
 	},
 });
 

@@ -1,8 +1,9 @@
+import { sharedChromeLaunchOptions } from '../../scripts/browser-automation.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-const browser = await chromium.launch();
+const browser = await chromium.launch(sharedChromeLaunchOptions);
 const results = [];
 async function geometry(page, context) {
 	const errors = await page.locator('.gift:not(.skeleton)').evaluateAll((cards, context) => {

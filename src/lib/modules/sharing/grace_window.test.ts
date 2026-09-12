@@ -9,23 +9,14 @@ import {
 const SHARE = new Date('2024-02-01T12:00:00.000Z');
 
 describe('isWithinGraceWindow', () => {
-	it('is open immediately after the last edit', () => {
-		expect(isWithinGraceWindow(SHARE, SHARE)).toBe(true);
-	});
-
-	it('is open one second before the window closes', () => {
-		const now = new Date(SHARE.getTime() + GRACE_WINDOW_MS - 1000);
-		expect(isWithinGraceWindow(SHARE, now)).toBe(true);
-	});
-
-	it('is closed exactly at the boundary (exclusive)', () => {
-		const now = new Date(SHARE.getTime() + GRACE_WINDOW_MS);
-		expect(isWithinGraceWindow(SHARE, now)).toBe(false);
-	});
-
-	it('is closed after the window elapses', () => {
-		const now = new Date(SHARE.getTime() + GRACE_WINDOW_MS + 1);
-		expect(isWithinGraceWindow(SHARE, now)).toBe(false);
+	it.each([
+		['immediately', 0, true],
+		['just before expiry', GRACE_WINDOW_MS - 1, true],
+		['exactly at expiry', GRACE_WINDOW_MS, false],
+		['after expiry', GRACE_WINDOW_MS + 1, false],
+	] as const)('is %s', (_case, elapsedMs, expected) => {
+		const now = new Date(SHARE.getTime() + elapsedMs);
+		expect(isWithinGraceWindow(SHARE, now)).toBe(expected);
 	});
 
 	it('accepts an ISO string for the last-edit timestamp', () => {

@@ -1,7 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
-import { createWishlistAndNavigate, addGift, shareWishlist } from './fixtures/wishlist-helpers.js';
+import {
+	createWishlistAndNavigate,
+	addGift,
+	shareWishlist,
+	openDesktopDisplaySubmenu,
+} from './fixtures/wishlist-helpers.js';
 
 /**
  * Role-aware reserved-gift ordering + priority grouping (issue #224).
@@ -75,7 +80,9 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		const foreigner = createTestUser('band-foreigner');
 		const foreignerPage = await registerAndGetPage(browser, request, baseURL!, foreigner);
 		await foreignerPage.goto(wishlistPath);
-		await foreignerPage.waitForLoadState('networkidle');
+		await expect(
+			foreignerPage.getByRole('heading', { name: 'Alpha Gift', level: 3 }),
+		).toBeVisible();
 		await reserveGiftByName(foreignerPage, 'Alpha Gift');
 		await foreignerPage.context().close();
 
@@ -83,14 +90,18 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		const gifter = createTestUser('band-gifter');
 		const gifterPage = await registerAndGetPage(browser, request, baseURL!, gifter);
 		await gifterPage.goto(wishlistPath);
-		await gifterPage.waitForLoadState('networkidle');
+		await expect(
+			gifterPage.getByRole('heading', { name: 'Bravo Gift', level: 3 }),
+		).toBeVisible();
 		await reserveGiftByName(gifterPage, 'Bravo Gift');
 
 		// Reload for a deterministic, server-derived reservation state: `myReservationId` (which the
 		// own-reservation band keys off) is persisted in the DB, whereas the post-reserve
 		// single-flight refresh of the client-only gifts query is a race we don't need to test here.
 		await gifterPage.reload();
-		await gifterPage.waitForLoadState('networkidle');
+		await expect(
+			gifterPage.getByRole('heading', { name: 'Bravo Gift', level: 3 }),
+		).toBeVisible();
 		await switchToListView(gifterPage);
 
 		// Both band headers appear: „Vaše rezervace" first, then „Ostatní dárky" for the
@@ -137,13 +148,17 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		const gifter = createTestUser('recipient-band-gifter');
 		const gifterPage = await registerAndGetPage(browser, request, baseURL!, gifter);
 		await gifterPage.goto(wishlistPath);
-		await gifterPage.waitForLoadState('networkidle');
+		await expect(
+			gifterPage.getByRole('heading', { name: 'First Gift', level: 3 }),
+		).toBeVisible();
 		await reserveGiftByName(gifterPage, 'First Gift');
 		await gifterPage.context().close();
 
 		// The owner (recipient) returns: no band header, no reservation-driven reordering.
 		await ownerPage.goto(wishlistPath);
-		await ownerPage.waitForLoadState('networkidle');
+		await expect(
+			ownerPage.getByRole('heading', { name: 'First Gift', level: 3 }),
+		).toBeVisible();
 		await switchToListView(ownerPage);
 		await expect(ownerPage.getByText(OWN_BAND_HEADER)).toHaveCount(0);
 		const firstY = await giftTop(ownerPage, 'First Gift');
@@ -173,7 +188,9 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		const visitor = createTestUser('no-res-visitor');
 		const visitorPage = await registerAndGetPage(browser, request, baseURL!, visitor);
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
+		await expect(
+			visitorPage.getByRole('heading', { name: 'Delta Gift', level: 3 }),
+		).toBeVisible();
 		await switchToListView(visitorPage);
 
 		await expect(
@@ -196,15 +213,11 @@ test.describe('Reserved-band ordering (issue #224)', () => {
 		const ownerPage = await registerAndGetPage(browser, request, baseURL!, owner);
 		await createWishlistAndNavigate(ownerPage, 'Grouping Toggle List');
 		await addGift(ownerPage, 'Unprioritized Gift');
-		await ownerPage.waitForLoadState('networkidle');
 
-		// Open the filter dropdown — the grouping toggle must not be offered yet.
-		await ownerPage
-			.getByRole('button', { name: /Filtr|Filter/ })
-			.first()
-			.click();
+		// Open Display → Filter — the grouping toggle must not be offered yet.
+		const filterMenu = await openDesktopDisplaySubmenu(ownerPage, /Filtrovat|Filter/);
 		await expect(
-			ownerPage.getByRole('menuitemcheckbox', {
+			filterMenu.getByRole('menuitemcheckbox', {
 				name: /Seskupit podle priority|Group by priority/,
 			}),
 		).toHaveCount(0);

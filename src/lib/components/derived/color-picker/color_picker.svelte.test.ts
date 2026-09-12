@@ -1,3 +1,4 @@
+import '../../../../app.css';
 import { render } from 'vitest-browser-svelte';
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
@@ -11,14 +12,24 @@ function nativeFallback(): HTMLInputElement {
 }
 
 describe('ColorPicker', () => {
-	it('renders only a styled rounded-square trigger while closed', async () => {
+	it('shows the accepted color on the sole visible trigger while closed', async () => {
 		const screen = render(ColorPicker, { value: '#0369A1', label });
 		const trigger = screen.getByRole('button', { name: label });
 
 		await expect.element(trigger).toBeVisible();
-		expect(trigger.element().className).toContain('rounded-btn');
 		expect(getComputedStyle(trigger.element()).backgroundColor).toBe('rgb(3, 105, 161)');
-		expect(nativeFallback().className).toContain('sr-only');
+		expect(document.querySelectorAll(`button[aria-label="${label}"]`)).toHaveLength(1);
+		const fallback = nativeFallback();
+		expect(fallback).toHaveAttribute('aria-hidden', 'true');
+		expect(fallback).toHaveAttribute('tabindex', '-1');
+		const fallbackRect = fallback.getBoundingClientRect();
+		const fallbackStyle = getComputedStyle(fallback);
+		const isVisuallySuppressed =
+			Number.parseFloat(fallbackStyle.opacity) === 0 ||
+			fallbackStyle.clip !== 'auto' ||
+			fallbackStyle.clipPath !== 'none' ||
+			(fallbackRect.width <= 1 && fallbackRect.height <= 1);
+		expect(isVisuallySuppressed).toBe(true);
 		await expect.element(page.getByRole('dialog', { name: label })).not.toBeInTheDocument();
 	});
 
@@ -95,9 +106,13 @@ describe('ColorPicker', () => {
 		const hex = dialog.getByRole('textbox', { name: m.color_picker_hex_label() });
 		const save = dialog.getByRole('button', { name: m.save() });
 
+		await expect.element(dialog).toBeVisible();
+		await expect.element(hex).toHaveValue('#aabbcc');
 		await hex.fill('#FFFFFF');
+		await expect.element(hex).toHaveValue('#FFFFFF');
 		await expect.element(save).toBeEnabled();
 		await hex.fill('#AABBCC');
+		await expect.element(hex).toHaveValue('#AABBCC');
 		await expect.element(save).toBeDisabled();
 		expect(onValueChange).not.toHaveBeenCalled();
 	});

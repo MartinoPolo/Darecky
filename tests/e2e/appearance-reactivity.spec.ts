@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { openCreateWishlistDialog } from './fixtures/wishlist-helpers.js';
 
 /**
  * Cross-surface reactivity regression guard for the PRD #33 image/crop work.
@@ -46,17 +47,10 @@ function waitForUpload(page: Page) {
 /** Create a wishlist from /my-lists via the modal (locale-proof: stable ids), land on its page. */
 async function createWishlist(page: Page, title: string): Promise<string> {
 	await page.goto('/my-lists');
-	await page.waitForLoadState('networkidle');
-	await page
-		.getByRole('button', { name: /Vytvořit|Create/ })
-		.first()
-		.click();
-	const dialog = page.getByRole('dialog');
-	await expect(dialog).toBeVisible({ timeout: 5_000 });
+	const dialog = await openCreateWishlistDialog(page);
 	await dialog.locator('#wishlist-title').fill(title);
 	await dialog.locator('button[type=submit]').click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText(title, { timeout: 10_000 });
-	await page.waitForLoadState('networkidle');
 	return new URL(page.url()).pathname.split('/').filter(Boolean).pop()!;
 }
 
@@ -104,7 +98,6 @@ test.describe('Wishlist appearance reactivity (no-reload)', () => {
 
 		// Baseline (full load): no image yet – the card renders the themed emoji fallback (no <img>).
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
 		await expect(card(page, title)).toBeVisible({ timeout: 10_000 });
 		await expect(card(page, title).locator('img')).toHaveCount(0);
 

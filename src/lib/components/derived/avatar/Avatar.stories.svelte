@@ -1,6 +1,6 @@
 <script module lang="ts">
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Avatar, AVATAR_SIZES } from './index.js';
+	import { Avatar, AVATAR_SHAPES, AVATAR_SIZES } from './index.js';
 
 	const { Story } = defineMeta({
 		title: 'Derived/Avatar',
@@ -10,6 +10,10 @@
 			size: {
 				control: 'select',
 				options: [...AVATAR_SIZES],
+			},
+			shape: {
+				control: 'select',
+				options: [...AVATAR_SHAPES],
 			},
 		},
 	});
@@ -45,6 +49,15 @@
 					<span class="text-xs text-muted-foreground">{size}</span>
 				</div>
 			{/each}
+		</div>
+	{/snippet}
+</Story>
+
+<Story name="Recipient">
+	{#snippet template()}
+		<div class="flex items-center gap-3">
+			<Avatar appearance="recipient" src={PHOTO} alt="Martin Novák" initials="MN" />
+			<Avatar appearance="recipient" src={null} alt="Martin Novák" initials="MN" />
 		</div>
 	{/snippet}
 </Story>

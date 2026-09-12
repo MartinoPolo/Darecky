@@ -9,8 +9,6 @@ export interface GiftPointerReorderOptions {
 	onCancelOrder: (orderedIds: string[]) => void;
 }
 
-export type GiftPointerReorderController = ReturnType<typeof createGiftPointerReorderController>;
-
 interface ItemPosition {
 	left: number;
 	top: number;

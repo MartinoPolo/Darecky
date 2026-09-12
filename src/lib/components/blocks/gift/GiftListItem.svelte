@@ -2,7 +2,6 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { Badge } from '$lib/components/base/badge/index.js';
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
-	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import GiftImage from '$lib/components/blocks/gift/GiftImage.svelte';
 	import GiftStateOverlay from '$lib/components/blocks/gift/GiftStateOverlay.svelte';
 	import GiftPieceCount from '$lib/components/blocks/gift/GiftPieceCount.svelte';
@@ -35,11 +34,12 @@
 		isArchived?: boolean;
 		hideReservationState?: boolean;
 		contextualMode?: boolean;
-		showLikeCount?: boolean;
 		onreserve?: (gift: GiftForVisitor) => void;
 		onunreserve?: (gift: GiftForVisitor) => void;
 		onreceived?: (giftId: string, received: boolean) => void;
-		onmore?: () => void;
+		onmore?: (anchor: HTMLButtonElement) => void;
+		moreOpen?: boolean;
+		moreSurface?: 'menu' | 'dialog';
 	}
 
 	let {
@@ -48,11 +48,12 @@
 		isArchived = false,
 		hideReservationState = role === 'recipient',
 		contextualMode = false,
-		showLikeCount = false,
 		onreserve,
 		onunreserve,
 		onreceived,
 		onmore,
+		moreOpen = false,
+		moreSurface = 'menu',
 	}: GiftListItemProps = $props();
 
 	const displayState = $derived(
@@ -73,7 +74,6 @@
 		visitorGift !== null &&
 			(visitorGift.myReservationId !== null || (!isArchived && !isFullyReserved)),
 	);
-	// Edit-icon hover affordance (issue #125 REQ-3): mirrors GiftCard's manager-only pencil icon.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
 	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
 	const hasMultipleActions = $derived(
@@ -87,13 +87,85 @@
 	const priceDisplay = $derived(formatPrice(gift.price, gift.currency, gift.priceMax));
 	const priorityInfo = $derived(getPriorityDisplay(gift.priorityLabel));
 	const reserverLine = $derived(formatReserverLine(visitorGift?.reserverNames ?? []));
+
+	function synchronizeListImageSize(item: HTMLElement) {
+		const container = item.parentElement;
+		const content = item.querySelector<HTMLElement>('[data-testid="gift-list-content"]');
+		if (container === null || content === null) {
+			return;
+		}
+
+		let animationFrame = 0;
+		let destroyed = false;
+		const schedule = () => {
+			if (destroyed) {
+				return;
+			}
+			cancelAnimationFrame(animationFrame);
+			animationFrame = requestAnimationFrame(measure);
+		};
+		const reset = () => {
+			item.style.removeProperty('--gift-list-image-size');
+			item.removeAttribute('data-list-image-stacked');
+		};
+		const measure = () => {
+			animationFrame = 0;
+			reset();
+			// Start at the content minimum so a wider initial image cannot force avoidable wrapping.
+			item.style.setProperty('--gift-list-image-size', '0px');
+
+			const itemStyle = getComputedStyle(item);
+			const rootFontSize = Number.parseFloat(
+				getComputedStyle(document.documentElement).fontSize,
+			);
+			const contentFloorInRem = Number.parseFloat(
+				itemStyle.getPropertyValue('--gift-list-content-floor'),
+			);
+			const maximumImageSize = item.clientWidth - rootFontSize * contentFloorInRem;
+			let imageSize = item.clientHeight;
+
+			while (imageSize <= maximumImageSize) {
+				item.style.setProperty('--gift-list-image-size', `${Math.ceil(imageSize)}px`);
+				const requiredSize = item.clientHeight;
+				if (requiredSize <= imageSize + 0.5) {
+					return;
+				}
+				imageSize = requiredSize;
+			}
+
+			item.setAttribute('data-list-image-stacked', '');
+			item.style.removeProperty('--gift-list-image-size');
+		};
+
+		const resizeObserver = new ResizeObserver(schedule);
+		resizeObserver.observe(container);
+		const mutationObserver = new MutationObserver(schedule);
+		mutationObserver.observe(content, {
+			attributes: true,
+			childList: true,
+			characterData: true,
+			subtree: true,
+		});
+		document.fonts.ready.then(schedule);
+		schedule();
+
+		return {
+			destroy() {
+				destroyed = true;
+				cancelAnimationFrame(animationFrame);
+				resizeObserver.disconnect();
+				mutationObserver.disconnect();
+			},
+		};
+	}
 </script>
 
 <div class="gift-list-query-container w-full">
 	<div
 		data-testid="gift-list-item"
+		use:synchronizeListImageSize
 		class={cn(
-			'gift-list-item group grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors hover:bg-muted/50',
+			'gift-list-item group relative grid items-start gap-0 rounded-panel border-2 border-ink bg-card shadow-sticker transition-colors hover:bg-muted/50',
 			hasReceivedPrimary &&
 				reserverLine !== null &&
 				reserverLine !== '' &&
@@ -101,7 +173,16 @@
 			hasMultipleActions && 'gift-list-item-multiple-actions',
 		)}
 	>
-		<!-- The normal horizontal layout keeps the thumb 1:1 while taller content can grow the card. -->
+		{#if !contextualMode && presentation.showLike && isVisitorOrModerator && visitorGift}
+			<LikeButton
+				giftId={gift.id}
+				giftName={gift.name}
+				likeCount={visitorGift.likeCount}
+				size="md"
+				class="absolute top-[6.5px] right-[6.5px] z-20"
+			/>
+		{/if}
+
 		<div
 			data-testid="gift-list-image"
 			class="gift-list-image relative aspect-square self-start border-r-2 border-ink"
@@ -121,41 +202,14 @@
 					aria-hidden="true"
 				></div>
 			{/if}
-			{#if canManage}
-				<!-- Edit affordance (issue #125 REQ-3): decorative, the whole row is the click target. -->
-				<span
-					class="absolute -top-1.5 -left-1.5 hidden items-center justify-center rounded-full border-2 border-ink bg-card p-1 opacity-0 shadow-sticker transition-opacity duration-150 sm:flex group-hover:opacity-100 group-focus-within:opacity-100"
-					aria-hidden="true"
-				>
-					<PencilIcon class="size-3" />
-				</span>
-			{/if}
-			{#if !contextualMode && presentation.showLike && isVisitorOrModerator && visitorGift}
-				<LikeButton
-					giftId={gift.id}
-					giftName={gift.name}
-					likeCount={visitorGift.likeCount}
-					size="md"
-					showCount={showLikeCount}
-					class={cn(
-						'absolute right-1 top-1 z-20 h-10 min-h-10 min-w-10 rounded-full sm:right-2 sm:top-2',
-						showLikeCount
-							? 'w-10 max-sm:[&_[data-like-count]]:hidden sm:w-auto'
-							: 'w-10',
-					)}
-					surfaceClass={cn(
-						'justify-center border-2 border-ink bg-card p-0 shadow-sticker',
-						showLikeCount
-							? 'gap-0 max-sm:[&_[data-like-count]]:hidden sm:gap-1 sm:px-1.5'
-							: 'gap-0',
-					)}
-				/>
-			{/if}
-			<GiftStateOverlay model={presentation.overlay} class="pt-[3.25rem]" />
+			<GiftStateOverlay
+				model={presentation.overlay}
+				class={contextualMode ? 'pt-[3.25rem]' : undefined}
+			/>
 		</div>
 
-		<!-- Ordinary rows keep content beside the image; narrow manager rows with multiple actions
-	     stack below it. The dim lives here so the centered state overlay stays crisp. -->
+		<!-- Content stays beside the full-height square image. The dim lives here so the
+	     centered state overlay stays crisp. -->
 		<div
 			data-testid="gift-list-content"
 			class={cn(
@@ -163,7 +217,12 @@
 				isDimmed && 'opacity-55 grayscale-50',
 			)}
 		>
-			<div class="flex items-start gap-1.5">
+			<div
+				class={cn(
+					'flex items-start gap-1.5',
+					!contextualMode && presentation.showLike && visitorGift && 'pr-11',
+				)}
+			>
 				<h3
 					class="gift-list-title line-clamp-2 min-w-0 flex-1 font-heading text-[13px] font-semibold leading-4 text-foreground sm:text-base sm:leading-snug"
 				>
@@ -192,7 +251,7 @@
 				{/if}
 			</div>
 
-			<div>
+			<div class="flex min-w-0">
 				{#if domain}
 					<a
 						href={safeGiftUrl ?? '#'}
@@ -241,13 +300,15 @@
 								size="md"
 								{onreserve}
 								{onunreserve}
-								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 							/>
 						{/if}
 					{/snippet}
 					<GiftActionRow
 						{onmore}
+						{moreOpen}
+						{moreSurface}
 						secondary={hasMultipleActions ? secondaryReservationAction : undefined}
+						controlSizing="intrinsic"
 					>
 						{#if !canManage && isVisitorOrModerator && visitorGift && onmore === undefined}
 							<PurchasedToggle
@@ -265,7 +326,6 @@
 								{onreceived}
 								size="md"
 								compactLabel
-								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1 [&_svg]:hidden"
 							/>
 						{:else if isVisitorOrModerator && visitorGift}
 							<ReserveButton
@@ -274,7 +334,6 @@
 								size="md"
 								{onreserve}
 								{onunreserve}
-								surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 							/>
 						{/if}
 					</GiftActionRow>
@@ -299,7 +358,7 @@
 
 		box-sizing: border-box;
 		grid-template-columns: var(--gift-list-image-size) minmax(0, 1fr);
-		min-height: calc(var(--gift-list-image-size) + 0.25rem);
+		min-height: calc(var(--gift-list-image-size) + 4px);
 	}
 
 	.gift-list-item-manager-dense {
@@ -328,66 +387,34 @@
 	}
 
 	@container gift-list (width < 40rem) {
-		.gift-list-item-multiple-actions {
-			display: flex;
-			height: auto;
-			flex-direction: column;
-		}
-
-		.gift-list-item-multiple-actions .gift-list-image {
-			width: 100%;
-			height: auto;
-			aspect-ratio: 1;
-			border-right: 0;
-			border-bottom: 2px solid var(--ink);
-		}
-
-		.gift-list-item-multiple-actions .gift-list-image-frame {
-			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
+		.gift-list-item,
+		.gift-list-item-manager-dense {
+			--gift-list-content-floor: 8rem;
+			--gift-list-image-size: clamp(
+				6.625rem,
+				calc(100cqi - var(--gift-list-content-floor) - 0.25rem),
+				13rem
+			);
 		}
 	}
 
-	@container gift-list (width < 20rem) {
-		.gift-list-item-manager-dense:not(.gift-list-item-multiple-actions) {
-			display: flex;
-			height: auto;
-			flex-direction: column;
-		}
+	:global(.gift-list-item[data-list-image-stacked]) {
+		grid-template-columns: minmax(0, 1fr);
 	}
 
-	@container gift-list (width < 18.5rem) {
-		.gift-list-item:not(.gift-list-item-manager-dense) {
-			display: flex;
-			height: auto;
-			flex-direction: column;
-		}
+	:global(.gift-list-item[data-list-image-stacked] .gift-list-image) {
+		width: 100%;
+		height: auto;
+		border-right-width: 0;
+		border-bottom: 2px solid var(--ink);
 	}
 
-	@container gift-list (width < 20rem) {
-		.gift-list-item-manager-dense:not(.gift-list-item-multiple-actions) .gift-list-image {
-			width: 100%;
-			height: auto;
-			aspect-ratio: 1;
-			border-right: 0;
-			border-bottom: 2px solid var(--ink);
-		}
-
-		.gift-list-item-manager-dense:not(.gift-list-item-multiple-actions) .gift-list-image-frame {
-			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
-		}
-	}
-
-	@container gift-list (width < 18.5rem) {
-		.gift-list-item:not(.gift-list-item-manager-dense) .gift-list-image {
-			width: 100%;
-			height: auto;
-			aspect-ratio: 1;
-			border-right: 0;
-			border-bottom: 2px solid var(--ink);
-		}
-
-		.gift-list-item:not(.gift-list-item-manager-dense) .gift-list-image-frame {
-			border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
-		}
+	:global(.gift-list-item[data-list-image-stacked] .gift-list-image-frame),
+	:global(
+		.gift-list-item[data-list-image-stacked]
+			.gift-list-image
+			> [data-testid='gift-reserved-veil']
+	) {
+		border-radius: calc(var(--radius-panel) - 2px) calc(var(--radius-panel) - 2px) 0 0;
 	}
 </style>

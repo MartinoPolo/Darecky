@@ -44,19 +44,10 @@ function deferredPromise() {
 	return { promise, resolve, reject };
 }
 
-const previewRecipes: Record<DepthStyle, { label: string; style: string }> = {
-	soft: {
-		label: m.depth_style_soft(),
-		style: '--hard-shadow: var(--soft-shadow); --hard-shadow-strong: var(--soft-shadow-strong);',
-	},
-	ink: {
-		label: m.depth_style_ink(),
-		style: '--hard-shadow: var(--ink-shadow); --hard-shadow-strong: var(--ink-shadow-strong);',
-	},
-	black: {
-		label: m.depth_style_black(),
-		style: '--hard-shadow: var(--black-shadow); --hard-shadow-strong: var(--black-shadow-strong);',
-	},
+const depthLabels: Record<DepthStyle, string> = {
+	soft: m.depth_style_soft(),
+	ink: m.depth_style_ink(),
+	black: m.depth_style_black(),
 };
 
 interface LinearSrgbColor {
@@ -176,18 +167,17 @@ describe('DepthStyleSwitcher', () => {
 		clearRootAppearanceState();
 	});
 
-	it('renders exactly three name-only minimum-48px controlled choices with exact independent previews', async () => {
+	it('renders the three named choices with accessible touch targets', async () => {
 		const screen = await render(DepthStyleSwitcher, {});
 		const choices = screen.getByRole('radio').all();
 		expect(choices).toHaveLength(3);
 
-		for (const { label, style } of Object.values(previewRecipes)) {
+		for (const label of Object.values(depthLabels)) {
 			const choice = screen.getByRole('radio', { name: label });
 			expect(
 				choice.element().getBoundingClientRect().height,
 				`${label} radio height`,
 			).toBeGreaterThanOrEqual(48);
-			await expect.element(choice).toHaveAttribute('style', style);
 		}
 		await screen.unmount();
 	});
@@ -207,15 +197,6 @@ describe('DepthStyleSwitcher', () => {
 		};
 		const baseline = choices.map((choice) => boundary(choice.element()));
 		for (const choice of choices) {
-			const surface = choice.element().querySelector(':scope > .elevation-surface')!;
-			await expect.element(choice).toHaveClass(/elevation-owner-raised/);
-			expect(surface.className).toContain('group-data-[state=on]:border-border-strong');
-			expect(surface.className).toContain('group-data-[state=on]:bg-[var(--selection-tint)]');
-			expect(surface.className).toContain('rounded-btn');
-			await expect.element(choice).not.toHaveClass(/data-\[state=on\]:shadow/);
-		}
-
-		for (const choice of choices) {
 			await choice.click();
 			expect(choices.map((option) => boundary(option.element()))).toEqual(baseline);
 		}
@@ -225,7 +206,7 @@ describe('DepthStyleSwitcher', () => {
 	it('renders contrast-safe selected text and indicators for every palette, mode, and depth', async () => {
 		const screen = await render(DepthStyleSwitcher, {});
 		const choiceElements = new Map(
-			Object.values(previewRecipes).map(({ label }) => {
+			Object.values(depthLabels).map((label) => {
 				const element = screen.getByRole('radio', { name: label }).element() as HTMLElement;
 				element.style.transition = 'none';
 				return [label, element] as const;
@@ -236,7 +217,7 @@ describe('DepthStyleSwitcher', () => {
 			document.documentElement.dataset.palette = palette;
 			for (const dark of [false, true]) {
 				document.documentElement.classList.toggle('dark', dark);
-				for (const { label } of Object.values(previewRecipes)) {
+				for (const label of Object.values(depthLabels)) {
 					const choiceElement = choiceElements.get(label)!;
 					choiceElement.click();
 					await tick();

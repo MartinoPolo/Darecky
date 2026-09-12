@@ -1,5 +1,9 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
-import { loginViaApi, parseCookiesForContext } from './fixtures/auth-helpers.js';
+import {
+	loginViaApi,
+	parseCookiesForContext,
+	waitForAppHydration,
+} from './fixtures/auth-helpers.js';
 
 const VIEWPORT_PADDING = 8;
 
@@ -16,6 +20,7 @@ async function openSeedWishlist(
 	await page.goto('/w/xmas2026', { waitUntil: 'domcontentloaded' });
 	await expect(page.getByTestId('wishlist-toolbar')).toBeVisible();
 	await expect(page.locator('[data-gift-item]').first()).toBeVisible();
+	await waitForAppHydration(page);
 }
 
 async function pinTrigger(trigger: Locator, top: number, left: number) {
@@ -26,6 +31,17 @@ async function pinTrigger(trigger: Locator, top: number, left: number) {
 			element.style.left = `${position.left}px`;
 			element.style.width = 'max-content';
 			element.style.zIndex = '999';
+		},
+		{ top, left },
+	);
+}
+
+async function pinNestedTrigger(trigger: Locator, top: number, left: number) {
+	await trigger.evaluate(
+		(element, position) => {
+			element.style.removeProperty('translate');
+			const rect = element.getBoundingClientRect();
+			element.style.translate = `${position.left - rect.left}px ${position.top - rect.top}px`;
 		},
 		{ top, left },
 	);
@@ -54,6 +70,41 @@ async function expectInsideViewport(menu: Locator, width: number, height: number
 	expect(rect!.y + rect!.height).toBeLessThanOrEqual(height - VIEWPORT_PADDING + 1);
 }
 
+async function openDesktopDisplayRoot(page: Page) {
+	const trigger = page.getByTestId('desktop-display-trigger').filter({ visible: true });
+	await expect(trigger).toBeVisible();
+	await trigger.click();
+	const root = page.getByRole('menu', { name: 'Možnosti zobrazení' });
+	await expect(root).toBeVisible();
+	return { trigger, root };
+}
+
+async function openDisplaySubmenu(page: Page, name: RegExp) {
+	const { trigger, root } = await openDesktopDisplayRoot(page);
+	const subTrigger = root.getByRole('menuitem', { name });
+	await expect(subTrigger).toBeVisible();
+	await subTrigger.focus();
+	await page.keyboard.press('ArrowRight');
+	const submenu = page.locator('[data-slot="dropdown-menu-sub-content"]:visible');
+	await expect(submenu).toBeVisible();
+	return { trigger, root, subTrigger, submenu };
+}
+
+async function closeDropdownHierarchy(page: Page) {
+	const visibleLayers = page.locator(
+		'[data-slot="dropdown-menu-sub-content"]:visible, [data-slot="dropdown-menu-content"]:visible',
+	);
+	for (let layer = 0; layer < 2; layer += 1) {
+		const layerCount = await visibleLayers.count();
+		if (layerCount === 0) {
+			break;
+		}
+		await page.keyboard.press('Escape');
+		await expect(visibleLayers).toHaveCount(layerCount - 1);
+	}
+	await expect(visibleLayers).toHaveCount(0);
+}
+
 async function visibleDropdown(page: Page) {
 	const menu = page.locator('[data-slot="dropdown-menu-content"]:visible').last();
 	await expect(menu).toBeVisible();
@@ -75,12 +126,23 @@ test.describe('issue #364 dropdown viewport placement', () => {
 	}, testInfo) => {
 		await page.setViewportSize({ width: 1000, height: 600 });
 		await openSeedWishlist(page, request, baseURL!);
-		const trigger = page.getByRole('button', { name: /Filtrovat/ }).first();
-		await pinTrigger(trigger, 280, 300);
-		await trigger.click();
-		const menu = await visibleDropdown(page);
+		const displayTrigger = page
+			.getByTestId('desktop-display-trigger')
+			.filter({ visible: true });
+		await pinTrigger(displayTrigger, 280, 300);
+		const { submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/);
 		await expectDropdownViewportCap(menu, 600);
 		await page.mouse.move(10, 580);
+		// Entrance scaling moves bounds by design; this check guards drift after opening settles.
+		await expect
+			.poll(() =>
+				menu.evaluate((element) =>
+					element
+						.getAnimations()
+						.every((animation) => animation.playState === 'finished'),
+				),
+			)
+			.toBe(true);
 
 		const evidence = await menu.evaluate(async (element) => {
 			const samples: Array<{ y: number; side: string | null }> = [];
@@ -115,11 +177,10 @@ test.describe('issue #364 dropdown viewport placement', () => {
 	}, testInfo) => {
 		await page.setViewportSize({ width: 1000, height: 700 });
 		await openSeedWishlist(page, request, baseURL!);
-		const trigger = page.getByRole('button', { name: /Filtrovat/ }).first();
+		const trigger = page.getByTestId('desktop-display-trigger').filter({ visible: true });
 		await unpinTrigger(trigger);
 		await trigger.scrollIntoViewIfNeeded();
-		await trigger.click();
-		let menu = await visibleDropdown(page);
+		let { submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/);
 		await expectDropdownViewportCap(menu, 700);
 
 		const appScroller = page.locator('main.app-content');
@@ -139,22 +200,23 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		});
 		expect(Math.max(...scrollSamples) - Math.min(...scrollSamples)).toBeLessThan(1);
 
-		await page.keyboard.press('Escape');
+		await closeDropdownHierarchy(page);
 		await pinTrigger(trigger, 12, 12);
-		await trigger.click();
-		menu = await visibleDropdown(page);
+		({ submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/));
 		await expectDropdownViewportCap(menu, 700);
 		await expectInsideViewport(menu, 1000, 700);
-		expect(await menu.getAttribute('data-side')).toBe('bottom');
+		expect(await menu.getAttribute('data-side')).toBe('right');
 
-		await page.keyboard.press('Escape');
+		await closeDropdownHierarchy(page);
 		await pinTrigger(trigger, 640, 720);
-		await trigger.click();
-		menu = await visibleDropdown(page);
+		const edgeAnchoredFilter = await openDisplaySubmenu(page, /Filtrovat/);
+		const filterSubTrigger = edgeAnchoredFilter.subTrigger;
+		menu = edgeAnchoredFilter.submenu;
 		await expectDropdownViewportCap(menu, 700);
 		await expectInsideViewport(menu, 1000, 700);
 
 		await pinTrigger(trigger, 460, 500);
+		await pinNestedTrigger(filterSubTrigger, 460, 500);
 		await page.setViewportSize({ width: 760, height: 520 });
 		await expectDropdownViewportCap(menu, 520);
 		await expectInsideViewport(menu, 760, 520);
@@ -171,10 +233,9 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		await page.addStyleTag({
 			content: '[data-filter-option] { min-height: 7rem; }',
 		});
-		const trigger = page.getByRole('button', { name: /Filtrovat/ }).first();
+		const trigger = page.getByTestId('desktop-display-trigger').filter({ visible: true });
 		await pinTrigger(trigger, 190, 400);
-		await trigger.click();
-		const menu = await visibleDropdown(page);
+		const { root, subTrigger, submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/);
 		await expectDropdownViewportCap(menu, 420);
 		const endpoints = menu.locator('[data-filter-option]');
 		const first = endpoints.first();
@@ -194,10 +255,13 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		await attachScreenshot(page, testInfo, 'oversized-filter-last-option.png');
 		await page.keyboard.press('Escape');
 		await expect(menu).toBeHidden();
+		await expect(subTrigger).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect(root).toBeHidden();
 		await expect(trigger).toBeFocused();
 	});
 
-	test('submenu corners and Select keyboard selection retain viewport geometry and dismissal', async ({
+	test('submenu corners and nested Sort keyboard selection retain viewport geometry and dismissal', async ({
 		page,
 		request,
 		baseURL,
@@ -205,32 +269,40 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		await page.setViewportSize({ width: 1000, height: 600 });
 		await openSeedWishlist(page, request, baseURL!);
 
-		const sortTrigger = page
-			.getByTestId('wishlist-toolbar')
-			.locator('[data-slot="select-trigger"]')
-			.first();
-		const initialSort = await sortTrigger.innerText();
-		await pinTrigger(sortTrigger, 548, 720);
-		await sortTrigger.press('Enter');
-		const select = page.locator('[data-slot="select-content"]:visible');
-		await expect(select).toBeVisible();
-		await expectInsideViewport(select, 1000, 600);
+		const displayTrigger = page
+			.getByTestId('desktop-display-trigger')
+			.filter({ visible: true });
+		await pinTrigger(displayTrigger, 548, 720);
+		const {
+			root: displayRoot,
+			subTrigger: sortSubTrigger,
+			submenu: sortMenu,
+		} = await openDisplaySubmenu(page, /Řadit podle/);
+		await expectDropdownViewportCap(sortMenu, 600);
+		await expectInsideViewport(sortMenu, 1000, 600);
+		const selectedSort = sortMenu.locator('[role="menuitemradio"][aria-checked="true"]');
+		const initialSort = await selectedSort.innerText();
 		await page.keyboard.press('ArrowDown');
 		await page.keyboard.press('Enter');
-		await expect(select).toBeHidden();
-		await expect(sortTrigger).toBeFocused();
-		expect(await sortTrigger.innerText()).not.toBe(initialSort);
+		await expect(sortMenu).toBeVisible();
+		await expect.poll(() => selectedSort.innerText()).not.toBe(initialSort);
+		await page.keyboard.press('Escape');
+		await expect(sortMenu).toBeHidden();
+		await expect(sortSubTrigger).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect(displayRoot).toBeHidden();
+		await expect(displayTrigger).toBeFocused();
 
 		const giftHeading = page.locator('[data-gift-item] h3').first();
 		await giftHeading.click({ button: 'right' });
 		await page.getByRole('menuitem', { name: /Vybrat více dárků/ }).click();
-		const actionsTrigger = page.getByTestId('selection-narrow-actions').getByRole('button');
+		const actionsTrigger = page.getByRole('button', { name: 'Akce', exact: true });
 		await expect(actionsTrigger).toBeVisible();
 		await pinTrigger(actionsTrigger, 540, 820);
 		await actionsTrigger.click();
 		const mainMenu = await visibleDropdown(page);
 		await expectDropdownViewportCap(mainMenu, 600);
-		const subTrigger = page.getByRole('menuitem', { name: /Priorita/ });
+		const subTrigger = mainMenu.getByRole('menuitem', { name: /Priorita/ });
 		await subTrigger.hover();
 		const submenu = page.locator('[data-slot="dropdown-menu-sub-content"]:visible');
 		await expect(submenu).toBeVisible();
@@ -249,7 +321,7 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		await actionsTrigger.click();
 		const topLeftMenu = await visibleDropdown(page);
 		await expectDropdownViewportCap(topLeftMenu, 600);
-		await page.getByRole('menuitem', { name: /Priorita/ }).hover();
+		await topLeftMenu.getByRole('menuitem', { name: /Priorita/ }).hover();
 		const topLeftSubmenu = page.locator('[data-slot="dropdown-menu-sub-content"]:visible');
 		await expect(topLeftSubmenu).toBeVisible();
 		await expectDropdownViewportCap(topLeftSubmenu, 600);

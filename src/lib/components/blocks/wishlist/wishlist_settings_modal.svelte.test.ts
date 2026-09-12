@@ -233,14 +233,11 @@ describe('WishlistSettingsModal import and export tab', () => {
 		await expect.element(screen.getByRole('button', { name: m.save() })).toBeVisible();
 	});
 
-	it('keeps the six tabs in one horizontally scrollable row', () => {
+	it('keeps the six tabs in the required order', () => {
 		const screen = renderSettings();
 		const tablist = screen
 			.getByRole('tablist', { name: m.wishlist_settings_title() })
 			.element();
-		expect(tablist.classList).toContain('flex-nowrap');
-		expect(tablist.classList).toContain('overflow-x-auto');
-		expect(tablist.classList).not.toContain('sm:flex-col');
 		expect(
 			[...tablist.querySelectorAll('[role=tab]')].map((tab) => tab.textContent?.trim()),
 		).toEqual([

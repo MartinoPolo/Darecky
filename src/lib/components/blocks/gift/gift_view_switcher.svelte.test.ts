@@ -5,6 +5,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { GIFT_VIEW_MODES } from '$lib/modules/gifts/types.js';
 import GiftViewSwitcher from './GiftViewSwitcher.svelte';
 
+function hasVisibleBoxShadow(element: Element): boolean {
+	const boxShadow = getComputedStyle(element).boxShadow;
+	if (boxShadow === 'none') {
+		return false;
+	}
+	const alphas = Array.from(boxShadow.matchAll(/rgba\([^)]*, ([\d.]+)\)/g), (match) =>
+		Number(match[1]),
+	);
+	return alphas.length === 0 || alphas.some((alpha) => alpha > 0);
+}
+
 describe('GiftViewSwitcher toggle selection (fixes: re-click deselects both items)', () => {
 	it('switches mode and fires onchange exactly once when clicking the inactive item', async () => {
 		const onchange = vi.fn();
@@ -109,7 +120,7 @@ describe('GiftViewSwitcher toggle selection (fixes: re-click deselects both item
 		await screen.unmount();
 	});
 
-	it('uses 40px mobile targets and compact 32px desktop targets inside the shared boundary', async () => {
+	it('keeps the visible tray flush with the selected 32px toolbar control at every viewport', async () => {
 		await page.viewport(390, 720);
 		const screen = await render(GiftViewSwitcher, {
 			value: GIFT_VIEW_MODES.card,
@@ -120,14 +131,22 @@ describe('GiftViewSwitcher toggle selection (fixes: re-click deselects both item
 			.getByTestId(`gift-view-${GIFT_VIEW_MODES.card}`)
 			.element() as HTMLElement;
 
-		expect(group.getBoundingClientRect().height).toBe(40);
-		expect(card.getBoundingClientRect().width).toBe(40);
-		expect(card.getBoundingClientRect().height).toBe(40);
+		for (const [viewportWidth, expectedSize] of [
+			[390, 32],
+			[800, 32],
+		] as const) {
+			await page.viewport(viewportWidth, 720);
+			const trayBounds = group.getBoundingClientRect();
+			const selectedBounds = card.getBoundingClientRect();
 
-		await page.viewport(800, 720);
-		expect(group.getBoundingClientRect().height).toBe(32);
-		expect(card.getBoundingClientRect().width).toBe(32);
-		expect(card.getBoundingClientRect().height).toBe(32);
+			expect(selectedBounds.width).toBe(expectedSize);
+			expect(selectedBounds.height).toBe(expectedSize);
+			expect(trayBounds.top).toBeCloseTo(selectedBounds.top, 1);
+			expect(trayBounds.bottom).toBeCloseTo(selectedBounds.bottom, 1);
+			// A shadow paints beyond the tray's border box, recreating the taller accent halo
+			// even when getBoundingClientRect reports the same height as the selected item.
+			expect(hasVisibleBoxShadow(group)).toBe(false);
+		}
 		await screen.unmount();
 	});
 

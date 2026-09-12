@@ -1,3 +1,4 @@
+import { sharedChromeLaunchOptions } from '../../scripts/browser-automation.mjs';
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +12,7 @@ const scenes = [
 ];
 const output = new URL('./screenshots/', import.meta.url);
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch(sharedChromeLaunchOptions);
 const results = [];
 try {
 	for (const [name, relativePath] of scenes) {

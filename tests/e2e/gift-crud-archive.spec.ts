@@ -320,7 +320,6 @@ test.describe('Wishlist archival', () => {
 		const visitorPage = await visitorContext.newPage();
 
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
 
 		// The gift should be visible
 		await expect(visitorPage.getByText(TEST_GIFT.name)).toBeVisible({ timeout: 10_000 });

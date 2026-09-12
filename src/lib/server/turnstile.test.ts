@@ -80,7 +80,7 @@ describe('verifyTurnstileToken', () => {
 		});
 	});
 
-	it('fails closed when Siteverify is unavailable', async () => {
+	it('classifies a network failure as unavailable for caller fail-open handling', async () => {
 		const fetcher = vi.fn().mockRejectedValue(new TypeError('network unavailable'));
 		expect(await verifyTurnstileToken({ token: 'valid', secretKey, fetcher })).toEqual({
 			success: false,
@@ -152,7 +152,7 @@ describe('verifyTurnstileToken', () => {
 		);
 	});
 
-	it('fails closed in production when the secret is missing', async () => {
+	it('classifies missing production configuration for caller fail-open handling', async () => {
 		expect(
 			await verifyTurnstileToken({
 				token: 'valid',

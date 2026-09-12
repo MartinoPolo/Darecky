@@ -5,6 +5,7 @@
 	import { createGiftPointerReorderController } from './gift_pointer_reorder.svelte.js';
 	import { giftSectionHasHeader, type GiftSection } from '$lib/modules/gifts/gift_ordering.js';
 	import type { GiftByRole, GiftForVisitor } from '$lib/modules/gifts/types.js';
+	import type { GiftContextInvocation } from './gift_context_invocation.js';
 	import type { WishlistRole } from '$lib/modules/wishlists/types.js';
 	import * as m from '$lib/paraglide/messages.js';
 	import {
@@ -28,8 +29,10 @@
 		onreordercancel: (orderedIds: string[]) => void;
 		selectionMode?: boolean;
 		onselectiontoggle?: (giftId: string) => void;
-		oncontextactions?: (gift: GiftByRole, event: MouseEvent | null) => boolean;
+		oncontextactions?: (gift: GiftByRole, invocation: GiftContextInvocation) => boolean;
 		hascontextactions?: (gift: GiftByRole) => boolean;
+		activeContextGiftId?: string | null;
+		contextSurface?: 'menu' | 'dialog';
 	}
 
 	let {
@@ -49,6 +52,8 @@
 		onselectiontoggle,
 		oncontextactions,
 		hascontextactions,
+		activeContextGiftId = null,
+		contextSurface = 'menu',
 	}: WishlistGiftCardGridProps = $props();
 
 	let gridEl = $state<HTMLElement | null>(null);
@@ -145,10 +150,12 @@
 						{onreserve}
 						{onunreserve}
 						{onreceived}
+						moreOpen={activeContextGiftId === giftItem.id}
+						moreSurface={contextSurface}
 						onmore={oncontextactions !== undefined &&
 						hascontextactions !== undefined &&
 						hascontextactions(giftItem)
-							? () => oncontextactions(giftItem, null)
+							? (anchor) => oncontextactions(giftItem, { kind: 'more', anchor })
 							: undefined}
 					/>
 				{/snippet}

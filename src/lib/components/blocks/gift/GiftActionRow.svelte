@@ -9,16 +9,28 @@
 	interface Props {
 		children?: Snippet;
 		secondary?: Snippet;
-		onmore?: () => void;
+		onmore?: (anchor: HTMLButtonElement) => void;
+		moreOpen?: boolean;
+		moreSurface?: 'menu' | 'dialog';
+		controlSizing?: 'fill' | 'intrinsic';
 		class?: string;
 	}
 
-	let { children, secondary, onmore, class: className }: Props = $props();
+	let {
+		children,
+		secondary,
+		onmore,
+		moreOpen = false,
+		moreSurface = 'menu',
+		controlSizing = 'fill',
+		class: className,
+	}: Props = $props();
 
 	const styles = $derived(
 		giftActionRowVariants({
 			withMore: onmore !== undefined,
 			withSecondary: secondary !== undefined,
+			controlSizing,
 		}),
 	);
 </script>
@@ -29,46 +41,58 @@
 			{@render secondary()}
 		</div>
 	{/if}
-	<div class={styles.primary()}>
-		{@render children?.()}
+	<div class={styles.primaryGroup()}>
+		<div class={styles.primary()}>
+			{@render children?.()}
+		</div>
+		{#if onmore}
+			<Button
+				intent="outline"
+				size="icon"
+				class={styles.more()}
+				aria-label={m.gift_more_actions()}
+				data-gift-action="more"
+				data-testid="gift-more-actions"
+				onclick={(event) => {
+					event.stopPropagation();
+					onmore(event.currentTarget as HTMLButtonElement);
+				}}
+				onkeydown={(event) => {
+					if (event.key === 'ArrowDown') {
+						event.preventDefault();
+						event.stopPropagation();
+						onmore(event.currentTarget as HTMLButtonElement);
+					}
+				}}
+				aria-haspopup={moreSurface}
+				aria-expanded={moreOpen}><EllipsisIcon data-icon /></Button
+			>
+		{/if}
 	</div>
-	{#if onmore}
-		<Button
-			intent="outline"
-			size="md"
-			class={styles.more()}
-			surfaceClass="h-full p-0"
-			aria-label={m.gift_more_actions()}
-			data-testid="gift-more-actions"
-			onclick={(event) => {
-				event.stopPropagation();
-				onmore();
-			}}><EllipsisIcon /></Button
-		>
-	{/if}
 </div>
 
 <style>
 	.gift-action-row {
-		--gift-action-control-size: var(--size-control-xl);
+		--gift-action-control-size: var(--size-control-md);
 	}
 
 	.gift-action-slot :global(> [data-slot='button']) {
-		height: auto;
-		min-height: var(--gift-action-control-size);
-		flex-grow: 1;
+		height: var(--gift-action-control-size);
 		min-width: 0;
-		width: 100%;
-		align-self: stretch;
 	}
 
 	.gift-action-slot :global(> [data-slot='button'] > .elevation-surface) {
 		height: 100%;
 	}
 
-	@media (width >= 640px) {
-		.gift-action-row {
-			--gift-action-control-size: var(--size-control-md);
+	/* Keep compact visuals while giving coarse pointers a separate 40px hit area.
+	 * The 8px mobile gaps make neighboring 4px expansions meet without overlapping. */
+	@media (width < 640px) and (pointer: coarse) {
+		.gift-action-slot :global(> [data-slot='button']::before),
+		.gift-action-row > :global([data-slot='button']::before) {
+			position: absolute;
+			inset: -4px;
+			content: '';
 		}
 	}
 </style>

@@ -1,3 +1,4 @@
+import { sharedChromeLaunchOptions } from './browser-automation.mjs';
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, normalize } from 'node:path';
@@ -286,7 +287,7 @@ async function collect(options) {
 			wranglerSpawnFailure,
 		]);
 		const { chromium } = await import('playwright');
-		browser = await chromium.launch({ headless: true });
+		browser = await chromium.launch({ ...sharedChromeLaunchOptions, headless: true });
 		for (const route of ['/', '/login']) {
 			const samples = [];
 			const routeAssets = new Set();

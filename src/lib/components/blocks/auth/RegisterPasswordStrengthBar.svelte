@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
+	import { HelpText } from '$lib/components/base/help-text/index.js';
 
 	interface RegisterPasswordStrengthBarProps {
 		password: string;
@@ -68,7 +69,7 @@
 			></div>
 		{/each}
 	</div>
-	<span class="form-helper-text">{label}</span>
+	<HelpText>{label}</HelpText>
 {/if}
 
 <style>
@@ -85,11 +86,5 @@
 		border: 2px solid var(--ink);
 		background: var(--surface);
 		transition: background var(--duration-normal);
-	}
-
-	.form-helper-text {
-		font-size: 12.5px;
-		font-weight: 700;
-		color: var(--muted-foreground);
 	}
 </style>

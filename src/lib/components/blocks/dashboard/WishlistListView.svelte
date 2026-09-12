@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { localizeInternalHref } from '$lib/i18n/locale.js';
 	import { wishlistListViewVariants } from './wishlist_list_view_variants.js';
-	import { STATUS_CHIP_CLASSES } from './wishlist_card_variants.js';
+	import { WishlistBadge } from '$lib/components/derived/wishlist-badge/index.js';
 	import { getWishlistEmoji } from '$lib/modules/wishlists/wishlist_theme.js';
 	import { WISHLIST_STATUS_LABELS } from '$lib/modules/wishlists/dashboard_types.js';
 	import type { Wishlist } from '$lib/modules/wishlists/types.js';
@@ -77,11 +77,13 @@
 						{item.giftCount}
 					</span>
 				{/if}
-				<div
-					class={cn(rowVariants.statusBadge(), STATUS_CHIP_CLASSES[item.wishlist.status])}
+				<WishlistBadge
+					class={rowVariants.statusBadge()}
+					presentation="list-status"
+					status={item.wishlist.status}
 				>
 					{WISHLIST_STATUS_LABELS[item.wishlist.status]()}
-				</div>
+				</WishlistBadge>
 			</div>
 		</a>
 	{/each}

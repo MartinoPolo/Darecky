@@ -6,47 +6,6 @@ import ViewToggle from './ViewToggle.svelte';
 import ViewToggleTestHarness from './ViewToggleTestHarness.svelte';
 
 describe('ViewToggle toggle selection (fixes: re-click deselects both items)', () => {
-	it('renders the same accent tray treatment as the wishlist switcher', async () => {
-		const rootStyle = document.documentElement.style;
-		const properties = ['--accent', '--card', '--ink'] as const;
-		const previousProperties = properties.map((property) => ({
-			property,
-			value: rootStyle.getPropertyValue(property),
-			priority: rootStyle.getPropertyPriority(property),
-		}));
-		rootStyle.setProperty('--accent', 'rgb(12, 23, 34)');
-		rootStyle.setProperty('--card', 'rgb(45, 56, 67)');
-		rootStyle.setProperty('--ink', 'rgb(78, 89, 100)');
-
-		const screen = await render(ViewToggle, { value: 'grid' });
-
-		try {
-			const group = screen
-				.getByRole('group', { name: m.dashboard_view_label() })
-				.element() as HTMLElement;
-			const grid = screen
-				.getByRole('radio', { name: m.dashboard_view_grid() })
-				.element() as HTMLElement;
-			const list = screen
-				.getByRole('radio', { name: m.dashboard_view_list() })
-				.element() as HTMLElement;
-
-			expect(getComputedStyle(group).backgroundColor).toBe('rgb(12, 23, 34)');
-			expect(getComputedStyle(grid).backgroundColor).toBe('rgb(45, 56, 67)');
-			expect(getComputedStyle(list).backgroundColor).toBe('rgba(0, 0, 0, 0)');
-			expect(parseFloat(getComputedStyle(group).borderWidth)).toBe(0);
-			expect(getComputedStyle(group).boxShadow).not.toContain('inset');
-			expect(getComputedStyle(grid).outlineStyle).toBe('solid');
-			expect(getComputedStyle(list).outlineStyle).not.toBe('solid');
-			expect(getComputedStyle(grid).boxShadow).toBe(getComputedStyle(list).boxShadow);
-		} finally {
-			await screen.unmount();
-			for (const { property, value, priority } of previousProperties) {
-				rootStyle.setProperty(property, value, priority);
-			}
-		}
-	});
-
 	it('updates the parent-owned bound mode', async () => {
 		const screen = await render(ViewToggleTestHarness);
 

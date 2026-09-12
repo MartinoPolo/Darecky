@@ -4,6 +4,7 @@
 	import * as Popover from '$lib/components/base/popover/index.js';
 	import { Separator } from '$lib/components/base/separator/index.js';
 	import { SimpleTooltip } from '$lib/components/base/tooltip/index.js';
+	import { ChoiceRow } from '$lib/components/derived/choice-row/index.js';
 	import DepthStyleSwitcher from '$lib/components/derived/depth-style-switcher/DepthStyleSwitcher.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 	import { setUserPalette } from '$lib/modules/settings/settings.remote.js';
@@ -15,7 +16,6 @@
 		isPalette,
 		type Palette,
 	} from '$lib/theme/palettes.js';
-	import { cn } from '$lib/utils.js';
 
 	interface PaletteSwitcherProps {
 		/** `popover` = header icon trigger; `inline` = label + grid for drawers/consolidated menus. */
@@ -58,23 +58,19 @@
 {#snippet paletteGrid()}
 	<div class="grid grid-cols-2 gap-1">
 		{#each PALETTES as palette (palette)}
-			<button
-				type="button"
-				class={cn(
-					'flex cursor-pointer items-center gap-2 rounded-btn border-2 border-transparent px-2 py-1.5 text-left text-(length:--text-sm) font-semibold text-foreground transition-colors',
-					'hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
-					palette === currentPalette && 'border-ink bg-accent',
-				)}
-				aria-pressed={palette === currentPalette}
-				onclick={() => selectPalette(palette)}
+			<ChoiceRow
+				selected={palette === currentPalette}
+				onSelect={() => selectPalette(palette)}
 			>
-				<span
-					class="size-4 shrink-0 rounded-full border-2 border-ink"
-					style:background-color={PALETTE_SWATCHES[palette]}
-					aria-hidden="true"
-				></span>
+				{#snippet leading()}
+					<span
+						class="size-4 shrink-0 rounded-full border-2 border-ink"
+						style:background-color={PALETTE_SWATCHES[palette]}
+						aria-hidden="true"
+					></span>
+				{/snippet}
 				{PALETTE_LABELS[palette]}
-			</button>
+			</ChoiceRow>
 		{/each}
 	</div>
 {/snippet}

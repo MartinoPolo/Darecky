@@ -144,7 +144,9 @@
 			: fitMode,
 	);
 
-	const styles = $derived(imageFrameVariants({ fit: effectiveFit, shape, interactive }));
+	const styles = $derived(
+		imageFrameVariants({ fit: effectiveFit, shape, interactive, loadingOverlay: loading }),
+	);
 
 	// Zoomed OUT below the cover baseline (#116 round 2): object-fit clips to the
 	// element box, so the source window is rendered by positioning the image
@@ -172,9 +174,9 @@
 	);
 	const imageClass = $derived(
 		natural
-			? cn('block h-auto w-auto object-contain', className)
+			? cn('relative z-10 block h-auto w-auto object-contain', className)
 			: zoomOutLayout !== null
-				? 'absolute max-w-none'
+				? 'absolute z-10 max-w-none'
 				: styles.image(),
 	);
 

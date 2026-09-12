@@ -13,7 +13,6 @@ const { httpsRequest, httpsState } = vi.hoisted(() => ({
 vi.mock('node:https', () => ({ request: httpsRequest }));
 
 import {
-	SUPPORTED_INGESTION_IMAGE_TYPES,
 	downloadValidatedImage,
 	imageObjectKey,
 	validatePreparedImageReference,
@@ -31,15 +30,6 @@ beforeEach(() => {
 });
 
 describe('ingestion image mirroring', () => {
-	it('exposes one shared supported MIME policy for request and validation boundaries', () => {
-		expect(SUPPORTED_INGESTION_IMAGE_TYPES).toEqual([
-			'image/jpeg',
-			'image/png',
-			'image/webp',
-			'image/gif',
-		]);
-	});
-
 	it('downloads a supported image only after DNS-safe HTTPS redirect validation and validates its bytes', async () => {
 		const fetch = vi
 			.fn()

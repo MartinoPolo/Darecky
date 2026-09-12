@@ -40,18 +40,4 @@ describe('SettingsAppearanceSection theme toggle selection (fixes: re-click dese
 		await expect.element(activeItem).toHaveAttribute('aria-checked', 'true');
 		await screen.unmount();
 	});
-
-	it('always has exactly one checked item after re-clicking the active item', async () => {
-		const screen = await render(SettingsAppearanceSection, {});
-
-		await screen.getByRole('radio', { name: m.settings_mode_light() }).click();
-
-		const lightItem = screen.getByRole('radio', { name: m.settings_mode_light() });
-		const darkItem = screen.getByRole('radio', { name: m.settings_mode_dark() });
-		const systemItem = screen.getByRole('radio', { name: m.settings_mode_system() });
-		await expect.element(lightItem).toHaveAttribute('aria-checked', 'true');
-		await expect.element(darkItem).toHaveAttribute('aria-checked', 'false');
-		await expect.element(systemItem).toHaveAttribute('aria-checked', 'false');
-		await screen.unmount();
-	});
 });

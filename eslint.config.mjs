@@ -28,6 +28,8 @@ export default [
 			'**/*.d.ts',
 			'scripts/**',
 			'.claude/worktrees/**',
+			'.mpx/logs/component-visual-review/**',
+			'review/checks/**',
 		],
 	},
 	...tseslint.configs.recommended,

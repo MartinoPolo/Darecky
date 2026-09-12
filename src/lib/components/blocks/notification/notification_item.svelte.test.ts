@@ -1,5 +1,6 @@
 import { render } from 'vitest-browser-svelte';
 import { describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import type { ComponentProps } from 'svelte';
 import NotificationItem from './NotificationItem.svelte';
 import type { Notification } from '$lib/modules/notifications/types.js';
@@ -93,6 +94,27 @@ describe('NotificationItem new-gift digests', () => {
 		await expect.element(screen.getByText(/Birthday: 1/)).toBeVisible();
 		await screen.getByRole('button').click();
 		expect(navigation.goto).toHaveBeenCalledWith('/followed');
+	});
+
+	it('keeps a long message readable and supports click and keyboard activation', async () => {
+		navigation.goto.mockClear();
+		const onMarkAsRead = vi.fn();
+		const longMessage =
+			'A very long notification message that needs to wrap across several lines without being clipped or forcing the notification row to a fixed height.';
+		const screen = render(NotificationItem, {
+			notification: notification({ message: longMessage, href: '/followed' }),
+			onMarkAsRead,
+		});
+		const button = screen.getByRole('button');
+
+		await expect.element(screen.getByText(longMessage)).toBeVisible();
+		expect(button.element().scrollHeight).toBeLessThanOrEqual(button.element().clientHeight);
+		await button.click();
+		expect(onMarkAsRead).toHaveBeenCalledWith('notification-1');
+
+		button.element().focus();
+		await userEvent.keyboard('{Enter}');
+		expect(navigation.goto).toHaveBeenCalledTimes(2);
 	});
 
 	it('falls back for malformed or legacy rows and keeps the legacy wishlist destination', async () => {

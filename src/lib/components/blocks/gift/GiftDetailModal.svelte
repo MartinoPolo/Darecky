@@ -75,6 +75,8 @@
 		onclose,
 	}: Props = $props();
 
+	let contentRef = $state<HTMLDivElement | null>(null);
+
 	const styles = giftDetailModalVariants();
 	const isEdit = $derived(mode === 'edit');
 	const title = $derived(
@@ -91,9 +93,13 @@
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
 	<Dialog.Content
+		bind:ref={contentRef}
 		class={styles.content()}
 		showCloseButton={true}
-		onOpenAutoFocus={(event) => event.preventDefault()}
+		onOpenAutoFocus={(event) => {
+			event.preventDefault();
+			contentRef?.focus({ preventScroll: true });
+		}}
 	>
 		<Dialog.Title class="sr-only">{title}</Dialog.Title>
 		<Dialog.Description class="sr-only">

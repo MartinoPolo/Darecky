@@ -1,3 +1,4 @@
+import { sharedChromeLaunchOptions } from '../../scripts/browser-automation.mjs';
 import assert from 'node:assert/strict';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -8,7 +9,7 @@ const exported = JSON.parse(
 	await readFile(new URL('./export-location.json', import.meta.url), 'utf8'),
 );
 const index = pathToFileURL(exported.index);
-const browser = await chromium.launch();
+const browser = await chromium.launch(sharedChromeLaunchOptions);
 const results = [];
 try {
 	for (const relative of [

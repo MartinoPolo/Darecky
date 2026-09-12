@@ -1,6 +1,6 @@
 <script module lang="ts">
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { expect, waitFor } from 'storybook/test';
+	import { expect, userEvent, waitFor, within } from 'storybook/test';
 	import FilterMenu from './FilterMenu.svelte';
 
 	const { Story } = defineMeta({
@@ -9,24 +9,22 @@
 		tags: ['autodocs'],
 	});
 
-	const playDistinguishesHeadings = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
-		const body = canvasElement.ownerDocument.body;
-		await waitFor(() => {
-			expect(body.querySelectorAll('[data-filter-group-heading]')).toHaveLength(3);
-			expect(body.querySelectorAll('[data-filter-option]')).toHaveLength(9);
+	const playFiltersAndClears = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		const trigger = canvas.getByRole('button', { name: 'Filtrovat: 3 aktivní' });
+		const received = await body.findByRole('menuitemcheckbox', {
+			name: 'Zobrazit obdržené',
 		});
-		const heading = body.querySelector<HTMLElement>('[data-filter-group-heading]');
-		const option = body.querySelector<HTMLElement>('[data-filter-option]');
-		const indicator = option?.querySelector<HTMLElement>(
-			'[data-slot="dropdown-menu-checkbox-item-indicator"]',
-		);
-		expect(heading).not.toBeNull();
-		expect(option).not.toBeNull();
-		expect(indicator).not.toBeNull();
-		expect(getComputedStyle(heading!).textTransform).toBe('uppercase');
-		expect(getComputedStyle(heading!).pointerEvents).toBe('none');
-		expect(getComputedStyle(option!).cursor).toBe('pointer');
-		expect(getComputedStyle(indicator!).borderStyle).toBe('solid');
+
+		await expect(received).not.toBeChecked();
+		await userEvent.click(received);
+		await expect(received).toBeChecked();
+		await expect(trigger).toHaveAccessibleName('Filtrovat: 4 aktivní');
+
+		await userEvent.click(body.getByRole('menuitem', { name: 'Zrušit filtry' }));
+		await waitFor(() => expect(trigger).toHaveAccessibleName('Filtrovat'));
+		await expect(trigger).toHaveFocus();
 	};
 </script>
 
@@ -100,7 +98,7 @@
 	}
 </script>
 
-<Story name="Grouped options [play: distinguish headings]" play={playDistinguishesHeadings}>
+<Story name="Grouped options [play: filter and clear]" play={playFiltersAndClears}>
 	{#snippet template()}
 		<div class="min-h-130 p-6">
 			<FilterMenu

@@ -8,7 +8,7 @@ The broad preview obscured the actual action-geometry decision and introduced in
 
 Latest user direction:
 
-- List images fill the complete row height; preserve the square thumbnail contract and truncate description first, then title when needed.
+- List images fill the complete row height while preserving the square thumbnail contract. These constraints apply together: width follows the row's inner height, so a taller content/action column makes the square image wider rather than leaving card background below it. Truncate description first, then title when needed.
 - Keep price, quantity, store-link entry and every eligible action available; full descriptive text belongs in gift details.
 - Grid Like overlays the image without reserving a white header band or reducing image height. Preserve ghost heart and adjacent count.
 - Top-left reorder grip: small outlined visual inside a larger actionable area, with coherent nested corners.

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { openCreateWishlistDialog } from './fixtures/wishlist-helpers.js';
 
 /**
  * „Další nastavení" accordion on the create-wishlist dialog (issue #112).
@@ -25,11 +26,7 @@ test.describe('Create-wishlist „Další nastavení" accordion', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
-		await page.getByRole('button', { name: 'Vytvořit seznam' }).first().click();
-
-		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible({ timeout: 5_000 });
+		const dialog = await openCreateWishlistDialog(page);
 
 		const title = 'Seznam s paletou';
 		const description = 'Volitelný popis zadaný při vytvoření';
@@ -80,11 +77,7 @@ test.describe('Create-wishlist „Další nastavení" accordion', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
-		await page.getByRole('button', { name: 'Vytvořit seznam' }).first().click();
-
-		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible({ timeout: 5_000 });
+		const dialog = await openCreateWishlistDialog(page);
 
 		const title = 'Seznam bez nastavení';
 		await dialog.getByRole('textbox', { name: 'Název' }).fill(title);

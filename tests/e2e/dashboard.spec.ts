@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
-import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { registerAndGetPage, waitForAppHydration } from './fixtures/auth-helpers.js';
+import { openCreateWishlistDialog } from './fixtures/wishlist-helpers.js';
 
 test.describe('Dashboard', () => {
 	test('shows empty state for new user', async ({ browser, request, baseURL }) => {
@@ -8,7 +9,6 @@ test.describe('Dashboard', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
 		await expect(page.getByRole('heading', { name: 'Moje seznamy' })).toBeVisible();
 		await expect(page.getByRole('heading', { name: 'Zatím žádné seznamy' })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Vytvořit seznam' })).toBeVisible();
@@ -25,12 +25,8 @@ test.describe('Dashboard', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
 		await expect(page.getByRole('heading', { name: 'Moje seznamy' })).toBeVisible();
-		await page.getByRole('button', { name: 'Vytvořit seznam' }).click();
-
-		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible({ timeout: 5_000 });
+		const dialog = await openCreateWishlistDialog(page);
 		await dialog.getByRole('textbox', { name: 'Název' }).fill('Vanoce 2026');
 		await dialog.getByRole('button', { name: 'Vytvořit', exact: true }).click();
 
@@ -46,8 +42,8 @@ test.describe('Dashboard', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
 		await expect(page.getByRole('heading', { name: 'Moje seznamy' })).toBeVisible();
+		await waitForAppHydration(page);
 		const gridButton = page.getByRole('radio', { name: 'Mřížka karet' });
 		const listButton = page.getByRole('radio', { name: 'Seznam', exact: true });
 

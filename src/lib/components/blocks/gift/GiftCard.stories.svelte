@@ -63,6 +63,12 @@
 		myReservationPurchasedAt: new Date('2026-01-02T00:00:00Z'),
 	};
 
+	const RECEIVED_RESERVED_BY_ME: GiftForVisitor = {
+		...RESERVED_BY_ME,
+		received: true,
+		likeCount: 12,
+	};
+
 	// Single unbroken 90-char token (issue #210/#211): no space, so the browser has no
 	// break opportunity. `name`'s `line-clamp-2` implies `overflow: hidden`, which per the
 	// CSS Sizing spec zeroes this grid item's automatic minimum size — so unlike the
@@ -140,6 +146,14 @@
 	{#snippet template()}
 		<div class="w-72">
 			<GiftCard gift={PURCHASED} role={WISHLIST_ROLES.visitor} />
+		</div>
+	{/snippet}
+</Story>
+
+<Story name="Narrow Received + Reserved + Like">
+	{#snippet template()}
+		<div class="w-36">
+			<GiftCard gift={RECEIVED_RESERVED_BY_ME} role={WISHLIST_ROLES.visitor} />
 		</div>
 	{/snippet}
 </Story>

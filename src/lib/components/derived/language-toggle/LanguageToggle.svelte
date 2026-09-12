@@ -3,11 +3,11 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/base/button/index.js';
 	import * as Popover from '$lib/components/base/popover/index.js';
+	import { ChoiceRow } from '$lib/components/derived/choice-row/index.js';
 	import * as m from '$lib/paraglide/messages.js';
 	import { localizeCurrentHref } from '$lib/i18n/locale.js';
 	import { updatePreferredLocale } from '$lib/modules/settings/settings.remote.js';
 	import { getLocaleForUrl, locales, setLocale, type Locale } from '$lib/paraglide/runtime.js';
-	import { cn } from '$lib/utils.js';
 	import { SimpleTooltip } from '$lib/components/base/tooltip/index.js';
 	import LanguageFlag from './LanguageFlag.svelte';
 
@@ -74,20 +74,14 @@
 	<div class="grid gap-1">
 		{#each availableLocales as locale (locale)}
 			{@const language = LOCALE_META[locale]}
-			<button
-				type="button"
-				class={cn(
-					'flex cursor-pointer items-center gap-2 rounded-btn border-2 border-transparent px-2 py-1.5 text-left text-(length:--text-sm) font-semibold text-foreground transition-colors',
-					'hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
-					locale === currentLocale && 'border-ink bg-accent',
-				)}
-				aria-pressed={locale === currentLocale}
-				aria-disabled={isSwitchingLocale ? 'true' : undefined}
-				onclick={() => handleLocaleChange(locale)}
+			<ChoiceRow
+				selected={locale === currentLocale}
+				disabled={isSwitchingLocale}
+				onSelect={() => handleLocaleChange(locale)}
 			>
-				<LanguageFlag {locale} />
-				<span class="flex-1">{language.label()}</span>
-			</button>
+				{#snippet leading()}<LanguageFlag {locale} />{/snippet}
+				{language.label()}
+			</ChoiceRow>
 		{/each}
 	</div>
 {/snippet}

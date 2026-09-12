@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { resolve } from '$app/paths';
 	import { localizeInternalHref } from '$lib/i18n/locale.js';
-	import { wishlistCardVariants, STATUS_CHIP_CLASSES } from './wishlist_card_variants.js';
+	import { wishlistCardVariants } from './wishlist_card_variants.js';
 	import { getWishlistEmoji } from '$lib/modules/wishlists/wishlist_theme.js';
 	import { WISHLIST_STATUS_LABELS } from '$lib/modules/wishlists/dashboard_types.js';
 	import type { Wishlist } from '$lib/modules/wishlists/types.js';
@@ -15,6 +15,10 @@
 	import { getInitials } from '$lib/utils/initials.js';
 	import type { Snippet } from 'svelte';
 	import { ElevationSurface } from '$lib/components/base/elevation-surface/index.js';
+	import { Separator } from '$lib/components/base/separator/index.js';
+	import { Avatar } from '$lib/components/derived/avatar/index.js';
+	import { WishlistBadge } from '$lib/components/derived/wishlist-badge/index.js';
+	import { WishlistProgress } from '$lib/components/derived/wishlist-progress/index.js';
 
 	interface WishlistCardProps {
 		wishlist: Wishlist;
@@ -53,7 +57,6 @@
 	const cardFrame = $derived(wishlistSlotToFrameProps(wishlistData.imageSlots, 'card'));
 	const variants = $derived(wishlistCardVariants({ archived: isArchived }));
 	const statusLabel = $derived(WISHLIST_STATUS_LABELS[wishlistData.status]());
-	const statusChipClass = $derived(STATUS_CHIP_CLASSES[wishlistData.status]);
 
 	function formatDate(date: Date | null): string {
 		if (date === null) {
@@ -90,21 +93,26 @@
 			<div class={variants.bannerPattern()}></div>
 		{/if}
 		<div class={variants.bannerTitle()}>{wishlistData.title}</div>
-		<div
-			class={cn(variants.statusBadge(), statusChipClass)}
+		<WishlistBadge
+			class={variants.statusBadge()}
+			presentation="card-status"
+			status={wishlistData.status}
 			aria-label={m.wishlist_status_aria({ status: statusLabel })}
 		>
 			{statusLabel}
-		</div>
+		</WishlistBadge>
 	</div>
 
 	<!-- Body -->
 	<div class={variants.body()}>
 		{#if recipientDisplayName}
 			<div class={variants.ownerRow()}>
-				<div class={variants.ownerAvatar()}>
-					{getInitials(recipientDisplayName)}
-				</div>
+				<Avatar
+					appearance="recipient"
+					src={null}
+					alt=""
+					initials={getInitials(recipientDisplayName)}
+				/>
 				<span>{m.wishlist_recipient_chip({ name: recipientDisplayName })}</span>
 			</div>
 		{/if}
@@ -120,14 +128,15 @@
 						})}
 					</span>
 				</div>
-				<div class={variants.progressTrack()}>
-					<div
-						class={variants.progressFill()}
-						style:width="{reservationProgress.total > 0
-							? (reservationProgress.reserved / reservationProgress.total) * 100
-							: 0}%"
-					></div>
-				</div>
+				<WishlistProgress
+					value={reservationProgress.total === 0 ? 0 : reservationProgress.reserved}
+					max={Math.max(reservationProgress.total, 1)}
+					aria-label={m.wishlist_reservation_progress()}
+					aria-valuetext={m.wishlist_reserved_ratio({
+						reserved: reservationProgress.reserved,
+						total: reservationProgress.total,
+					})}
+				/>
 			</div>
 		{/if}
 
@@ -138,10 +147,10 @@
 					{m.wishlist_available_gifts({ count: availableGifts })}
 				</span>
 				{#if myReservations !== undefined && myReservations > 0}
-					<span class={variants.reservationChip()}>
-						<CheckIcon class="size-3" />
+					<WishlistBadge presentation="reservation-count">
+						{#snippet icon()}<CheckIcon class="size-3" data-icon />{/snippet}
 						{m.wishlist_my_reservations({ count: myReservations })}
-					</span>
+					</WishlistBadge>
 				{:else if myReservations !== undefined}
 					<span class="text-xs text-muted-foreground/60"
 						>{m.wishlist_no_my_reservations()}</span
@@ -153,14 +162,16 @@
 		<!-- Owner card: gift count + optional event date (owner invariant – no reservations) -->
 		{#if giftCount !== undefined}
 			<div class={variants.metaRow()}>
-				<span class={variants.metaChip()}>
-					<GiftIcon class="size-3.5" />
+				<WishlistBadge presentation="card-metadata">
+					{#snippet icon()}<GiftIcon class="size-3.5" data-icon />{/snippet}
 					{giftCount === 1
 						? m.wishlist_gift_count_one()
 						: m.wishlist_gift_count_other({ count: giftCount })}
-				</span>
+				</WishlistBadge>
 				{#if wishlistData.eventDate}
-					<span class={variants.metaChip()}>🗓 {formatDate(wishlistData.eventDate)}</span>
+					<WishlistBadge presentation="card-metadata">
+						🗓 {formatDate(wishlistData.eventDate)}
+					</WishlistBadge>
 				{/if}
 			</div>
 		{/if}
@@ -196,7 +207,7 @@
 		{/if}
 
 		{#if actions}
-			<div class={variants.divider()}></div>
+			<Separator class={variants.divider()} />
 			<div class={variants.actions()}>
 				{@render actions()}
 			</div>

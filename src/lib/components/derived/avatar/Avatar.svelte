@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { cn } from '$lib/utils.js';
 	import { ImageFrame } from '$lib/components/derived/image-frame/index.js';
-	import { avatarVariants, type AvatarSize } from './avatar_variants.js';
+	import {
+		avatarVariants,
+		type AvatarAppearance,
+		type AvatarShape,
+		type AvatarSize,
+	} from './avatar_variants.js';
 
 	interface Props {
 		/** Image source. Null/empty renders the initials fallback. */
@@ -12,8 +17,12 @@
 		initials: string;
 		/** Box size – `sm` (32px) matches the header icon controls. */
 		size?: AvatarSize;
+		/** Crop shape. The default remains the established rounded square. */
+		shape?: AvatarShape;
 		/** Ink border + sticker shadow so the avatar matches neighboring header buttons. */
 		bordered?: boolean;
+		/** Descriptive visual treatment for a known shared placement. */
+		appearance?: AvatarAppearance;
 		class?: string;
 	}
 
@@ -22,7 +31,9 @@
 		alt,
 		initials,
 		size = 'sm',
+		shape = 'square',
 		bordered = false,
+		appearance = 'default',
 		class: className,
 	}: Props = $props();
 
@@ -33,7 +44,7 @@
 	let erroredSrc = $state<string | null>(null);
 
 	const hasSrc = $derived(src !== null && src.trim() !== '' && src !== erroredSrc);
-	const styles = $derived(avatarVariants({ size, bordered }));
+	const styles = $derived(avatarVariants({ size, shape, bordered, appearance }));
 </script>
 
 <span data-slot="avatar" class={cn(styles.root(), className)}>
@@ -41,7 +52,7 @@
 		<ImageFrame
 			{src}
 			{alt}
-			shape="square"
+			{shape}
 			fitMode="cover-crop"
 			referrerPolicy="no-referrer"
 			class={styles.image()}

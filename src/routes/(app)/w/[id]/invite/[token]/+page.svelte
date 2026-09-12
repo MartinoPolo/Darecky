@@ -48,6 +48,7 @@
 	let isAccepting = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let accepted = $state(false);
+	let isHydrated = $state(false);
 
 	// Fire-once guard so the auto-accept-on-return never runs twice (e.g. if the
 	// mount effect re-evaluates or the user reloads mid-flow).
@@ -74,6 +75,7 @@
 	}
 
 	onMount(() => {
+		isHydrated = true;
 		if (isAuthenticated && shouldAutoAccept && !hasAutoAccepted) {
 			hasAutoAccepted = true;
 			void handleAccept();
@@ -163,7 +165,7 @@
 					>
 						{m.cancel()}
 					</Button>
-					<Button disabled={isAccepting} onclick={handleAccept}>
+					<Button disabled={!isHydrated || isAccepting} onclick={handleAccept}>
 						{#if isAccepting}
 							{m.invite_accepting()}
 						{:else}

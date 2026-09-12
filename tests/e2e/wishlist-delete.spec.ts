@@ -56,7 +56,9 @@ test.describe('Wishlist delete (issue #120)', () => {
 
 		const visitorPage = await registerAndGetPage(browser, request, baseURL!, visitor);
 		await visitorPage.goto(path);
-		await visitorPage.waitForLoadState('networkidle');
+		await expect(
+			visitorPage.getByRole('heading', { name: 'Test Gift', level: 3 }),
+		).toBeVisible();
 
 		await expect(
 			visitorPage.getByRole('button', { name: 'Nastavení seznamu' }),

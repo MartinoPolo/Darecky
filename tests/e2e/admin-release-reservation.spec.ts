@@ -73,16 +73,18 @@ test.describe('Administrator releases another gifter reservation (issue #213)', 
 		// app administrator.
 		const gifterPage = await signInAs(browser, request, baseURL!, GIFTER_USER);
 		await gifterPage.goto(wishlistPath);
-		await gifterPage.waitForLoadState('networkidle');
+		await expect(
+			gifterPage.getByRole('heading', { name: TEST_GIFT.name, level: 3 }),
+		).toBeVisible();
 		await reserveTheGift(gifterPage);
 		await gifterPage.context().close();
 
 		// Tomáš (administrator, plain visitor on this list) sees the release control.
 		const adminPage = await signInAs(browser, request, baseURL!, ADMIN_USER);
 		await adminPage.goto(wishlistPath);
-		await adminPage.waitForLoadState('networkidle');
 
 		const giftCard = adminPage.locator('[data-gift-item]').filter({ hasText: TEST_GIFT.name });
+		await expect(giftCard).toBeVisible();
 		// Fully reserved browse surfaces communicate status on the image and intentionally
 		// render neither the redundant disabled reserve control nor privileged release.
 		await expect(giftCard.getByTestId('reserve-button')).toHaveCount(0);
@@ -138,7 +140,9 @@ test.describe('Administrator releases another gifter reservation (issue #213)', 
 
 		const gifterPage = await signInAs(browser, request, baseURL!, GIFTER_USER);
 		await gifterPage.goto(wishlistPath);
-		await gifterPage.waitForLoadState('networkidle');
+		await expect(
+			gifterPage.getByRole('heading', { name: TEST_GIFT.name, level: 3 }),
+		).toBeVisible();
 		await reserveTheGift(gifterPage);
 		await gifterPage.context().close();
 
@@ -147,7 +151,6 @@ test.describe('Administrator releases another gifter reservation (issue #213)', 
 		const visitor = createTestUser('release-denied-visitor');
 		const visitorPage = await registerAndGetPage(browser, request, baseURL!, visitor);
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
 
 		const giftCard = visitorPage
 			.locator('[data-gift-item]')
@@ -165,5 +168,53 @@ test.describe('Administrator releases another gifter reservation (issue #213)', 
 		await expect(giftDialog.getByTestId('release-reservation-button')).toHaveCount(0);
 
 		await visitorPage.context().close();
+	});
+	test('does not grant release or reservation visibility to an administrator who is the recipient', async ({
+		browser,
+		request,
+		baseURL,
+	}) => {
+		const recipientPage = await signInAs(browser, request, baseURL!, ADMIN_USER);
+		await createWishlistAndNavigate(recipientPage, 'E2E admin recipient privacy');
+		await addGift(recipientPage, TEST_GIFT.name, { price: TEST_GIFT.price });
+		await shareWishlist(recipientPage);
+		const wishlistPath = new URL(recipientPage.url()).pathname;
+		await recipientPage.context().close();
+
+		const gifterPage = await signInAs(browser, request, baseURL!, GIFTER_USER);
+		await gifterPage.goto(wishlistPath);
+		await expect(
+			gifterPage.getByRole('heading', { name: TEST_GIFT.name, level: 3 }),
+		).toBeVisible();
+		await reserveTheGift(gifterPage);
+		await gifterPage.context().close();
+
+		const returningRecipient = await signInAs(browser, request, baseURL!, ADMIN_USER);
+		await returningRecipient.goto(wishlistPath);
+		const giftCard = returningRecipient
+			.locator('[data-gift-item]')
+			.filter({ hasText: TEST_GIFT.name });
+		await expect(giftCard).toBeVisible();
+
+		// Admin capability stops at the recipient boundary. Neither status, identity, nor
+		// privileged controls may reveal that another person reserved this gift.
+		await expect(giftCard.getByText(/Rezervov[a\u00e1]no|Reserved/)).toHaveCount(0);
+		await expect(giftCard.getByText(GIFTER_DISPLAY_NAME, { exact: true })).toHaveCount(0);
+		await expect(giftCard.getByTestId('release-reservation-button')).toHaveCount(0);
+		await expect(giftCard.getByTestId('reserve-button')).toHaveCount(0);
+
+		await giftCard.getByRole('heading', { name: TEST_GIFT.name, exact: true }).click();
+		const editDialog = returningRecipient.getByRole('dialog', {
+			name: /Upravit dárek|Edit gift/,
+		});
+		await expect(editDialog).toBeVisible();
+		await expect(editDialog.getByRole('textbox', { name: /Název|Name/ })).toHaveValue(
+			TEST_GIFT.name,
+		);
+		await expect(editDialog.getByText(/Rezervov[a\u00e1]no|Reserved/)).toHaveCount(0);
+		await expect(editDialog.getByText(GIFTER_DISPLAY_NAME, { exact: true })).toHaveCount(0);
+		await expect(editDialog.getByTestId('release-reservation-button')).toHaveCount(0);
+
+		await returningRecipient.context().close();
 	});
 });

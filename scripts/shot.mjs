@@ -2,7 +2,7 @@
 /**
  * Reliable visual-testing driver for prejemesi.
  *
- * Drives a real Chromium via the project's own `playwright` dependency — NO MCP layer,
+ * Drives Google Chrome via the project's own `playwright` dependency — NO MCP layer,
  * so it works in every Claude Code session (Chrome DevTools MCP / Playwright MCP routinely
  * fail to connect here; this does not depend on them).
  *
@@ -36,6 +36,7 @@
  *
  * Prints the absolute screenshot path on success. Read that path back to view it.
  */
+import { sharedChromeLaunchOptions } from './browser-automation.mjs';
 import { chromium, devices } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -122,7 +123,7 @@ async function main() {
 		`${slug(route)}_${user}${opts.mobile ? '_m' : ''}${opts.dark ? '_dark' : ''}_${Date.now()}.png`;
 	const outPath = resolve(outDir, name);
 
-	const browser = await chromium.launch();
+	const browser = await chromium.launch(sharedChromeLaunchOptions);
 	const contextOptions = {
 		...(opts.mobile
 			? devices['iPhone 13']

@@ -7,20 +7,45 @@
  * if a regression occurred (new issues beyond the baseline).
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 const BASELINE = 'fallow-baselines/dead-code-regression.json';
-const FALLOW_CMD = `pnpm exec fallow dead-code --fail-on-regression --regression-baseline ${BASELINE}`;
+const require = createRequire(import.meta.url);
+const localFallowEntry = require.resolve('fallow/bin/fallow');
+const fallowArguments = [
+	localFallowEntry,
+	'dead-code',
+	'--fail-on-regression',
+	'--regression-baseline',
+	BASELINE,
+	'--format',
+	'json',
+	'--quiet',
+];
 
-// Run fallow with JSON format to parse regression result
+// Run the project-installed fallow directly and parse its regression result.
 let jsonOutput = '';
+let fallowStderr = '';
 try {
-	jsonOutput = execSync(`${FALLOW_CMD} --format json --quiet`, {
+	jsonOutput = execFileSync(process.execPath, fallowArguments, {
 		encoding: 'utf-8',
 		stdio: ['pipe', 'pipe', 'pipe'],
 	});
 } catch (error) {
 	jsonOutput = error.stdout ?? '';
+	fallowStderr = error.stderr ?? '';
+
+	// Exit 1 is fallow's normal "issues found" result. Other failures are fatal.
+	if (error.status !== 1) {
+		if (fallowStderr) {
+			console.error(fallowStderr.trimEnd());
+		}
+		if (jsonOutput) {
+			console.error(jsonOutput.trimEnd());
+		}
+		process.exit(1);
+	}
 }
 
 // Parse JSON to determine regression status
@@ -100,6 +125,9 @@ try {
 		);
 	}
 } catch {
+	if (fallowStderr) {
+		console.error(fallowStderr.trimEnd());
+	}
 	console.error('fallow: failed to parse JSON output');
 	if (jsonOutput) {
 		console.error(jsonOutput);

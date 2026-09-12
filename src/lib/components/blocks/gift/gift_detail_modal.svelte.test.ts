@@ -1,4 +1,5 @@
 import { render } from 'vitest-browser-svelte';
+import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import * as m from '$lib/paraglide/messages.js';
 import type { GiftByRole } from '$lib/modules/gifts/types.js';
@@ -44,6 +45,35 @@ const baseProps = {
 	isSubmitting: false,
 	isDeleting: false,
 };
+
+describe('GiftDetailModal focus contract', () => {
+	it.each([
+		{ name: 'desktop', width: 1280, height: 800 },
+		{ name: 'mobile', width: 390, height: 844 },
+	])('owns focus without opening the $name text editor', async ({ width, height }) => {
+		await page.viewport(width, height);
+		const onclose = vi.fn();
+		const screen = await render(GiftDetailModal, {
+			...baseProps,
+			mode: 'edit' as const,
+			gift: makeGift(),
+			onclose,
+		});
+
+		const dialog = screen.getByRole('dialog').element() as HTMLDivElement;
+		const nameInput = screen.getByRole('textbox', { name: m.gift_name_label() }).element();
+		await expect.poll(() => document.activeElement).toBe(dialog);
+		expect(nameInput).not.toBe(document.activeElement);
+
+		await userEvent.tab();
+		expect(dialog.contains(document.activeElement)).toBe(true);
+		expect(document.activeElement).not.toBe(dialog);
+
+		await userEvent.keyboard('{Escape}');
+		expect(onclose).toHaveBeenCalledOnce();
+		await expect.element(screen.getByRole('dialog')).not.toBeInTheDocument();
+	});
+});
 
 describe('GiftDetailModal form identity (2026-08-04 data-corruption incident)', () => {
 	// The `?gift=` deep-link effect can legitimately flip the modal from create to edit

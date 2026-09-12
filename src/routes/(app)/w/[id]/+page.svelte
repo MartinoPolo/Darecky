@@ -14,6 +14,13 @@
 		type BulkCopyDestination,
 	} from '$lib/components/blocks/wishlist/GiftBulkCopyDialog.svelte';
 	import GiftContextActions from '$lib/components/blocks/wishlist/GiftContextActions.svelte';
+	import type {
+		GiftContextFinishPolicy,
+		GiftContextInvocation,
+		GiftContextSession,
+	} from '$lib/components/blocks/wishlist/gift_context_invocation.js';
+	import { resolveGiftContextFocusTarget } from '$lib/components/blocks/wishlist/gift_context_focus.js';
+	import { useNarrowViewportState } from '$lib/components/derived/narrow_viewport_state.svelte.js';
 	import WishlistPreparingNotice from '$lib/components/blocks/wishlist/WishlistPreparingNotice.svelte';
 	import WishlistModals from '$lib/components/blocks/wishlist/WishlistModals.svelte';
 	import WishlistSettingsModal from '$lib/components/blocks/wishlist/WishlistSettingsModal.svelte';
@@ -507,15 +514,41 @@
 	let bulkCopyDestinations = $state<BulkCopyDestination[]>([]);
 	let hiddenConfirmOpen = $state(false);
 	let deferredBulkAction = $state<GiftBulkAction | null>(null);
-	let contextGift = $state<GiftByRole | null>(null);
-	// Keep the Bits UI content component mounted before the first contextmenu event so its
-	// floating-positioning lifecycle can observe the trigger's virtual anchor.
-	const contextActionGift = $derived(contextGift ?? gifts[0] ?? null);
-	let contextAnchorPoint = $state({ x: 0, y: 0 });
-	let contextOpen = $state(false);
-	let contextMobile = $state(false);
+	let contextSession = $state<GiftContextSession<GiftByRole> | null>(null);
+	let nextContextSessionId = 0;
+	let nativeContextOpen = $state(false);
+	let programmaticOpen = $state(false);
+	let queuedContextAction = $state<{ sessionId: number; run: () => void } | null>(null);
+	// Keep content hosts mounted before first invocation; a fallback supplies inert render data only.
+	const contextActionGift = $derived(contextSession?.gift ?? gifts[0] ?? null);
+	const contextMobile = $derived(
+		contextSession?.invocation.kind === 'longpress' ||
+			(contextSession?.invocation.kind === 'more' &&
+				contextSession.invocation.surface === 'sheet'),
+	);
+	const contextAnchor = $derived(
+		contextSession?.invocation.kind === 'more' ? contextSession.invocation.anchor : null,
+	);
+	const contextAnchorPoint = $derived(
+		contextSession?.invocation.kind === 'native'
+			? contextSession.invocation.point
+			: { x: 0, y: 0 },
+	);
+	const narrowViewport = useNarrowViewportState();
 
 	$effect(() => giftSelection.reconcileExisting(gifts.map((giftItem) => giftItem.id)));
+	$effect(() => {
+		const session = contextSession;
+		if (
+			session !== null &&
+			(!gifts.some((giftItem) => giftItem.id === session.gift.id) ||
+				giftSelection.active ||
+				narrowViewport.current !== session.viewportAtOpen)
+		) {
+			nativeContextOpen = false;
+			programmaticOpen = false;
+		}
+	});
 
 	function reservationContextFor(giftItem: GiftByRole) {
 		if (hideReservationState || !('myReservationId' in giftItem)) {
@@ -553,41 +586,93 @@
 		return hasAdditionalGiftContextActions(contextActionsFor(giftItem), role);
 	}
 
-	function openContextActions(giftItem: GiftByRole, event: MouseEvent | null): boolean {
-		if (giftSelection.active) {
+	function openContextActions(giftItem: GiftByRole, invocation: GiftContextInvocation): boolean {
+		if (giftSelection.active || contextActionsFor(giftItem).length === 0) {
 			return false;
 		}
-		const actions = contextActionsFor(giftItem);
-		if (actions.length === 0) {
-			contextGift = null;
-			contextOpen = false;
-			return false;
-		}
-		contextGift = giftItem;
-		contextMobile = event === null;
-		if (event !== null) {
-			contextAnchorPoint = { x: event.clientX, y: event.clientY };
-		}
-		// Desktop opening belongs to Bits UI's ContextMenu.Trigger. Setting the controlled root
-		// open before its contextmenu handler runs skips virtual-anchor measurement and leaves the
-		// floating content at its off-screen setup position. Long press has no Bits trigger event,
-		// so the mobile Sheet is opened directly.
-		if (contextMobile) {
-			contextOpen = true;
+		const viewportAtOpen = narrowViewport.current;
+		const id = ++nextContextSessionId;
+		contextSession = {
+			id,
+			gift: giftItem,
+			viewportAtOpen,
+			invocation:
+				invocation.kind === 'native'
+					? invocation
+					: invocation.kind === 'longpress'
+						? { kind: 'longpress', surface: 'sheet' }
+						: {
+								kind: 'more',
+								anchor: invocation.anchor,
+								surface: viewportAtOpen ? 'sheet' : 'menu',
+							},
+		};
+		queuedContextAction = null;
+		if (invocation.kind !== 'native') {
+			programmaticOpen = true;
 		}
 		void ensurePriorityLevels();
 		return true;
+	}
+
+	function requestContextClose() {
+		nativeContextOpen = false;
+		programmaticOpen = false;
+	}
+
+	function finishContextAction(policy: GiftContextFinishPolicy, callback: () => void) {
+		const session = contextSession;
+		if (session === null) {
+			return;
+		}
+		if (policy === 'handoff') {
+			queuedContextAction = { sessionId: session.id, run: callback };
+		} else {
+			callback();
+		}
+		requestContextClose();
+	}
+
+	async function completeContextClose(sessionId = contextSession?.id) {
+		const session = contextSession;
+		if (
+			sessionId === undefined ||
+			session?.id !== sessionId ||
+			nativeContextOpen ||
+			programmaticOpen
+		) {
+			return;
+		}
+		await tick();
+		if (contextSession?.id !== sessionId || nativeContextOpen || programmaticOpen) {
+			return;
+		}
+		const queued = queuedContextAction?.sessionId === sessionId ? queuedContextAction : null;
+		if (queued !== null) {
+			queuedContextAction = null;
+			queued.run();
+		} else if (session.invocation.kind === 'more') {
+			resolveGiftContextFocusTarget(
+				session.invocation.anchor,
+				session.gift.id,
+				wishlistPageElement ?? document,
+			)?.focus({ preventScroll: true });
+		}
+		if (contextSession?.id === sessionId) {
+			contextSession = null;
+		}
 	}
 
 	async function updateContextGift(update: {
 		priorityLevelId?: string | null;
 		categoryId?: string | null;
 	}) {
-		if (contextGift === null) {
+		const gift = contextSession?.gift;
+		if (gift === undefined) {
 			return;
 		}
 		try {
-			await updateGiftRemote({ id: contextGift.id, ...update });
+			await updateGiftRemote({ id: gift.id, ...update });
 			toastSuccess(m.toast_gift_updated());
 		} catch (thrown) {
 			toastError(translateServerError(thrown));
@@ -1458,6 +1543,7 @@
 		{role}
 		giftCount={headerGiftCount}
 		{recipientIsModerator}
+		{adminSettingsAvailable}
 		onshare={handleShareOpened}
 		onmoderators={handleModeratorsOpened}
 		onarchive={handleArchive}
@@ -1496,7 +1582,6 @@
 		{/snippet}
 		<WishlistDetailToolbar
 			{canManage}
-			{adminSettingsAvailable}
 			{role}
 			{isArchived}
 			{isAuthenticated}
@@ -1515,7 +1600,6 @@
 			onsortchange={handleSortChange}
 			onfilterchange={handleFilterChange}
 			ongroupingchange={handleGroupingChange}
-			onsettings={handleSettingsOpened}
 			onunfollow={handleUnfollow}
 			onaddgift={openCreateModal}
 			onbatchadd={openBatchAddDialog}
@@ -1526,8 +1610,10 @@
 		{#snippet contextActions()}
 			{#if contextActionGift !== null}
 				<GiftContextActions
-					open={contextOpen}
+					sessionId={contextSession?.id ?? 0}
+					{programmaticOpen}
 					mobile={contextMobile}
+					desktopAnchor={contextMobile ? null : contextAnchor}
 					anchorPoint={contextAnchorPoint}
 					name={contextActionGift.name}
 					{role}
@@ -1541,7 +1627,9 @@
 					priorityLevelId={contextActionGift.priorityLevelId}
 					categoryId={contextActionGift.categoryId ?? null}
 					{...reservationContextFor(contextActionGift)}
-					onclose={() => (contextOpen = false)}
+					onclose={requestContextClose}
+					oncomplete={completeContextClose}
+					onfinish={finishContextAction}
 					onedit={() => void openEditModal(contextActionGift)}
 					onpriority={(priorityLevelId) => void updateContextGift({ priorityLevelId })}
 					oncategory={(categoryId) => void updateContextGift({ categoryId })}
@@ -1579,6 +1667,10 @@
 			onselectiontoggle={(giftId) => giftSelection.toggle(giftId)}
 			oncontextactions={openContextActions}
 			hascontextactions={hasAdditionalContextActions}
+			activeContextGiftId={programmaticOpen && contextAnchor !== null
+				? contextSession?.gift.id
+				: null}
+			contextSurface={narrowViewport.current ? 'dialog' : 'menu'}
 			onedit={openEditModal}
 			onreserve={handleOpenReserveModal}
 			onunreserve={handleUnreserve}
@@ -1588,7 +1680,9 @@
 			onreorderpreview={handleReorderPreview}
 			onreordercommit={handleReorderCommit}
 			onreordercancel={handleReorderCancel}
-			bind:contextMenuOpen={contextOpen}
+			bind:nativeContextOpen
+			nativeContextSessionId={contextSession?.id ?? 0}
+			onnativecontextcomplete={completeContextClose}
 			contextContent={contextActions}
 		/>
 	{/if}
@@ -1600,7 +1694,7 @@
 		if (
 			shouldExitGiftSelectionOnEscape(event, {
 				selectionActive: giftSelection.active,
-				contextOpen,
+				contextOpen: nativeContextOpen || programmaticOpen,
 				hiddenConfirmOpen,
 			})
 		) {

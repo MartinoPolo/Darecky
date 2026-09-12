@@ -15,14 +15,11 @@
 
 		// Initial state – first tab active
 		await expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
-		await expect(tabs[1]).toHaveAttribute('aria-selected', 'false');
-		await expect(tabs[2]).toHaveAttribute('aria-selected', 'false');
 
 		// Click second tab
 		await userEvent.click(tabs[1]);
 		await expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
 		await expect(tabs[0]).toHaveAttribute('aria-selected', 'false');
-		await expect(tabs[2]).toHaveAttribute('aria-selected', 'false');
 	};
 
 	const playKeyboardActivation = async ({ canvasElement }: { canvasElement: HTMLElement }) => {

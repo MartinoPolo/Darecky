@@ -32,7 +32,6 @@ test.describe('Like system', () => {
 		const visitorPage = await visitorContext.newPage();
 
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
 		await expect(visitorPage.getByText(TEST_GIFT.name)).toBeVisible();
 
 		const likeButton = visitorPage.getByRole('button', {
@@ -83,7 +82,7 @@ test.describe('Like system', () => {
 		const visitorPage = await visitorContext.newPage();
 
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
+		await expect(visitorPage.getByText(TEST_GIFT.name)).toBeVisible();
 
 		// Like the gift – count should appear (1)
 		const likeButton = visitorPage.getByRole('button', {
@@ -152,12 +151,10 @@ test.describe('Follower management', () => {
 
 		// Visit the shared wishlist – should auto-follow
 		await followerPage.goto(wishlistPath);
-		await followerPage.waitForLoadState('networkidle');
 		await expect(followerPage.getByText(TEST_GIFT.name)).toBeVisible();
 
 		// Navigate to /followed – wishlist should be listed
 		await followerPage.goto('/followed');
-		await followerPage.waitForLoadState('networkidle');
 		await expect(followerPage.getByRole('heading', { name: 'Sledované' })).toBeVisible({
 			timeout: 5_000,
 		});
@@ -194,11 +191,10 @@ test.describe('Follower management', () => {
 
 		// Visit to trigger auto-follow
 		await followerPage.goto(wishlistPath);
-		await followerPage.waitForLoadState('networkidle');
+		await expect(followerPage.getByText(TEST_GIFT.name)).toBeVisible();
 
 		// Unfollow from /followed page
 		await followerPage.goto('/followed');
-		await followerPage.waitForLoadState('networkidle');
 		await expect(
 			followerPage.getByTestId('wishlist-card').filter({ hasText: wishlistTitle }),
 		).toBeVisible({ timeout: 5_000 });
@@ -245,10 +241,9 @@ test.describe('Follower management', () => {
 
 		// Visit to trigger auto-follow, then unfollow
 		await followerPage.goto(wishlistPath);
-		await followerPage.waitForLoadState('networkidle');
+		await expect(followerPage.getByText(TEST_GIFT.name)).toBeVisible();
 
 		await followerPage.goto('/followed');
-		await followerPage.waitForLoadState('networkidle');
 		await expect(
 			followerPage.getByTestId('wishlist-card').filter({ hasText: wishlistTitle }),
 		).toBeVisible({ timeout: 5_000 });

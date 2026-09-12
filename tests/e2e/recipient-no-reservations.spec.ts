@@ -31,7 +31,9 @@ test.describe('Recipient cannot see reservation state', () => {
 		const visitorContext = await browser.newContext();
 		const visitorPage = await visitorContext.newPage();
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
+		await expect(
+			visitorPage.getByRole('heading', { name: TEST_GIFT.name, level: 3 }),
+		).toBeVisible();
 		// Locale-agnostic: ReserveButton's label is i18n'd (issue #154), select the
 		// card-level trigger via its stable data-testid.
 		await visitorPage.getByTestId('reserve-button').first().click();

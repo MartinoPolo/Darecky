@@ -1,7 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
-import { addGift, createWishlistAndNavigate } from './fixtures/wishlist-helpers.js';
+import {
+	addGift,
+	createWishlistAndNavigate,
+	openDesktopDisplaySubmenu,
+	startGiftReorder,
+} from './fixtures/wishlist-helpers.js';
 
 const giftItems = (page: Page) =>
 	page.locator('[data-gift-item][data-gift-id]:not([data-gift-reorder-overlay])');
@@ -178,20 +183,17 @@ test.describe('issue #269 integrated motion strategy', () => {
 		expect(displacedId).not.toBeNull();
 
 		await installAnimationRecorder(page);
-		await page.getByRole('button', { name: 'Filtrovat', exact: true }).click();
-		const withLinkFilter = page.getByRole('menuitemcheckbox', {
+		const filterMenu = await openDesktopDisplaySubmenu(page, /^Filtrovat/);
+		const withLinkFilter = filterMenu.getByRole('menuitemcheckbox', {
 			name: 'S odkazem',
 			exact: true,
 		});
 		await expect(withLinkFilter).toHaveAttribute('aria-checked', 'false');
 		await withLinkFilter.click();
 
-		await expect(
-			page.getByRole('button', {
-				name: 'Filtrovat: Aktivní filtry: 1',
-				exact: true,
-			}),
-		).toBeVisible();
+		await expect(page.getByTestId('desktop-display-trigger')).toHaveAccessibleName(
+			'Možnosti zobrazení: Aktivní filtry: 1',
+		);
 		await expect(page.locator('[data-filter-count]')).toHaveText('1');
 		await expect(withLinkFilter).toHaveAttribute('aria-checked', 'true');
 		const activeFilters = page.getByTestId('wishlist-toolbar-active-filters');
@@ -218,7 +220,7 @@ test.describe('issue #269 integrated motion strategy', () => {
 			.click();
 		await expect(filteredOut).toBeVisible();
 		await expect(activeFilters).toHaveCount(0);
-		await expect(page.getByRole('button', { name: 'Filtrovat', exact: true })).toBeFocused();
+		await expect(page.getByTestId('desktop-display-trigger')).toBeFocused();
 		await expect
 			.poll(async () => translatedAnimations(await recordedAnimations(page), displacedId))
 			.toContainEqual(expect.objectContaining({ duration: 520 }));
@@ -301,7 +303,7 @@ test.describe('issue #269 integrated motion strategy', () => {
 		await page.context().close();
 	});
 
-	test('reorder mode keeps toolbar geometry and controls in place, including mobile', async ({
+	test('reorder mode keeps stable toolbar regions in place, including mobile replacement controls', async ({
 		browser,
 		request,
 		baseURL,
@@ -317,56 +319,20 @@ test.describe('issue #269 integrated motion strategy', () => {
 		await addGift(page, 'Motion Reorder A');
 		await addGift(page, 'Motion Reorder B');
 
-		const regions = [
-			'wishlist-toolbar',
-			'wishlist-toolbar-controls',
-			'wishlist-toolbar-view-controls',
-			'wishlist-toolbar-display-controls',
-			'wishlist-toolbar-edit-controls',
-		];
-		const before = await Promise.all(regions.map((id) => page.getByTestId(id).boundingBox()));
-		const action = page.getByRole('button', { name: 'Změnit pořadí', exact: true });
-		await action.focus();
-		await action.click();
-		const done = page.getByRole('button', { name: 'Hotovo', exact: true });
-		await expect(done).toBeFocused();
-		await expect(
-			page.locator('[role="status"]').filter({ hasText: 'Režim změny pořadí zapnut.' }),
-		).toHaveCount(1);
-		const after = await Promise.all(regions.map((id) => page.getByTestId(id).boundingBox()));
-		expect(after).toEqual(before);
-		for (const control of [
-			page.getByTestId('gift-view-card'),
-			page.getByTestId('gift-view-list'),
-		]) {
-			await expect(control).toBeVisible();
-			await expect(control).toBeEnabled();
-		}
-		for (const control of await page
-			.getByTestId('wishlist-toolbar-display-controls')
-			.getByRole('button')
-			.all()) {
-			await expect(control).toBeVisible();
-			await expect(control).toBeDisabled();
-		}
-		await page.setViewportSize({ width: 390, height: 844 });
-		const mobileToolbarGeometry = () =>
+		const desktopGeometry = () =>
 			page.evaluate(() => {
 				const toolbar = document.querySelector<HTMLElement>(
 					'[data-testid="wishlist-toolbar"]',
 				);
-				const mobileContainer = document.querySelector<HTMLElement>(
-					'[data-testid="wishlist-toolbar-mobile"]',
-				);
-				if (!toolbar || !mobileContainer) {
-					throw new Error('Missing mobile toolbar region');
+				if (!toolbar) {
+					throw new Error('Missing wishlist toolbar');
 				}
-				const visibleRows = Array.from(
-					document.querySelectorAll<HTMLElement>('[data-mobile-toolbar-row]'),
-				).filter((row) => row.getClientRects().length > 0);
-				const elements = [toolbar, mobileContainer, ...visibleRows];
 				const toolbarRectangle = toolbar.getBoundingClientRect();
-				return elements.map((element) => {
+				const relativeRectangle = (selector: string) => {
+					const element = toolbar.querySelector<HTMLElement>(selector);
+					if (!element) {
+						throw new Error(`Missing stable toolbar region: ${selector}`);
+					}
 					const rectangle = element.getBoundingClientRect();
 					return {
 						x: rectangle.x - toolbarRectangle.x,
@@ -374,47 +340,110 @@ test.describe('issue #269 integrated motion strategy', () => {
 						width: rectangle.width,
 						height: rectangle.height,
 					};
+				};
+				const actions = relativeRectangle('[data-testid="wishlist-toolbar-actions"]');
+				return {
+					toolbar: { width: toolbarRectangle.width, height: toolbarRectangle.height },
+					controls: relativeRectangle('[data-testid="wishlist-toolbar-controls"]'),
+					view: relativeRectangle('[data-testid="gift-view-switcher"]'),
+					display: relativeRectangle('[data-testid="desktop-display-trigger"]'),
+					actionsEdge: {
+						right: toolbarRectangle.width - actions.x - actions.width,
+						y: actions.y,
+						height: actions.height,
+					},
+				};
+			});
+
+		const desktopBefore = await desktopGeometry();
+		await startGiftReorder(page);
+		const desktopDone = page.getByRole('button', { name: 'Hotovo', exact: true });
+		await expect(desktopDone).toBeFocused();
+		await expect(
+			page.locator('[role="status"]').filter({ hasText: 'Režim změny pořadí zapnut.' }),
+		).toHaveCount(1);
+		expect(await desktopGeometry()).toEqual(desktopBefore);
+		for (const control of [
+			page.getByTestId('gift-view-card'),
+			page.getByTestId('gift-view-list'),
+		]) {
+			await expect(control).toBeVisible();
+			await expect(control).toBeEnabled();
+		}
+		await expect(page.getByTestId('desktop-display-trigger')).toBeDisabled();
+		await expect(
+			page.getByRole('button', { name: 'Přidat dárek', exact: true }),
+		).toBeDisabled();
+		await desktopDone.click();
+
+		await page.setViewportSize({ width: 390, height: 844 });
+		const mobileGeometry = () =>
+			page.evaluate(() => {
+				const toolbar = document.querySelector<HTMLElement>(
+					'[data-testid="wishlist-toolbar"]',
+				);
+				const mobile = document.querySelector<HTMLElement>(
+					'[data-testid="wishlist-toolbar-mobile"]',
+				);
+				const row = document.querySelector<HTMLElement>('[data-mobile-toolbar-row]');
+				const view = row?.querySelector<HTMLElement>('[data-testid="gift-view-switcher"]');
+				if (!toolbar || !mobile || !row || !view) {
+					throw new Error('Missing mobile toolbar region');
+				}
+				const origin = toolbar.getBoundingClientRect();
+				return [toolbar, mobile, row, view].map((element) => {
+					const rectangle = element.getBoundingClientRect();
+					return {
+						x: rectangle.x - origin.x,
+						y: rectangle.y - origin.y,
+						width: rectangle.width,
+						height: rectangle.height,
+					};
 				});
 			});
-		// Compare each region relative to the toolbar within the same mode. Focusing
-		// the entry/exit control may scroll the viewport, but must not move or resize
-		// the controls within the toolbar. Disable smooth scrolling so samples settle.
-		await page.evaluate(() => {
-			document.documentElement.style.scrollBehavior = 'auto';
-		});
-		await done.evaluate((element) => element.scrollIntoView({ block: 'center' }));
-		await done.focus();
 		await expect(page.locator('[data-mobile-toolbar-row]:visible')).toHaveCount(1);
-		const mobileAfterEntry = await mobileToolbarGeometry();
+		const browseGeometry = await mobileGeometry();
+		const mobileMore = page.getByTestId('mobile-more-trigger');
+		await mobileMore.click();
+		await page
+			.getByRole('dialog', { name: 'Další možnosti' })
+			.getByRole('button', { name: 'Změnit pořadí', exact: true })
+			.click();
+		const mobileDone = page.getByRole('button', { name: 'Hotovo', exact: true });
+		await expect(page.getByText('Změna pořadí', { exact: true })).toBeVisible();
+		await expect(mobileDone).toBeFocused();
+		await expect(
+			page.locator('[role="status"]').filter({ hasText: 'Režim změny pořadí zapnut.' }),
+		).toHaveCount(1);
+		expect(await mobileGeometry()).toEqual(browseGeometry);
+		const doneInsets = await mobileDone.evaluate((button) => {
+			const toolbar = button.closest('[data-testid="wishlist-toolbar"]');
+			const surface = button.querySelector('.elevation-surface');
+			if (!toolbar || !surface) {
+				throw new Error('Missing reorder action surface');
+			}
+			const outer = toolbar.getBoundingClientRect();
+			const inner = surface.getBoundingClientRect();
+			return {
+				top: inner.top - outer.top,
+				bottom: outer.bottom - inner.bottom,
+				right: outer.right - inner.right,
+			};
+		});
+		expect(doneInsets.top).toBeGreaterThan(0);
+		expect(doneInsets.bottom).toBeCloseTo(doneInsets.top, 0);
+		expect(doneInsets.right).toBeCloseTo(doneInsets.bottom, 0);
 		expect(
 			await page.evaluate(
 				() => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
 			),
 		).toBe(true);
-		await expect(done).toBeFocused();
-		const mobileMore = page.getByTestId('mobile-more-trigger');
-		await done.click();
+		await mobileDone.click();
 		await expect(mobileMore).toBeFocused();
 		await expect(
 			page.locator('[role="status"]').filter({ hasText: 'Režim změny pořadí ukončen.' }),
 		).toHaveCount(1);
-		await expect(page.locator('[data-mobile-toolbar-row]:visible')).toHaveCount(1);
-		const mobileAfterExit = await mobileToolbarGeometry();
-		await mobileMore.click();
-		const mobileAction = page
-			.getByRole('dialog', { name: 'Další možnosti' })
-			.getByRole('button', { name: 'Změnit pořadí', exact: true });
-		await expect(mobileAction).toBeVisible();
-		await mobileAction.click();
-		await expect(done).toBeFocused();
-		await expect(page.locator('[data-mobile-toolbar-row]:visible')).toHaveCount(1);
-		const mobileAfterReentry = await mobileToolbarGeometry();
-		expect(mobileAfterReentry).toEqual(mobileAfterEntry);
-		await done.click();
-		await expect(mobileMore).toBeFocused();
-		await expect(page.locator('[data-mobile-toolbar-row]:visible')).toHaveCount(1);
-		const mobileAfterSecondExit = await mobileToolbarGeometry();
-		expect(mobileAfterSecondExit).toEqual(mobileAfterExit);
+		expect(await mobileGeometry()).toEqual(browseGeometry);
 		expect(errors).toEqual([]);
 		await page.context().close();
 	});

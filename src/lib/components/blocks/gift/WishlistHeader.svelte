@@ -7,9 +7,7 @@
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
 	import HourglassIcon from '@lucide/svelte/icons/hourglass';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
-	import ShareIcon from '@lucide/svelte/icons/share-2';
 	import ArchiveIcon from '@lucide/svelte/icons/archive';
-	import UsersIcon from '@lucide/svelte/icons/users';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { WISHLIST_ROLES, type WishlistRole } from '$lib/modules/wishlists/types.js';
@@ -59,6 +57,7 @@
 		giftCount: number | null;
 		/** True when the linked recipient self-promoted to also see reservation state (trust warning). */
 		recipientIsModerator: boolean;
+		adminSettingsAvailable?: boolean;
 		/**
 		 * Which heading element the title renders as. The wishlist page is the list's own
 		 * page, so the title is its `<h1>` — but on the landing page the demo header sits
@@ -89,6 +88,7 @@
 		role,
 		giftCount,
 		recipientIsModerator,
+		adminSettingsAvailable = false,
 		headingLevel = 1,
 		onshare,
 		onmoderators,
@@ -108,6 +108,7 @@
 	// Management actions open to any manager — the linked recipient OR a správce (issue #99).
 	const canManage = $derived(canManageWishlist(role));
 	const isArchived = $derived(status === 'archived');
+	const settingsAvailable = $derived((canManage && !isArchived) || adminSettingsAvailable);
 	const isEventPast = $derived(eventDate !== null && new Date(eventDate) < new Date());
 	// Recipient edit pencil (issue #150): free-text lists → any manager may rename; linked
 	// lists → ONLY the linked recipient may flip to free-text (no evicting by správci).
@@ -220,6 +221,7 @@
 		</div>
 		<WishlistHeaderActions
 			{canManage}
+			{settingsAvailable}
 			canShare={!isArchived}
 			canEditImage={!isArchived}
 			{canEditRecipient}
@@ -236,6 +238,22 @@
 	<!-- Spiral-notebook panel: punch holes, red margin line, ruled lines -->
 	<div class="notebook" data-testid="wishlist-banner">
 		<div class="notebook-face">
+			<div class="desktop-header-actions">
+				<WishlistHeaderActions
+					{canManage}
+					{settingsAvailable}
+					canShare={!isArchived}
+					canEditImage={!isArchived}
+					{canEditRecipient}
+					canArchive={!isArchived}
+					{onshare}
+					{onmoderators}
+					{onsettings}
+					{oneditimage}
+					{oneditrecipient}
+					{onarchive}
+				/>
+			</div>
 			{#if countdownLabel !== null}
 				<!-- Sunshine sticky note pinned to the page's top-right corner (desktop only) -->
 				<div class="sticky-note" aria-hidden="true">{countdownLabel}</div>
@@ -270,7 +288,10 @@
 				{/if}
 			</figure>
 
-			<div class={styles.headerText()}>
+			<div
+				class={styles.headerText()}
+				class:header-text-has-actions={settingsAvailable || canManage}
+			>
 				<!-- Every list leads with „Pro: {recipient}" — colon form, prefix lighter, name bold
 				     (2026-07-14 header decision, self lists included). A `<div>`, not a `<p>`: the
 				     recipient avatar below renders ImageFrame's `<div>` root, and a div nested in a
@@ -330,40 +351,6 @@
 						<span class={styles.managersLine()}>{managedByLabel}</span>
 					{/if}
 				</div>
-				{#if canManage}
-					<div class={styles.actionRow()}>
-						{#if !isArchived}
-							<Button
-								size="sm"
-								aria-label={m.wishlist_share_label()}
-								onclick={onshare}
-							>
-								<ShareIcon data-icon="inline-start" />
-								{m.wishlist_share_button()}
-							</Button>
-						{/if}
-						<Button
-							size="sm"
-							intent="secondary"
-							aria-label={m.wishlist_moderators_label()}
-							onclick={onmoderators}
-						>
-							<UsersIcon data-icon="inline-start" />
-							{m.wishlist_moderators_label()}
-						</Button>
-						{#if !isArchived}
-							<Button
-								size="sm"
-								intent="secondary"
-								aria-label={m.wishlist_archive_label()}
-								onclick={onarchive}
-							>
-								<ArchiveIcon data-icon="inline-start" />
-								{m.wishlist_archive_button()}
-							</Button>
-						{/if}
-					</div>
-				{/if}
 			</div>
 		</div>
 	</div>
@@ -410,6 +397,13 @@
 		display: none;
 	}
 
+	.desktop-header-actions {
+		position: absolute;
+		z-index: 2;
+		top: 1rem;
+		right: 1rem;
+	}
+
 	/* Static „spiral notebook page": ruled lines, red margin, punch holes down the
 	   left edge. Layered backgrounds don't translate to utility classes, so the
 	   notebook motifs live here; colors come from the palette tokens in app.css. */
@@ -452,7 +446,7 @@
 	.sticky-note {
 		position: absolute;
 		top: 18px;
-		right: 34px;
+		right: 8rem;
 		z-index: 1;
 		padding: 14px 18px 12px;
 		font-family: var(--font-head);
@@ -551,6 +545,12 @@
 		}
 	}
 
+	@media (width >= 640px) {
+		.header-text-has-actions {
+			padding-inline-end: 6.5rem;
+		}
+	}
+
 	@media (width < 640px) {
 		.notebook {
 			display: none;
@@ -582,6 +582,10 @@
 
 		.mobile-copy {
 			min-width: 0;
+		}
+
+		.mobile-hero :global([data-testid='wishlist-header-actions']) {
+			align-self: start;
 		}
 
 		.mobile-recipient,

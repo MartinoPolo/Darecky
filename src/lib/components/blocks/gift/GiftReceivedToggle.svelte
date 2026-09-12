@@ -56,7 +56,7 @@
 	<Button
 		bind:ref={action}
 		{size}
-		intent="primary"
+		intent="secondary"
 		class={className}
 		{surfaceClass}
 		onclick={handleClick}

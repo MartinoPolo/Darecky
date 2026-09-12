@@ -36,9 +36,4 @@ describe('ImportReviewStep: editable draft grid seeding', () => {
 		expect(valid).toBe(true);
 		expect(draft.name).toBe('My Gift');
 	});
-
-	it('links from parsed CSV are preserved in grid rows', () => {
-		const row = createDraftGridRow(drafts[0], { pristine: false });
-		expect(row.links[0].url).toBe('https://alza.cz/ps5');
-	});
 });

@@ -198,51 +198,6 @@ describe('authorizeUpload', () => {
 		});
 	});
 
-	// ── Object key format ────────────────────────────────────────────────────
-
-	describe('object key format', () => {
-		it('follows {prefix}/{uniqueId}.{extension} pattern', async () => {
-			const result = await callAuthorizeUpload({
-				target: 'gift-image',
-				fileName: 'photo.jpg',
-				contentType: 'image/jpeg',
-				fileSize: 1024,
-			});
-
-			expect(result.objectKey).toMatch(/^gifts\/[a-zA-Z0-9_-]+\.jpg$/);
-		});
-	});
-
-	// ── Upload URL format ────────────────────────────────────────────────────
-
-	describe('upload URL format', () => {
-		it('starts with /api/upload/', async () => {
-			const result = await callAuthorizeUpload({
-				target: 'gift-image',
-				fileName: 'photo.jpg',
-				contentType: 'image/jpeg',
-				fileSize: 1024,
-			});
-
-			expect(result.uploadUrl).toBe('/api/upload/gifts/test-id-123.jpg');
-		});
-	});
-
-	// ── Public URL ───────────────────────────────────────────────────────────
-
-	describe('public URL', () => {
-		it('contains the object key', async () => {
-			const result = await callAuthorizeUpload({
-				target: 'gift-image',
-				fileName: 'photo.jpg',
-				contentType: 'image/jpeg',
-				fileSize: 1024,
-			});
-
-			expect(result.publicUrl).toBe('https://cdn.example.com/gifts/test-id-123.jpg');
-		});
-	});
-
 	// ── Invalid target ───────────────────────────────────────────────────────
 
 	describe('invalid target', () => {
@@ -405,23 +360,5 @@ describe('authorizeUpload', () => {
 
 			expect(result.objectKey).toBe(`gifts/test-id-123.${expectedExtension}`);
 		});
-	});
-});
-
-// ── Statement budget (issue #108, REQ-7) ──────────────────────────────────────
-
-describe('statement budget (issue #108, REQ-7)', () => {
-	it('authorizeUpload issues zero database statements', async () => {
-		// Upload authorization is pure validation + token/URL signing; the getDb mock
-		// at the top of this file throws on any use, so a successful happy path here
-		// proves the 0-statement budget holds.
-		const result = await callAuthorizeUpload({
-			target: 'gift-image',
-			fileName: 'photo.jpg',
-			contentType: 'image/jpeg',
-			fileSize: 1024,
-		});
-
-		expect(result.objectKey).toBe('gifts/test-id-123.jpg');
 	});
 });

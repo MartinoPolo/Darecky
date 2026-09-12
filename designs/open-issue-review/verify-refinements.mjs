@@ -1,9 +1,10 @@
+import { sharedChromeLaunchOptions } from '../../scripts/browser-automation.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(sharedChromeLaunchOptions);
 const results = [];
 const output = new URL('./screenshots/', import.meta.url);
 await mkdir(output, { recursive: true });

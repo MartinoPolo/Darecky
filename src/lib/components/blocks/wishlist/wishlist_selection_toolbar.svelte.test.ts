@@ -28,12 +28,6 @@ function createProps() {
 	};
 }
 
-function visibleChildren(element: HTMLElement) {
-	return Array.from(element.children).filter(
-		(child) => getComputedStyle(child).display !== 'none',
-	);
-}
-
 describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 	beforeEach(async () => page.viewport(390, 760));
 	afterEach(async () => {
@@ -89,17 +83,36 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		}
 	});
 
-	it('shows exactly six first-level actions without scrolling at 320px height', async () => {
+	it('keeps all six first-level actions in the shared sheet with 48px touch rows', async () => {
 		await page.viewport(320, 320);
 		const screen = await render(WishlistSelectionToolbar, createProps());
 		await screen.getByRole('button', { name: m.gift_selection_actions() }).click();
 		const dialog = screen.getByRole('dialog', { name: m.gift_selection_actions() });
 		await expect.element(dialog).toBeVisible();
-		const style = getComputedStyle(dialog.element());
+		const shell = dialog.element();
+		const shellRect = shell.getBoundingClientRect();
+		const style = getComputedStyle(shell);
 		expect(style.bottom).toBe('0px');
-		expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
-		expect(parseFloat(style.borderLeftWidth)).toBeGreaterThan(0);
-		expect(parseFloat(style.borderRightWidth)).toBeGreaterThan(0);
+		expect(parseFloat(style.maxHeight)).toBeCloseTo(window.innerHeight * 0.8, 1);
+		expect(shellRect.left).toBeCloseTo(window.innerWidth - shellRect.right, 1);
+		expect(shellRect.left).toBeGreaterThan(0);
+		expect(style.borderLeftWidth).toBe(style.borderRightWidth);
+		expect(style.borderLeftWidth).toBe(style.borderTopWidth);
+		expect(style.borderTopLeftRadius).toBe(style.borderTopRightRadius);
+		expect(parseFloat(style.borderTopLeftRadius)).toBeGreaterThan(0);
+		const header = shell.querySelector<HTMLElement>('[data-slot="sheet-header"]')!;
+		const headerStyle = getComputedStyle(header);
+		expect(header.getBoundingClientRect().width).toBeCloseTo(
+			shellRect.width -
+				parseFloat(style.borderLeftWidth) -
+				parseFloat(style.borderRightWidth),
+			1,
+		);
+		expect(headerStyle.paddingLeft).toBe('16px');
+		expect(headerStyle.paddingRight).toBe('56px');
+		expect(headerStyle.paddingTop).toBe('12px');
+		expect(headerStyle.paddingBottom).toBe('12px');
+		expect(parseFloat(headerStyle.borderBottomWidth)).toBeCloseTo(1, 1);
 		const actions = screen.getByTestId('selection-bulk-sheet-actions').element();
 		const rows = Array.from(
 			actions.querySelectorAll<HTMLButtonElement>('[data-mobile-bulk-action]'),
@@ -112,14 +125,15 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			'copy',
 			'received',
 		]);
-		await expect
-			.poll(() => Math.max(...rows.map((row) => row.getBoundingClientRect().bottom)))
-			.toBeLessThanOrEqual(320);
+		const bodyStyle = getComputedStyle(actions.parentElement!);
+		expect(bodyStyle.paddingLeft).toBe('8px');
+		expect(bodyStyle.paddingRight).toBe('8px');
+		expect(bodyStyle.paddingTop).toBe('8px');
+		expect(bodyStyle.paddingBottom).toBe('8px');
 		for (const row of rows) {
-			expect(row.getBoundingClientRect().height).toBeCloseTo(40, 1);
+			expect(row.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+			expect(row.textContent?.trim()).not.toBe('');
 		}
-		expect(actions.scrollHeight).toBeLessThanOrEqual(actions.clientHeight);
-		expect(getComputedStyle(actions).overflowY).not.toBe('auto');
 		await screen.unmount();
 	});
 
@@ -136,19 +150,22 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		await screen.getByRole('button', { name: m.gift_selection_actions() }).click();
 		const actions = screen.getByTestId('selection-bulk-sheet-actions');
 
-		for (const [action, option, assertion] of [
+		for (const [action, focusedOption, option, assertion] of [
 			[
 				'priority',
+				'Vysoká',
 				m.gift_priority_none(),
 				() => expect(props.onpriority).toHaveBeenCalledWith(null),
 			],
 			[
 				'category',
+				'Sport',
 				m.gift_category_uncategorized(),
 				() => expect(props.oncategory).toHaveBeenCalledWith(null),
 			],
 			[
 				'imageFit',
+				m.image_fit_fit(),
 				m.image_fit_fill(),
 				() =>
 					expect(props.onaction).toHaveBeenCalledWith({
@@ -158,6 +175,7 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			],
 			[
 				'imageBackground',
+				m.image_background_black(),
 				m.image_background_transparent(),
 				() =>
 					expect(props.onaction).toHaveBeenCalledWith({
@@ -167,6 +185,7 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			],
 			[
 				'received',
+				m.gift_mark_received(),
 				m.gift_mark_unreceived(),
 				() =>
 					expect(props.onaction).toHaveBeenCalledWith({
@@ -183,6 +202,8 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 				.element(screen.getByRole('button', { name: m.gift_context_back() }))
 				.toHaveFocus();
 			expect(screen.getByTestId('selection-bulk-sheet-actions').query()).toBeNull();
+			await userEvent.keyboard('{Tab}');
+			await expect.element(screen.getByRole('radio', { name: focusedOption })).toHaveFocus();
 			await screen.getByRole('radio', { name: option }).click();
 			assertion();
 			await screen.getByRole('button', { name: m.gift_context_back() }).click();
@@ -202,6 +223,27 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		await new Promise(requestAnimationFrame);
 		await new Promise(requestAnimationFrame);
 		expect(document.activeElement).toHaveAttribute('data-mobile-bulk-action', 'copy');
+		await screen.unmount();
+	});
+
+	it('uses named library radio groups with arrow-key selection', async () => {
+		const props = { ...createProps(), commonPriorityId: 'high' };
+		const screen = await render(WishlistSelectionToolbar, props);
+		await screen.getByRole('button', { name: m.gift_selection_actions() }).click();
+		await screen
+			.getByTestId('selection-bulk-sheet-actions')
+			.element()
+			.querySelector<HTMLButtonElement>('[data-mobile-bulk-action="priority"]')!
+			.click();
+		await expect
+			.element(screen.getByRole('button', { name: m.gift_context_back() }))
+			.toHaveFocus();
+		const group = screen.getByRole('radiogroup', { name: m.gift_priority_label() });
+		const selected = group.getByRole('radio', { name: 'Vysoká' });
+		await userEvent.keyboard('{Tab}');
+		await expect.element(selected).toHaveFocus();
+		await userEvent.keyboard('{ArrowUp}');
+		expect(props.onpriority).toHaveBeenCalledWith(null);
 		await screen.unmount();
 	});
 
@@ -264,10 +306,10 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			expect(screen.getByTestId('selection-bulk-sheet-options').element()).toHaveTextContent(
 				m.gift_selection_mixed(),
 			);
-			for (const radio of sheet
-				.element()
-				.querySelectorAll<HTMLInputElement>('input[type="radio"]')) {
-				expect(radio.checked).toBe(false);
+			const radios = sheet.element().querySelectorAll<HTMLElement>('[role="radio"]');
+			expect(radios.length).toBeGreaterThan(0);
+			for (const radio of radios) {
+				expect(radio).toHaveAttribute('aria-checked', 'false');
 			}
 			await sheet.getByRole('button', { name: m.gift_context_back() }).click();
 		}
@@ -285,7 +327,7 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			.click();
 		const radio = screen
 			.getByRole('radio', { name: m.image_fit_fit() })
-			.element() as HTMLInputElement;
+			.element() as HTMLButtonElement;
 		await radio.click();
 		await screen.rerender({
 			...props,
@@ -367,8 +409,14 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 			.querySelector<HTMLButtonElement>('[data-mobile-bulk-action="category"]')!
 			.click();
 		const options = screen.getByTestId('selection-bulk-sheet-options').element();
-		expect(options.scrollHeight).toBeGreaterThan(options.clientHeight);
-		expect(getComputedStyle(options).overflowY).toBe('auto');
+		const scrollBody = options.parentElement!;
+		const firstRadio = options.querySelector<HTMLElement>('[role="radio"]')!;
+		const firstChoice = firstRadio.closest('label');
+		expect(firstChoice).not.toBeNull();
+		expect(firstChoice).toHaveAttribute('for', firstRadio.id);
+		expect(getComputedStyle(firstChoice!).minHeight).toBe('48px');
+		expect(scrollBody.scrollHeight).toBeGreaterThan(scrollBody.clientHeight);
+		expect(getComputedStyle(scrollBody).overflowY).toBe('auto');
 		await expect
 			.element(screen.getByRole('button', { name: m.gift_context_back() }))
 			.toBeVisible();
@@ -398,38 +446,5 @@ describe('WishlistSelectionToolbar mobile bulk surface (#340)', () => {
 		await screen.unmount();
 		document.body.style.minHeight = '';
 		window.scrollTo(0, 0);
-	});
-});
-
-describe('WishlistSelectionToolbar desktop preservation (#340)', () => {
-	beforeEach(async () => page.viewport(1280, 760));
-
-	it('keeps the existing wide field controls and Done action', async () => {
-		const screen = await render(WishlistSelectionToolbar, {
-			...createProps(),
-			commonPriorityId: 'high',
-			commonCategoryId: 'sport',
-			commonImageFit: 'fit' as const,
-			commonImageBackground: '#000000',
-			commonReceived: true,
-		});
-		const summary = screen
-			.getByRole('region', { name: m.gift_selection_toolbar() })
-			.element()
-			.querySelector('.desktop-selection-summary') as HTMLElement;
-		expect(summary.children[0]).toHaveAttribute('role', 'checkbox');
-		expect(summary.children[1]).toHaveClass('selection-count');
-		expect(summary).not.toHaveTextContent(m.draft_grid_select_all());
-		const wide = screen.getByTestId('selection-wide-controls').element() as HTMLElement;
-		wide.style.display = 'flex';
-		expect(visibleChildren(wide)).toHaveLength(6);
-		await expect
-			.element(screen.getByRole('button', { name: m.gift_bulk_copy() }))
-			.toBeVisible();
-		await expect.element(screen.getByRole('button', { name: m.done() })).toBeVisible();
-		await expect
-			.element(screen.getByRole('button', { name: `${m.gift_priority_label()}: Vysoká` }))
-			.toBeVisible();
-		await screen.unmount();
 	});
 });

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
 	import { Badge } from '$lib/components/base/badge/index.js';
-	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import GiftImage from '$lib/components/blocks/gift/GiftImage.svelte';
 	import GiftPieceCount from '$lib/components/blocks/gift/GiftPieceCount.svelte';
 	import GiftLinkList from '$lib/components/blocks/gift/GiftLinkList.svelte';
@@ -24,7 +23,6 @@
 	} from '$lib/modules/wishlists/wishlist_capabilities.js';
 	import { resolveGiftImageUrl } from '$lib/modules/images/public_url.js';
 	import { hasExplicitFrameFill } from '$lib/components/derived/image-frame/index.js';
-	import { useNarrowViewportState } from '$lib/components/derived/narrow_viewport_state.svelte.js';
 	import { cn } from '$lib/utils.js';
 	import { giftCardVariants } from './gift_card_variants.js';
 	import GiftDescription from './GiftDescription.svelte';
@@ -42,7 +40,9 @@
 		onreserve?: (gift: GiftForVisitor) => void;
 		onunreserve?: (gift: GiftForVisitor) => void;
 		onreceived?: (giftId: string, received: boolean) => void;
-		onmore?: () => void;
+		onmore?: (anchor: HTMLButtonElement) => void;
+		moreOpen?: boolean;
+		moreSurface?: 'menu' | 'dialog';
 	}
 
 	let {
@@ -56,9 +56,10 @@
 		onunreserve,
 		onreceived,
 		onmore,
+		moreOpen = false,
+		moreSurface = 'menu',
 	}: GiftCardProps = $props();
 
-	const narrowViewportState = useNarrowViewportState();
 	const displayState = $derived(
 		deriveGiftDisplayState(
 			gift,
@@ -81,8 +82,6 @@
 		visitorGift !== null &&
 			(visitorGift.myReservationId !== null || (!isArchived && !isFullyReserved)),
 	);
-	// Edit-icon hover affordance (issue #125 REQ-3): editing roles see a pencil icon appear
-	// on card hover/focus; visitors rely on the shared cursor-pointer + hover lift only.
 	const canManage = $derived(canManageWishlist(role) && !contextualMode);
 	const hasReceivedPrimary = $derived(canManage && !isArchived && onreceived !== undefined);
 	const hasMultipleActions = $derived(
@@ -108,11 +107,24 @@
 	);
 </script>
 
-<div class={styles.card()}>
+<div class={styles.card()} data-testid="gift-card-surface">
 	<ElevationSurface plate class={styles.plate()} />
+	{#if !contextualMode && presentation.showLike && visitorGift}
+		<LikeButton
+			giftId={gift.id}
+			giftName={gift.name}
+			likeCount={visitorGift.likeCount}
+			size="md"
+			class="absolute top-2 right-2 z-20"
+		/>
+	{/if}
 	<!-- Image area: dotted mat behind the photo; letterboxed photos keep the mat visible -->
 	<div
-		class={cn(styles.imageArea(), explicitImageFrameFill !== null && 'bg-[var(--frame-fill)]')}
+		class={cn(
+			styles.imageArea(),
+			'[container-type:inline-size]',
+			explicitImageFrameFill !== null && 'bg-[var(--frame-fill)]',
+		)}
 		data-testid="gift-card-image-frame"
 		style:--frame-fill={explicitImageFrameFill ?? undefined}
 	>
@@ -141,34 +153,8 @@
 			<div class="max-sm:hidden"><GiftCategoryBadge category={gift.category} /></div>
 		{/if}
 
-		{#if canManage}
-			<!-- Edit affordance (issue #125 REQ-3): hidden until the card is hovered/focused;
-			     purely decorative, the whole card is already the click target via
-			     WishlistGiftDraggableWrapper. -->
-			<span
-				class={cn(styles.editIcon(), 'max-sm:hidden')}
-				data-testid="gift-card-edit-icon"
-				aria-hidden="true"
-			>
-				<PencilIcon class="size-3.5" />
-			</span>
-		{/if}
-
-		<GiftStateOverlay
-			model={presentation.overlay}
-			class={cn(narrowViewportState.current && presentation.showLike && 'pt-12 pr-12')}
-		/>
-		{#if !contextualMode && narrowViewportState.current && presentation.showLike && visitorGift}
-			<LikeButton
-				giftId={gift.id}
-				giftName={gift.name}
-				likeCount={visitorGift.likeCount}
-				size="md"
-				countOverlay
-				class="absolute top-1 right-1 z-20 size-10 rounded-full"
-				surfaceClass="border-2 border-ink bg-card p-0 shadow-sticker"
-			/>
-		{/if}
+		<!-- Center state labels over the complete image; Like occupies its own corner layer. -->
+		<GiftStateOverlay model={presentation.overlay} avoidTopRight />
 	</div>
 
 	<!-- Body -->
@@ -230,15 +216,6 @@
 
 	{#if !contextualMode && (hasReceivedPrimary || (isVisitorOrModerator && hasReservationAction) || onmore)}
 		<div class={styles.footer()} data-testid="gift-card-footer">
-			{#if !narrowViewportState.current && presentation.showLike && visitorGift}
-				<LikeButton
-					giftId={gift.id}
-					giftName={gift.name}
-					likeCount={visitorGift.likeCount}
-					size="md"
-					class="h-(--size-control-md) shrink-0 self-start"
-				/>
-			{/if}
 			<div
 				data-testid="gift-card-reservation-actions"
 				class={cn(styles.reservationActions(), !hasMultipleActions && 'sm:flex-initial')}
@@ -251,13 +228,15 @@
 							size="md"
 							{onreserve}
 							{onunreserve}
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 						/>
 					{/if}
 				{/snippet}
 				<GiftActionRow
 					{onmore}
+					{moreOpen}
+					{moreSurface}
 					secondary={hasMultipleActions ? secondaryReservationAction : undefined}
+					controlSizing="intrinsic"
 				>
 					{#if !canManage && isVisitorOrModerator && visitorGift && onmore === undefined}
 						<PurchasedToggle
@@ -275,7 +254,6 @@
 							{onreceived}
 							size="md"
 							compactLabel
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1 [&_svg]:hidden"
 						/>
 					{:else if isVisitorOrModerator && visitorGift}
 						<ReserveButton
@@ -284,7 +262,6 @@
 							size="md"
 							{onreserve}
 							{onunreserve}
-							surfaceClass="whitespace-normal px-2 py-2 text-sm leading-tight sm:py-1"
 						/>
 					{/if}
 				</GiftActionRow>

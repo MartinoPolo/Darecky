@@ -62,7 +62,7 @@
 	const reservedGiftIds = new SvelteSet<string>();
 
 	// Loaded after hydration only, so the server-rendered landing page still needs no
-	// database. `LikeButton` hides a zero count, so the numbers just pop in when they land.
+	// database. The count updates when the client-side query lands.
 	const likesQuery = $derived(browser ? getLandingDemoLikes() : null);
 	const likeCounts = $derived<LandingDemoLikeCounts>(likesQuery?.current?.counts ?? {});
 	const likedGiftIds = $derived(

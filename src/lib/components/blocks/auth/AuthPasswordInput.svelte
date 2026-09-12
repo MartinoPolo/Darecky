@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from 'svelte/elements';
 	import { Input } from '$lib/components/base/input/index.js';
+	import { Button } from '$lib/components/base/button/index.js';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import * as m from '$lib/paraglide/messages.js';
@@ -30,7 +31,7 @@
 	let showPassword = $state(false);
 </script>
 
-<div class="password-wrapper">
+<div class="relative">
 	<Input
 		id={fieldId}
 		size="lg"
@@ -43,46 +44,23 @@
 		aria-describedby={errorDescribedById}
 		{disabled}
 		state={hasError ? 'error' : 'default'}
-		class="pr-11!"
+		class="pr-12!"
 	/>
-	<button
-		class="password-toggle"
+	<Button
+		intent="ghost"
+		size="icon-sm"
+		class="absolute top-1/2 right-0 size-10 -translate-y-1/2"
+		surfaceClass="m-auto size-(--size-control-sm)"
 		type="button"
 		aria-label={showPassword ? m.hide_password() : m.show_password()}
+		aria-pressed={showPassword}
 		onclick={() => (showPassword = !showPassword)}
-		tabindex={-1}
+		{disabled}
 	>
 		{#if showPassword}
-			<EyeOffIcon class="size-4" />
+			<EyeOffIcon data-icon />
 		{:else}
-			<EyeIcon class="size-4" />
+			<EyeIcon data-icon />
 		{/if}
-	</button>
+	</Button>
 </div>
-
-<style>
-	.password-wrapper {
-		position: relative;
-	}
-
-	.password-toggle {
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		background: none;
-		border: none;
-		color: var(--muted-foreground);
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		border-radius: var(--radius-sm);
-		transition: color var(--duration-fast);
-		line-height: 1;
-	}
-
-	.password-toggle:hover {
-		color: var(--foreground);
-	}
-</style>

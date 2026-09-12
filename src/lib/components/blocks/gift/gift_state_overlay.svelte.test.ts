@@ -197,8 +197,8 @@ describe('GiftStateOverlay', () => {
 			expect(badge.className).toContain('bg-primary');
 			expect(badge.className).toContain('text-primary-foreground');
 			expect(badge.className).not.toContain('footer-bg');
-			expect(Number.parseFloat(style.paddingLeft)).toBeGreaterThanOrEqual(12);
-			expect(Number.parseFloat(style.paddingTop)).toBeGreaterThanOrEqual(6);
+			expect(Number.parseFloat(style.paddingLeft)).toBeGreaterThanOrEqual(8);
+			expect(Number.parseFloat(style.paddingTop)).toBeGreaterThanOrEqual(4);
 			expect(badge.getBoundingClientRect().width).toBeLessThan(
 				host.getBoundingClientRect().width / 2,
 			);

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GiftByRole } from '$lib/modules/gifts/types.js';
+	import type { GiftContextInvocation } from './gift_context_invocation.js';
 	import { getPrimaryGiftLink } from '$lib/modules/gifts/gift_url.js';
 	import { getContext, type Snippet } from 'svelte';
 	import WishlistGiftDraggableWrapper from './WishlistGiftDraggableWrapper.svelte';
@@ -16,7 +17,7 @@
 		selectionMode?: boolean;
 		selectionLayout?: 'overlay' | 'list';
 		onselectiontoggle?: (giftId: string) => void;
-		oncontextactions?: (gift: GiftByRole, event: MouseEvent | null) => boolean;
+		oncontextactions?: (gift: GiftByRole, invocation: GiftContextInvocation) => boolean;
 		onedit: (gift: GiftByRole) => void;
 		onreorderpointerdown: (event: PointerEvent, index: number) => void;
 		onreordermove: (index: number, direction: -1 | 1) => void;
@@ -64,8 +65,12 @@
 	{selectionLayout}
 	{selected}
 	{onselectiontoggle}
-	oncontextmenu={(event) => oncontextactions?.(gift, event) ?? false}
-	onlongpress={() => oncontextactions?.(gift, null)}
+	oncontextmenu={(event) =>
+		oncontextactions?.(gift, {
+			kind: 'native',
+			point: { x: event.clientX, y: event.clientY },
+		}) ?? false}
+	onlongpress={() => oncontextactions?.(gift, { kind: 'longpress' })}
 	onopendetail={() => onedit(gift)}
 	{onreorderpointerdown}
 	{onreordermove}
