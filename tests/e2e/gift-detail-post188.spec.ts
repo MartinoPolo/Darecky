@@ -128,21 +128,26 @@ async function assertCenteredOverlay(
 		'data-testid',
 		/^(gift-card-image-frame|gift-list-image)$/,
 	);
-	const [imageFrameBox, imageFrameBorders, pillBoxes] = await Promise.all([
-		imageFrame.boundingBox(),
-		imageFrame.evaluate((element) => {
-			const style = getComputedStyle(element);
+	// Sample the frame and sticker in one frame; independent protocol calls can straddle motion.
+	const { imageFrameBox, imageFrameBorders, pillBoxes, paddingTop } = await overlay.evaluate(
+		(element) => {
+			const frame = element.parentElement!;
+			const style = getComputedStyle(frame);
 			return {
-				left: Number.parseFloat(style.borderLeftWidth),
-				right: Number.parseFloat(style.borderRightWidth),
-				top: Number.parseFloat(style.borderTopWidth),
-				bottom: Number.parseFloat(style.borderBottomWidth),
+				imageFrameBox: frame.getBoundingClientRect().toJSON(),
+				imageFrameBorders: {
+					left: Number.parseFloat(style.borderLeftWidth),
+					right: Number.parseFloat(style.borderRightWidth),
+					top: Number.parseFloat(style.borderTopWidth),
+					bottom: Number.parseFloat(style.borderBottomWidth),
+				},
+				pillBoxes: Array.from(element.querySelectorAll(':scope > span'), (pill) =>
+					pill.getBoundingClientRect().toJSON(),
+				),
+				paddingTop: getComputedStyle(element).paddingTop,
 			};
-		}),
-		pills.evaluateAll((elements) =>
-			elements.map((element) => element.getBoundingClientRect().toJSON()),
-		),
-	]);
+		},
+	);
 	expect(imageFrameBox, 'active image frame has a bounding box').not.toBeNull();
 	expect(pillBoxes.length, 'overlay pills have bounding boxes').toBeGreaterThan(0);
 	const stackBox = {
@@ -162,7 +167,7 @@ async function assertCenteredOverlay(
 			(imageFrameBox!.height - imageFrameBorders.top - imageFrameBorders.bottom) / 2,
 	};
 	expect(stackBox.x + (stackBox.right - stackBox.x) / 2).toBeCloseTo(imageContentCenter.x, 0);
-	if ((await overlay.evaluate((element) => getComputedStyle(element).paddingTop)) === '0px') {
+	if (paddingTop === '0px') {
 		expect(stackBox.y + (stackBox.bottom - stackBox.y) / 2).toBeCloseTo(
 			imageContentCenter.y,
 			0,

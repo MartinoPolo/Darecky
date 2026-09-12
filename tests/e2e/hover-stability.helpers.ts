@@ -276,7 +276,29 @@ export async function bottomToTopSweep(page: Page, control: Locator, controlName
 	await page.mouse.move(1, 1);
 	await expect(control).toBeVisible();
 	await control.scrollIntoViewIfNeeded();
-	await page.waitForTimeout(250);
+	await page.evaluate(() => document.fonts.ready.then(() => undefined));
+	await expect
+		.poll(() =>
+			control.evaluate((element) => {
+				let running = 0;
+				for (
+					let ancestor: Element | null = element;
+					ancestor;
+					ancestor = ancestor.parentElement
+				) {
+					running += ancestor
+						.getAnimations()
+						.filter(
+							(animation) =>
+								animation.playState !== 'finished' &&
+								animation.playState !== 'idle' &&
+								animation.effect?.getComputedTiming().endTime !== Infinity,
+						).length;
+				}
+				return running;
+			}),
+		)
+		.toBe(0);
 	const box = await control.boundingBox();
 	expect(box).not.toBeNull();
 	const afterHeight = await control.evaluate((element) => {
