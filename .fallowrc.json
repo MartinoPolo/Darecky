@@ -11,7 +11,7 @@
 		"tests/load/setup.ts",
 		"tests/load/cleanup.ts"
 	],
-	"ignorePatterns": ["scripts/**", "designs/**"],
+	"ignorePatterns": ["scripts/**", "designs/**", "archive/**"],
 	"ignoreExports": [
 		{
 			"file": "src/lib/components/**/index.ts",

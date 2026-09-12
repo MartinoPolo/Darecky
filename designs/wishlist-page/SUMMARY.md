@@ -1,5 +1,7 @@
 # Wishlist Page -- Refinement Summary
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 **Mockup:** `designs/wishlist-page/refined.html`
 **Base variant:** Variant 2 (E-commerce grid)
 **Date:** 2026-05-30

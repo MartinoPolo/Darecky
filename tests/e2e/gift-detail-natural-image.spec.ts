@@ -1,23 +1,12 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
 import { createWishlistAndNavigate, shareWishlist } from './fixtures/wishlist-helpers.js';
-import { GIFT_CROP_TARGET_SPECS } from '../../src/lib/modules/images/crop_targets.js';
 
 const SAMPLE_IMAGE_PORTRAIT_PATH = fileURLToPath(
 	new URL('./fixtures/sample-image-portrait.png', import.meta.url),
 );
-
-function waitForUpload(page: Page) {
-	return page.waitForResponse(
-		(response) =>
-			response.request().method() === 'PUT' &&
-			response.url().includes('/api/upload/') &&
-			response.status() === 201,
-		{ timeout: 15_000 },
-	);
-}
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
@@ -44,9 +33,7 @@ test.describe('Gift detail image presentation', () => {
 		await addDialog.getByRole('button', { name: 'Nahrát', exact: true }).click();
 		const fileInput = addDialog.locator('input[type=file]');
 		await expect(fileInput).toBeAttached();
-		const uploaded = waitForUpload(ownerPage);
 		await fileInput.setInputFiles(SAMPLE_IMAGE_PORTRAIT_PATH);
-		await uploaded;
 		await expect(addDialog.getByTestId('image-upload-preview')).toBeVisible({
 			timeout: 10_000,
 		});
@@ -72,19 +59,26 @@ test.describe('Gift detail image presentation', () => {
 			.getByTestId('gift-detail-view-image-column')
 			.locator('img');
 		await expect(detailImage).toBeVisible({ timeout: 10_000 });
-		const box = await detailImage.boundingBox();
-		expect(box, 'detail image has a bounding box').not.toBeNull();
-		const ratio = box!.width / box!.height;
-
-		// The source is a portrait fixture (20x40px, natural ratio 0.5) – the
-		// detail view must render it at that natural ratio, NOT the `square` 4:3
-		// card crop target and NOT a 1:1 crop.
-		expect(ratio, 'detail image renders portrait, not landscape/square').toBeLessThan(0.95);
-		expect(
-			Math.abs(ratio - GIFT_CROP_TARGET_SPECS.square.aspect),
-			'ratio is clearly not the 4:3 square crop target',
-		).toBeGreaterThan(0.3);
-		expect(Math.abs(ratio - 1), 'ratio is clearly not 1:1').toBeGreaterThan(0.3);
+		await expect
+			.poll(() =>
+				detailImage.evaluate(
+					(image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+				),
+			)
+			.toBe(true);
+		await expect
+			.poll(
+				() =>
+					detailImage.evaluate((image) => {
+						// A tilted sticker's axis-aligned bounding box does not represent photo aspect.
+						return image.clientWidth / image.clientHeight;
+					}),
+				{
+					message:
+						'the portrait fixture retains its natural 1:2 aspect, without cropping or distortion',
+				},
+			)
+			.toBeCloseTo(0.5, 2);
 
 		await visitorContext.close();
 	});

@@ -1,5 +1,7 @@
 # Gift Image Crop Workflow – Design Summary
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 **Base**: Variant A (stage + preview strip) | **Refined**: 2026-06-02
 
 ## Refinements Applied

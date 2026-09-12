@@ -108,9 +108,8 @@ Notification dispatcher coverage:
 - `new_gift_added` – in-app only to followers.
 - `gift_reserved` – in-app only to followers.
 
-Still not covered:
-
-- Saving notification preferences; the settings UI exists, but server persistence is still TODO.
+Notification preferences are persisted by
+`src/lib/modules/notifications/notification_preferences_public.ts`.
 
 ## References
 

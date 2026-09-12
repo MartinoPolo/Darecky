@@ -1,5 +1,7 @@
 # Gift Detail Modal – Refined Summary
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 **Mockup:** `designs/gift-detail-modal/refined.html`
 **Base variant:** Variant 1 – center modal, 2-column (image left / details right)
 **Date:** 2026-05-30

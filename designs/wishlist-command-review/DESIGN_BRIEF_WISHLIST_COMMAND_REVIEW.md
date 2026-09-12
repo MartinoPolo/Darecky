@@ -66,7 +66,7 @@ Compact row spacing, icon alignment, menu summaries and active-state presentatio
 
 ## 10. Visual References
 
-`designs/mobile-wishlist-toolbar/`, `designs/wishlist-gift-actions/refined.html`, current toolbar and selection source, current `WishlistHeaderActions.svelte`. Older separate-control decisions are explicitly superseded by #359; latest mask acceptance is not.
+`archive/designs/mobile-wishlist-toolbar/` (historical provenance only), `designs/wishlist-gift-actions/refined.html`, current toolbar and selection source, current `WishlistHeaderActions.svelte`. Older separate-control decisions are explicitly superseded by #359; latest mask acceptance is not.
 
 ## 11. Not Included
 

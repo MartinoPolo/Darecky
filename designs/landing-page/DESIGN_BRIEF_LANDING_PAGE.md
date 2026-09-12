@@ -187,7 +187,7 @@ Z-index:
 - **Color family:** Sage green primary (like Craft.do or Notion's green). Warm neutrals for backgrounds.
 - **Typography mood:** Clean, slightly humanist (Figtree body; Noto Sans for impact headings).
 - **App preview fidelity:** Use actual `dk-card`, `dk-badge`, `dk-btn` components from the design system to show the real UI.
-- **Reference mockups:** `designs/style-exploration/direction-a-honey.html` – same structural conventions (nav, card patterns, badge patterns, typography classes).
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-a-honey.html` is historical provenance only.
 
 ---
 

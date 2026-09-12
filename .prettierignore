@@ -17,5 +17,9 @@ bun.lockb
 # Design mockups — reference-only artifacts, not gated source
 /designs/
 
+# Preserve historical artifacts without reformatting them
+/archive/**
+!/archive/README.md
+
 # Paraglide compiler-owned generated output
 /src/lib/paraglide/

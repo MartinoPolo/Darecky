@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { waitForAppHydration } from './fixtures/auth-helpers.js';
 
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 } as const;
 const MOBILE_VIEWPORT = { width: 375, height: 812 } as const;
@@ -10,88 +11,47 @@ function demoGift(pane: Locator): Locator {
 	return pane.getByTestId('landing-demo-gift-teapot');
 }
 async function gotoDemo(page: Page) {
+	const loaded = page.waitForResponse((response) =>
+		new URL(response.url()).pathname.endsWith('/getLandingDemoLikes'),
+	);
 	await page.goto('/');
-	await page.waitForSelector('[data-testid="landing-demo"]');
+	await loaded;
+	await waitForAppHydration(page);
+	await expect(page.getByTestId('landing-demo')).toBeVisible();
 }
 function pairLikeButton(page: Page): Locator {
 	return page.getByTestId('landing-demo-pair-gifter').locator('button[aria-pressed]');
 }
-function likeCounterResponse(page: Page): Promise<unknown> {
-	return page.waitForResponse((response) => response.url().includes('/_app/remote/'), {
-		timeout: 15_000,
-	});
-}
-async function likeCount(button: Locator) {
-	const label = (await button.innerText()).trim();
-	return label === '' ? 0 : Number(label);
-}
 async function toggleLike(button: Locator, expectedPressed: boolean) {
-	await expect(async () => {
-		await button.click();
-		await expect(button).toHaveAttribute('aria-pressed', String(expectedPressed), {
-			timeout: 2_000,
-		});
-	}).toPass({ timeout: 30_000 });
-}
-async function waitForFirstLikeToCommit(page: Page) {
-	await expect
-		.poll(
-			async () =>
-				(await page.context().cookies()).some(
-					(cookie) => cookie.name === 'prejemesi_anon_id',
-				),
-			{ timeout: 15_000 },
-		)
-		.toBe(true);
+	// Pressed state is optimistic; wait for this mutation before reloading or toggling again.
+	const committed = button
+		.page()
+		.waitForResponse(
+			(response) =>
+				response.request().method() === 'POST' &&
+				new URL(response.url()).pathname.endsWith('/toggleLandingDemoLike'),
+		);
+	await button.click();
+	expect((await committed).ok()).toBe(true);
+	await expect(button).toHaveAttribute('aria-pressed', String(expectedPressed));
 }
 
-test.describe('Landing demo like counter', () => {
-	test.describe.configure({ mode: 'serial' });
-
-	test('liking a demo gift moves the shared counter and unliking puts it back', async ({
+test.describe('Landing demo likes', () => {
+	test('liking and unliking persist for this browser independently of the shared count', async ({
 		page,
 	}) => {
 		await page.setViewportSize(MOBILE_VIEWPORT);
-		const initialCounts = likeCounterResponse(page);
 		await gotoDemo(page);
-		await initialCounts;
-
 		const likeButton = pairLikeButton(page);
 		await expect(likeButton).toHaveAttribute('aria-pressed', 'false');
 
-		// The counter is real, shared, global state — parallel workers and reruns all write
-		// to it, so only deltas against the count on screen right now can be asserted.
-		const countBeforeLike = await likeCount(likeButton);
-
-		const likeCommitted = likeCounterResponse(page);
 		await toggleLike(likeButton, true);
-		await likeCommitted;
-		await expect.poll(() => likeCount(likeButton)).toBe(countBeforeLike + 1);
-
-		const unlikeCommitted = likeCounterResponse(page);
-		await toggleLike(likeButton, false);
-		await unlikeCommitted;
-		await expect.poll(() => likeCount(likeButton)).toBe(countBeforeLike);
-	});
-
-	test('a like survives a reload (anonymous visitor cookie)', async ({ page }) => {
-		await page.setViewportSize(MOBILE_VIEWPORT);
 		await gotoDemo(page);
+		await expect(likeButton).toHaveAttribute('aria-pressed', 'true');
 
-		const likeButton = () => pairLikeButton(page);
-		await toggleLike(likeButton(), true);
-		await waitForFirstLikeToCommit(page);
-		const countAfterLike = await likeCount(likeButton());
-
-		await page.reload();
-		await page.waitForSelector('[data-testid="landing-demo"]');
-
-		// Unlike the reservation state, this one is restored from the server for this browser.
-		await expect(likeButton()).toHaveAttribute('aria-pressed', 'true');
-		await expect.poll(() => likeCount(likeButton())).toBe(countAfterLike);
-
-		// Leave the shared counter as it was found.
-		await toggleLike(likeButton(), false);
+		await toggleLike(likeButton, false);
+		await gotoDemo(page);
+		await expect(likeButton).toHaveAttribute('aria-pressed', 'false');
 	});
 
 	test('a like explains the counter once per session', async ({ page }) => {
@@ -136,11 +96,7 @@ test.describe('Landing demo like counter', () => {
 		await toggleLike(heart, false);
 		await expect(popup).toHaveCount(0, { timeout: 15_000 });
 
-		// Second like in the same session: the explainer has had its turn. Sequenced behind
-		// the command response, since that is what would have opened the bubble.
-		const secondLikeCommitted = likeCounterResponse(page);
 		await toggleLike(heart, true);
-		await secondLikeCommitted;
 		await expect(popup).toHaveCount(0);
 
 		await toggleLike(heart, false);

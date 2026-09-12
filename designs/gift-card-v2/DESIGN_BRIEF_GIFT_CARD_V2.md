@@ -1,5 +1,7 @@
 # Design Brief – Gift Card v2
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant C)
 > **Refined mockup**: `designs/gift-card-v2/refined.html`
 > **Summary**: `designs/gift-card-v2/SUMMARY.md`
@@ -239,7 +241,7 @@ Canonical in `src/app.css`; structural tokens mirrored in `designs/tokens.css`.
 
 - `designs/wishlist-page/refined.html` – current gift card in context (the surface this card sits in)
 - `designs/gift-detail-modal/refined.html` – sibling surface; reserve/like/link patterns to stay consistent with
-- `designs/style-exploration/direction-b-sage.html` – sage green primary palette at high fidelity
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-b-sage.html` is historical provenance only.
 - `designs/tokens.css` – structural spacing / radius / motion tokens
 - `src/app.css` – canonical color values (sage green primary, reserved/liked/archived, light/dark)
 - Current implementation (the thing being superseded):

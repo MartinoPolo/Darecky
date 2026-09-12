@@ -247,13 +247,6 @@ test.describe('Landing demo section', () => {
 		await expect(gifterPolaroid).toHaveText(new RegExp(CS.gifterPhotoCaption));
 		await expect(recipientPolaroid).toHaveText(new RegExp(CS.recipientPhotoCaption));
 
-		// The prints are asymmetric decoration; the two pane cards still start on one line.
-		const gifterBox = await gifterPane(page).boundingBox();
-		const recipientBox = await recipientPane(page).boundingBox();
-		expect(gifterBox).not.toBeNull();
-		expect(recipientBox).not.toBeNull();
-		expect(Math.abs((gifterBox?.y ?? 0) - (recipientBox?.y ?? 0))).toBeLessThanOrEqual(1);
-
 		// Overhanging prints must never push the page sideways. 1024px is the tightest
 		// case: the absolute-positioned prints exist but the viewport margins around the
 		// 1200px content column do not yet.

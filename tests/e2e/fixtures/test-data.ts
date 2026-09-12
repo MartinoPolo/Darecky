@@ -1,5 +1,7 @@
+import { randomUUID } from 'node:crypto';
+
 export function uniqueEmail(prefix: string): string {
-	return `e2e-${prefix}-${Date.now()}@test.prejemesi.cz`;
+	return `e2e-${prefix}-${randomUUID()}@test.prejemesi.cz`;
 }
 
 export const TEST_PASSWORD = 'TestPassword123!';

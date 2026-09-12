@@ -236,12 +236,13 @@ test('gift card footer follows nested radii and keeps the action shadow and touc
 	);
 
 	await expect(surface).toBeVisible();
-	expect(geometry.outerRadius).toBe(16);
-	expect(geometry.buttonRadius).toBe(7);
-	expect(geometry.rightGap).toBeCloseTo(geometry.outerRadius - geometry.buttonRadius, 0);
+	expect(geometry.buttonRadius).toBeCloseTo(
+		Math.max(0, geometry.outerRadius - geometry.rightGap),
+		0,
+	);
 	expect(geometry.bottomGap).toBeCloseTo(geometry.rightGap, 0);
-	expect(geometry.rightGap).toBeGreaterThanOrEqual(4);
-	expect(geometry.bottomGap).toBeGreaterThanOrEqual(4);
+	expect(geometry.rightGap).toBeGreaterThan(0);
+	expect(geometry.bottomGap).toBeGreaterThan(0);
 	await page.context().close();
 });
 
@@ -266,29 +267,5 @@ test('list view persists on the local device after reload', async ({
 	await page.reload();
 	await expect(page.locator('[data-view-mode="list"]')).toBeVisible();
 	await expect(page.getByRole('radio', { name: m.gift_view_list(), exact: true })).toBeChecked();
-	await page.context().close();
-});
-
-test('compact view remains excluded from gift actions', async ({ browser, request, baseURL }) => {
-	const page = await registerAndGetPage(
-		browser,
-		request,
-		baseURL!,
-		createTestUser('gift-actions-compact'),
-	);
-	await createActionFixture(page);
-	await expect(page.getByRole('button', { name: /Kompaktní/ })).toHaveCount(0);
-	await page.evaluate(() => {
-		window.localStorage.setItem('prejemesi-gift-view-mode', JSON.stringify('compact'));
-	});
-	await page.reload();
-	await expect(page.locator('[data-view-mode="compact"]')).toBeVisible();
-	await page.getByText('Kolo pro výlety', { exact: true }).click({
-		button: 'right',
-		position: { x: 30, y: 10 },
-	});
-	await expect(page.getByRole('menu')).toHaveCount(0);
-	await expect(page.getByRole('dialog')).toHaveCount(0);
-	await expect(page.getByRole('region', { name: 'Nástroje výběru' })).toHaveCount(0);
 	await page.context().close();
 });

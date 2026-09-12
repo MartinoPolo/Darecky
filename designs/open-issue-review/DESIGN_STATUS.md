@@ -1,5 +1,7 @@
 # Design phase status
 
+> **Snapshot warning:** Status and approval assertions below capture the original review snapshot, not the current implementation. Later `.mpx/DECISIONS.md` entries take precedence; do not assume every item remains pending.
+
 ## All reviewed design decisions are complete
 
 The user approved settings Variant A, command Variant A with duplicate-text cleanup, and focused gift Variant C including its explicit enlarged-text and manager cases. No further human design decision remains in the reviewed open backlog. All implementation issues remain open; design approval is not a production fix.

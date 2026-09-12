@@ -11,7 +11,8 @@ The application code is **already fully wired** for Google OAuth:
 
 The only missing piece is obtaining **Google Cloud OAuth credentials** and placing them in `.env`.
 
-Stack reference: Better Auth `~1.4.22`, redirect path `{ORIGIN}/api/auth/callback/google`.
+Stack reference: use the Better Auth version declared in `package.json`; the redirect path is
+`{ORIGIN}/api/auth/callback/google`.
 
 ---
 
@@ -41,10 +42,10 @@ Required before credentials can be created.
 3. **Name**: e.g. `Přejeme si Web`.
 4. **Authorized JavaScript origins**:
     - `http://localhost:5173`
-    - _(production)_ `https://yourdomain.com`
+    - _(production)_ `https://prejemesi.cz`
 5. **Authorized redirect URIs** – must match **exactly** (Better Auth uses `{ORIGIN}/api/auth/callback/google`):
     - `http://localhost:5173/api/auth/callback/google`
-    - _(production)_ `https://yourdomain.com/api/auth/callback/google`
+    - _(production)_ `https://prejemesi.cz/api/auth/callback/google`
 6. **Create**, then copy the **Client ID** and **Client secret**.
 
 ## 4. Add credentials to `.env`

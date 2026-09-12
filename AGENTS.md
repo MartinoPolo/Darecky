@@ -2,6 +2,9 @@
 
 - App is in production (prejemesi.cz) with real user data. Preserve data integrity: avoid destructive schema operations, and migrate existing rows rather than dropping or recreating tables. Code may still be freely refactored, but breaking schema/API changes need a migration plan.
 - Before implementation, read `.mpx/CONTEXT.md` and `.mpx/DECISIONS.md`.
+- `.mpx/DECISIONS.md` governs settled product/design behavior; summaries, plans, and mockups do not override it. Report unresolved conflicts rather than treating implementation drift as a new decision.
+- Before consulting design artifacts, read `designs/README.md`; mockup approval and delivery-status snapshots are not current whole-app specifications.
+- Exclude `archive/` from routine searches and implementation context. Consult it only for explicitly requested historical research; its mirrored paths contain superseded references, not current requirements.
 
 ## Stack
 

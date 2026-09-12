@@ -174,9 +174,11 @@ Verification:
 
 ## Turnstile
 
-Protect registration, password sign-in, password-reset request, and
-anonymous reservation. The widget is only the client signal; every protected server
-operation must enforce Siteverify before email, database, or reservation work.
+Protect registration, password sign-in, password-reset request, and anonymous reservation.
+The widget is only the client signal. BetterAuth authentication endpoints are hard-gated by
+its Turnstile integration. Anonymous reservation is advisory: reject a missing or bad token
+when verification is configured and available, but allow and operationally log the request
+when the secret is unconfigured or Siteverify is unavailable.
 
 1. In **Turnstile > Add widget**, create a Managed widget for `prejemesi.cz`
    (and `www.prejemesi.cz` while it remains a routed hostname). Copy sitekey and
@@ -191,20 +193,22 @@ operation must enforce Siteverify before email, database, or reservation work.
     `wrangler.jsonc` sets `keep_vars: true`, so deployments preserve the
     dashboard-managed site key and secrets.
 
-3. Render the widget on all five protected surfaces and submit its token with
-   the form/remote-function payload.
-4. On the server, call
-   `POST https://challenges.cloudflare.com/turnstile/v0/siteverify` with the
-   secret and token. Require `success: true`. The Turnstile widget hostname
-   allowlist constrains token issuance to the production domains. Reject missing,
-   invalid, expired, or replayed tokens before side effects.
+3. Render the widget on every protected surface and submit its token with the
+   form/remote-function payload.
+4. Server verification calls
+   `POST https://challenges.cloudflare.com/turnstile/v0/siteverify`. The widget hostname
+   allowlist constrains token issuance to production domains. Authentication endpoints
+   require successful verification. Anonymous reservation rejects `missing`, `invalid`,
+   and `expired_or_replayed`, but treats `configuration` and `unavailable` as logged
+   fail-open outcomes; do not change that availability policy from this runbook.
 5. Tokens expire after five minutes and are single-use; reset the widget after
    an error. Never expose or log the secret or token. Use Cloudflare's documented
    test keys outside production.
-6. Verify each surface accepts one valid token and rejects missing, malformed,
-   expired, and replayed tokens. Confirm failed validation creates no user,
-   email, reset request, or reservation. Check Turnstile Analytics without
-   copying personal form fields into logs.
+6. Verify authentication surfaces accept a valid token and reject failed verification.
+   Verify anonymous reservation rejects missing/malformed/expired/replayed tokens while
+   configured, and confirm a controlled configuration/provider failure is allowed and
+   logged without exposing form data. Check Turnstile Analytics without copying personal
+   fields into logs.
 
 ## Smart Placement experiment
 

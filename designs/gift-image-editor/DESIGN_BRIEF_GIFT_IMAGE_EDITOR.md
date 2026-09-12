@@ -7,13 +7,13 @@
 
 The gift create/edit modal's left column is a "photo workshop": the owner uploads one photo, then decides how it is framed everywhere the gift appears — the grid card (4:3), the wishlist list row and the reservation thumb (1:1). This brief specs the completed design on top of the PR #188 baseline: a **two-target crop family** with a two-tile switcher, an **adaptive full-photo crop stage** that always shows the whole picture, an intentional **design-system treatment** for the whole mode section, the **link-editor rows**, and the **list-view row alignment**.
 
-**Source**: issue #189 (follow-up to PR #188 / issue #183). Supersedes `designs/gift-edit-mode-section/` (reference-only from here). Related: #159 (control heights + dialog chrome), #165/v3 visitor modal, #116 (editor model), #131 (click-to-edit).
+**Source**: issue #189 (follow-up to PR #188 / issue #183). Supersedes `archive/designs/gift-edit-mode-section/` (historical provenance only; current requirements are stated in this brief). Related: #159 (control heights + dialog chrome), #165/v3 visitor modal, #116 (editor model), #131 (click-to-edit).
 
 ---
 
 ## Scope Reconciliation: what PR #188 landed vs. what this completes
 
-Base the design on the **actual post-#188 code**, not on the pre-#188 screenshots or the superseded `gift-edit-mode-section` brief. PR #188 (merged to `dev` as `2f13f84`) already shipped:
+Base the design on the **actual post-#188 code**, not on the pre-#188 screenshots or the superseded archived `gift-edit-mode-section` brief. PR #188 (merged to `dev` as `2f13f84`) already shipped:
 
 **Already landed (do not re-solve; reproduce as the baseline):**
 
@@ -131,7 +131,7 @@ Keep production behavior, adopt the accepted mockup styling, enrich with a visib
 
 - **Behavior (production, keep):** each link = **URL + per-link label**; the label **defaults to the URL's domain** and is the text gift cards render (e.g. „↗ alza.cz"). Add / remove / reorder, cap counter, URL validation error. **The primary-link badge („Hlavní odkaz") is dropped** (refine) — the first row is primary by order alone, so a visible chip is redundant noise; `gift_link_primary` may survive only as an aria/screen-reader hint on `links[0]`, never a visible badge.
 - **Visible label field, renamed (refine):** the per-link label input gains a **visible `Label` reading „Viditelný popisek"** (EN „Visible label"). Production today shows only a placeholder („Popisek (volitelné)"); a visible label disambiguates it from the gift **„Popis"** (description) field above and states plainly that this text is what visitors see. Needs a **new message key** (e.g. `gift_link_visible_label` = „Viditelný popisek" / „Visible label"); the existing `gift_link_label_placeholder` stays as the input placeholder.
-- **Styling (adopt the accepted mockup row — `designs/gift-edit-mode-section/variants/variant-a.html`, reference-only):** a **bordered URL input** with the **trash icon to the right of the row**, and a **„+ Přidat odkaz" ghost affordance below** the rows. Reconcile with production, which already carries the label field but in a heavier bordered-card row (`rounded-md border border-border/60 p-2.5`) — the target is the lighter accepted row **plus a visible label field** (URL row + label field, trash right, ghost add below).
+- **Styling (requirements stated here; `archive/designs/gift-edit-mode-section/variants/variant-a.html` is historical provenance only):** a **bordered URL input** with the **trash icon to the right of the row**, and a **„+ Přidat odkaz" ghost affordance below** the rows. Reconcile with production, which already carries the label field but in a heavier bordered-card row (`rounded-md border border-border/60 p-2.5`) — the target is the lighter accepted row **plus a visible label field** (URL row + label field, trash right, ghost add below).
 - Uses `GiftLinkEditor` / `GiftLinkRow`; label „Odkazy" per existing i18n.
 
 ### 3.8 Form column — two-column rows (#159 REQ-5, inherited)
@@ -264,8 +264,8 @@ None expected. Deliverables are: the adaptive-stage sizing rework (`ImageCropSta
 ## 10. Visual References
 
 - **Current implementation (behavior + baseline source of truth):** `src/lib/components/blocks/gift/GiftDetailForm.svelte`, `gift_detail_modal_variants.ts`, `GiftImagePreviewSlots.svelte`, `GiftListItem.svelte`; `src/lib/components/blocks/reservation/ReserveModal.svelte`; `src/lib/components/derived/image-crop/ImageCropStage.svelte`; `src/lib/modules/images/crop_targets.ts` + `types.ts`; `GiftLinkEditor.svelte` / `GiftLinkRow.svelte`.
-- **Accepted link-row styling (reference-only):** `designs/gift-edit-mode-section/variants/variant-a.html` (the `.linkrow` + „Přidat odkaz" pattern) — §3.7 enriches it with a label field.
-- **Superseded predecessor (reference-only):** `designs/gift-edit-mode-section/DESIGN_BRIEF_GIFT_EDIT_MODE_SECTION.md` — its mode-section vocabulary carries over; its single-tile / pre-#188 geometry does not.
+- **Accepted link-row historical provenance:** `archive/designs/gift-edit-mode-section/variants/variant-a.html` records the `.linkrow` + „Přidat odkaz" pattern; §3.7 is authoritative and enriches it with a label field.
+- **Superseded predecessor (historical provenance only):** `archive/designs/gift-edit-mode-section/DESIGN_BRIEF_GIFT_EDIT_MODE_SECTION.md` — §3.7 and the current implementation define the requirements; its single-tile / pre-#188 geometry does not.
 - **Design language**: `designs/redesign-2026/sky-final/anime-sky-final.html`, `anime-gift-detail-modal.html`; v3 accepted `designs/gift-detail-modal-v3/refined.html` + `SUMMARY.md` (the sibling visitor surface this must feel related to).
 - **Sibling briefs (consistency)**: `designs/control-heights/DESIGN_BRIEF_CONTROL_HEIGHTS.md` §3.9 (dialog chrome, `md` step) + `refined.html` (chrome reference); `designs/creation-dialog-accordion/DESIGN_BRIEF_CREATION_DIALOG_ACCORDION.md` §4.8 (chrome supersession table); `designs/unified-filters/` (token-inheritance rule).
 - **Tokens**: `src/app.css` (canonical).

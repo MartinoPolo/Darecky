@@ -1,5 +1,7 @@
 # Design Brief – Gift Detail Modal v2 (Multi-link + Enrichment)
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant A + C cherry-picks)
 > **Refined mockup**: `designs/gift-detail-modal/refined-v2.html`
 > **Summary**: `designs/gift-detail-modal/SUMMARY-v2.md`
@@ -187,7 +189,7 @@ No new color tokens – semantic tokens only (per project styling rules).
 - v1 brief + `designs/gift-detail-modal/refined.html` – the modal frame, 2-column layout, field styling these deltas slot into.
 - v1 single-URL affordance ("Koupit na alza.cz ↗") – the visual seed for the view-mode **primary** link.
 - Existing image field (URL/upload tabs + fit toggle + `GiftImageCropCanvas`) in `GiftDetailForm.svelte` – the flow enrichment pre-fills into.
-- `designs/style-exploration/direction-b-sage.html` – sage primary palette for the primary-link accent and sparkles tint.
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-b-sage.html` is historical provenance only.
 - `designs/tokens.css` + `src/app.css` – structural + semantic tokens.
 
 ---

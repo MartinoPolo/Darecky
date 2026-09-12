@@ -205,7 +205,14 @@ test.describe('Anonymous visitor reservation', () => {
 		const submitReservationButton = reserveDialog.getByRole('button', { name: /Rezervovat/ });
 		await expect(submitReservationButton).toBeEnabled();
 		await submitReservationButton.click();
-		await expect(visitorPage.getByText(/[Rr]ezervov/).first()).toBeVisible();
+		await expect(reserveDialog).toBeHidden();
+		await expect(
+			mobileListItem.getByRole('button', {
+				name: new RegExp(
+					`Zrušit rezervaci ${TEST_GIFT.name}|Cancel reservation for ${TEST_GIFT.name}`,
+				),
+			}),
+		).toBeVisible();
 
 		await visitorContext.close();
 	});

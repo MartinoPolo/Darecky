@@ -20,6 +20,10 @@ Supports two modes:
 
 ## Process
 
+### Step 0: Read Current Design Authority
+
+First read `designs/README.md` and the current `.mpx/DECISIONS.md`. Later decisions override earlier approved scope and artifacts. Exclude `archive/designs/` and folders marked historical by `designs/README.md` from discovery. Missing variants or `refined.html` alone is not proof that refinement is pending. If the active folder, chosen variant, or applicable decision is ambiguous, ask the user; never guess from recency or the latest-mentioned variant.
+
 ### Step 1: Parse Arguments
 
 **If the argument is `all`** → switch to [Batch Mode](#batch-mode-all) below.
@@ -56,7 +60,7 @@ Collect every folder that meets all three conditions. If none qualify, report "N
 
 For each eligible folder, read its `DECISION.md` and extract:
 
-- **Chosen variant letter** — look for explicit phrases like "Let's refine Variant E", "go with B", "I prefer C", "accept variant A", etc. (case-insensitive). If ambiguous, pick the last mentioned variant.
+- **Chosen variant letter** — look for explicit phrases like "Let's refine Variant E", "go with B", "I prefer C", "accept variant A", etc. (case-insensitive). If ambiguous, ask the user and do not process that folder until clarified.
 - **Refinement requirements** — the full body of the DECISION.md (after any variant-selection sentence) is the refinement spec. Pass it verbatim as the refinements for that folder.
 
 ### Batch Step C: Report plan and confirm
@@ -71,7 +75,7 @@ Ask the user: "Proceed with refining all N folders above?" — wait for confirma
 
 ### Batch Step D: Process sequentially via sub-agents
 
-For each eligible folder in order, spawn a dedicated **`mp-executor`** sub-agent to handle that folder end-to-end. Pass the sub-agent:
+For each eligible folder in order, spawn a dedicated **`mpx-executor`** sub-agent to handle that folder end-to-end. Pass the sub-agent:
 
 - The target folder path (`designs/<name>/`)
 - The chosen variant letter and full refinement requirements extracted in Batch Step B
@@ -90,7 +94,7 @@ At the end, print a summary table of all folders processed, any that were skippe
 
 ### Step 2: Locate Source Files
 
-1. Infer active component from context, or find the most recently modified folder under `designs/` that has variants.
+1. Infer the active current component from explicit context and current decisions; if more than one folder qualifies, ask the user rather than selecting by modification time.
 2. Read: `designs/<component-name>/variants/variant-<letter>.html` (chosen variant)
 3. Read: `designs/<component-name>/DESIGN_BRIEF_<COMPONENT_NAME>.md` (full brief)
 4. Read: `designs/DESIGN_SYSTEM.md` if it exists (class names and component reference)
@@ -105,9 +109,9 @@ For every component referenced in the brief or refinements:
 
 ### Step 4: Adopt Missing Components (if needed, preferably from shadcn-svelte or Bits UI)
 
-1. Spawn `mp-context7-docs-fetcher` to look up in shadcn-svelte (`/huntabyte/shadcn-svelte`) or Bits UI (`/huntabyte/bits-ui`)
-2. Install: `pnpm dlx shadcn-svelte@latest add <name> --yes --overwrite`
-3. Record adoption in SUMMARY.md
+1. Spawn `mpx-context7-docs-fetcher` to look up in shadcn-svelte (`/huntabyte/shadcn-svelte`) or Bits UI (`/huntabyte/bits-ui`)
+2. Inspect the local primitive/component contracts and reuse the managed primitive by default. Before any command that would overwrite a managed primitive, show the impact and obtain explicit user approval; never default to `--overwrite`.
+3. If approved and genuinely missing, install with the minimum non-overwriting command supported by the local project, then record adoption in SUMMARY.md.
 
 ### Step 5: Produce `refined.html`
 
@@ -118,8 +122,8 @@ The refined HTML must:
 - Use the chosen variant as visual and structural base
 - Apply **every** refinement requirement
 - Cover all states from the brief (not just the happy path)
-- If `designs/tokens.css` exists: `<link rel="stylesheet" href="../tokens.css">` — never inline token values
-- If no tokens file: inline the project's CSS variables from `src/app.css`
+- Link the current compiled design-review CSS (or inline the required compiled subset derived from `src/app.css` when no review stylesheet exists); `designs/tokens.css` is historical reference only and is not linked by default
+- Match local component APIs and stories exactly (for example, Button uses `intent` and Badge uses `tone`)
 - Use Tailwind utility classes and design system classes throughout
 - Only component-specific styles in `<style>`
 - Realistic mock data
@@ -146,10 +150,10 @@ requirements. Key changes from the base variant: [1–3 concise sentences on str
 
 ### Codebase — Use As-Is
 
-| Component | Path                              | Usage         | Key Props/Variants          |
-| --------- | --------------------------------- | ------------- | --------------------------- |
-| Button    | `src/lib/components/base/button/` | [where + how] | `variant="ghost" size="sm"` |
-| Badge     | `src/lib/components/base/badge/`  | [where + how] | `variant="success"`         |
+| Component | Path                              | Usage         | Key Props/Variants         |
+| --------- | --------------------------------- | ------------- | -------------------------- |
+| Button    | `src/lib/components/base/button/` | [where + how] | `intent="ghost" size="sm"` |
+| Badge     | `src/lib/components/base/badge/`  | [where + how] | `tone="success"`           |
 
 ### Adopt from shadcn-svelte / Bits UI
 
@@ -254,8 +258,8 @@ Report (concise, in this order):
 ```
 designs/
 └── <component-name>/
-    ├── DESIGN_BRIEF_<COMPONENT_NAME>.md   ← authoritative requirements (always updated)
-    ├── refined.html                        ← authoritative visual design (post-refine)
+    ├── DESIGN_BRIEF_<COMPONENT_NAME>.md   ← scoped approved reference, subject to current DECISIONS
+    ├── refined.html                        ← scoped approved visual reference, subject to current DECISIONS
     ├── SUMMARY.md                          ← component map + implementation notes
     └── variants/
         ├── variant-a.html                  ← kept for reference

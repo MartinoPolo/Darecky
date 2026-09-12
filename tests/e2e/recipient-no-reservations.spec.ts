@@ -43,7 +43,15 @@ test.describe('Recipient cannot see reservation state', () => {
 			.getByRole('textbox', { name: /Vaše jméno/i })
 			.fill(ANONYMOUS_RESERVER.name);
 		await reserveDialog.getByRole('button', { name: /Rezervovat/ }).click();
-		await expect(visitorPage.getByText(/[Rr]ezervov/).first()).toBeVisible({ timeout: 5_000 });
+		await expect(reserveDialog).toBeHidden();
+		await visitorPage.reload();
+		await expect(
+			visitorPage.getByRole('button', {
+				name: new RegExp(
+					`Zrušit rezervaci ${TEST_GIFT.name}|Cancel reservation for ${TEST_GIFT.name}`,
+				),
+			}),
+		).toBeVisible({ timeout: 5_000 });
 		await visitorContext.close();
 
 		// Recipient reloads and must NOT see reservation info

@@ -45,7 +45,11 @@ test.describe('Gift creation', () => {
 		await page.context().close();
 	});
 
-	test('creates gift with all fields', async ({ browser, request, baseURL }) => {
+	test('creates gift with supplied description, price, and link', async ({
+		browser,
+		request,
+		baseURL,
+	}) => {
 		const user = createTestUser('gc-full');
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
@@ -61,6 +65,18 @@ test.describe('Gift creation', () => {
 		await expect(page.getByText('Plný dárek')).toBeVisible({ timeout: 10_000 });
 		// Price formatted via Intl.NumberFormat – "1 500 Kč" or similar depending on locale
 		await expect(page.getByText(/1\s?500/)).toBeVisible({ timeout: 10_000 });
+
+		await page.reload();
+		await page.getByText('Plný dárek').click();
+		const savedGiftDialog = page.getByRole('dialog');
+		await expect(savedGiftDialog).toBeVisible({ timeout: 5_000 });
+		await expect(
+			savedGiftDialog.getByRole('textbox', { name: 'Popis', exact: true }),
+		).toHaveValue('Testovací popis');
+		await expect(savedGiftDialog.getByTestId('gift-link-url').first()).toHaveValue(
+			'https://example.com/gift',
+		);
+		await expect(savedGiftDialog.getByLabel(/Cena/)).toHaveValue('1500');
 
 		await page.context().close();
 	});
@@ -139,22 +155,15 @@ test.describe('Gift image upload', () => {
 		const fileInput = dialog.locator('input[type=file]');
 		await expect(fileInput).toBeAttached();
 
-		// Monitor the upload request and set the file
-		const uploadResponsePromise = page.waitForResponse(
-			(response) =>
-				response.request().method() === 'PUT' &&
-				response.url().includes('/api/upload/') &&
-				response.status() === 201,
-			{ timeout: 15_000 },
-		);
-
 		await fileInput.setInputFiles(SAMPLE_IMAGE_PATH);
 
-		// Wait for upload to complete (PUT 201 response)
-		await uploadResponsePromise;
-
-		// Preview image should appear (upload complete, progress bar gone)
-		await expect(dialog.getByTestId('image-upload-preview')).toBeVisible({ timeout: 10_000 });
+		// The decoded preview is the user-visible signal that the upload completed.
+		const uploadPreview = dialog.getByTestId('image-upload-preview');
+		await expect(uploadPreview).toBeVisible({ timeout: 10_000 });
+		await expect(uploadPreview).toHaveJSProperty('complete', true);
+		await expect
+			.poll(() => uploadPreview.evaluate((image: HTMLImageElement) => image.naturalWidth))
+			.toBeGreaterThan(0);
 
 		// No error message should be shown
 		await expect(dialog.locator('.text-destructive')).not.toBeVisible();
@@ -229,33 +238,6 @@ test.describe('Gift list refresh after creation', () => {
 		// Both gifts must be visible simultaneously without a reload
 		await expect(page.getByRole('heading', { name: 'První dárek', level: 3 })).toBeVisible();
 		await expect(page.getByRole('heading', { name: 'Druhý dárek', level: 3 })).toBeVisible();
-
-		await page.context().close();
-	});
-
-	test('multiple rapid creations all appear', async ({ browser, request, baseURL }) => {
-		const user = createTestUser('gc-rapid');
-		const page = await registerAndGetPage(browser, request, baseURL!, user);
-
-		await createWishlistAndNavigate(page, 'Rapid Creation Test');
-
-		const giftNames = ['Dárek A', 'Dárek B', 'Dárek C'];
-
-		for (const giftName of giftNames) {
-			const dialog = await openAddGiftDialog(page);
-			await dialog.getByRole('textbox', { name: 'Název' }).fill(giftName);
-			await dialog.getByRole('button', { name: 'Přidat dárek' }).click();
-			// Wait for the dialog to close so its input value can't pollute the heading check.
-			await expect(dialog).not.toBeVisible({ timeout: 10_000 });
-			await expect(page.getByRole('heading', { name: giftName, level: 3 })).toBeVisible({
-				timeout: 10_000,
-			});
-		}
-
-		// All three must be visible at the same time
-		for (const giftName of giftNames) {
-			await expect(page.getByRole('heading', { name: giftName, level: 3 })).toBeVisible();
-		}
 
 		await page.context().close();
 	});

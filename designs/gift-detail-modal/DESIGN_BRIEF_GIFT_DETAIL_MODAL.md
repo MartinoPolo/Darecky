@@ -1,5 +1,7 @@
 # Design Brief – Gift Detail Modal
 
+> **Historical scoped reference:** This document preserves its original design scope. For current requirements, see `designs/README.md`, `.mpx/DECISIONS.md`, `src/app.css`, and the current components; older auth, role, visual, and geometry copy here is not authoritative.
+
 > **Status**: Refined (Variant 1 – Center modal 2-column)
 > **Refined mockup**: `designs/gift-detail-modal/refined.html`
 > **Summary**: `designs/gift-detail-modal/SUMMARY.md`
@@ -160,9 +162,9 @@ From `src/app.css` (Shadcn theme tokens):
 
 ## 10. Visual References
 
-- `designs/style-exploration/direction-a-honey.html` – card, badge, button, nav patterns at high fidelity
-- `designs/style-exploration/direction-b-sage.html` – sage green primary palette
-- `designs/style-exploration/direction-c-berry.html` – alternative accent
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-a-honey.html` is historical provenance only.
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-b-sage.html` is historical provenance only.
+- Current visual fidelity, palette, and component requirements come from `src/app.css` and current components. `archive/designs/style-exploration/direction-c-berry.html` is historical provenance only.
 - `designs/tokens.css` – all structural tokens
 - Sage green primary: `oklch(52.7% 0.154 150.069deg)`
 

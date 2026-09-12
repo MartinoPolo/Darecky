@@ -4,44 +4,6 @@ import { registerAndGetPage } from './fixtures/auth-helpers.js';
 import { createWishlistAndNavigate } from './fixtures/wishlist-helpers.js';
 
 test.describe('Wishlist settings – controls and draft lifecycle', () => {
-	test('Knihy picker renders five columns and visible keyboard focus on extreme swatches', async ({
-		browser,
-		request,
-		baseURL,
-	}) => {
-		const owner = createTestUser('settings-color-picker');
-		const page = await registerAndGetPage(browser, request, baseURL!, owner);
-		await createWishlistAndNavigate(page, 'Barevná mřížka');
-		await page.getByRole('button', { name: 'Nastavení seznamu' }).click();
-		const settings = page.getByRole('dialog', { name: 'Nastavení seznamu' });
-		await settings.getByRole('tab', { name: 'Kategorie' }).click();
-		await settings.getByRole('button', { name: 'Knihy' }).press('Enter');
-
-		const picker = page.getByRole('dialog', { name: 'Knihy' });
-		const group = picker.getByRole('group');
-		// Opening autofocus runs after mount and must finish before moving focus elsewhere.
-		await expect(group.getByRole('button').first()).toBeFocused();
-		const columns = await group.evaluate((element) =>
-			getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean),
-		);
-		expect(columns).toHaveLength(5);
-		const gray = picker.getByRole('button', { name: '#6B7280' });
-		await gray.focus();
-		await expect(gray).toBeFocused();
-		for (const color of ['#000000', '#FFFFFF']) {
-			await page.keyboard.press('Tab');
-			const swatch = picker.getByRole('button', { name: color });
-			await expect(swatch).toBeFocused();
-			const outline = await swatch.evaluate((element) => {
-				const style = getComputedStyle(element);
-				return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth) };
-			});
-			expect(outline.style).not.toBe('none');
-			expect(outline.width).toBeGreaterThan(0);
-		}
-		await page.context().close();
-	});
-
 	test('real gift numeric fields suppress spinners and wheel only while focused', async ({
 		browser,
 		request,

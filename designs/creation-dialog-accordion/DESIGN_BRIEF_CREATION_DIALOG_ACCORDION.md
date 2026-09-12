@@ -58,7 +58,7 @@ Issue #112 carries the HITL label; these product questions are **unresolved**. E
 
 ### Q1 — Is image upload part of the creation accordion at all?
 
-Prior decision tension: issue #36's brief (`designs/wishlist-visuals/`) made "image assignment lives in settings, never in create" a non-negotiable; #112 explicitly reopens it. Technical blockers have since dissolved: uploads are wishlist-id-independent (target-prefix keys, `src/lib/server/storage/r2.ts`) and abandoned pre-save uploads already get client-side cleanup (see Q2). The real cost is UX weight: the full `WishlistCropEditor` (3 slots, three-mode Fill/Fit/Manual model) would balloon a quick-create dialog.
+Prior decision tension: issue #36's historical brief (`archive/designs/wishlist-visuals/`, provenance only) made "image assignment lives in settings, never in create" a non-negotiable; #112 explicitly reopens it. Technical blockers have since dissolved: uploads are wishlist-id-independent (target-prefix keys, `src/lib/server/storage/r2.ts`) and abandoned pre-save uploads already get client-side cleanup (see Q2). The real cost is UX weight: the full `WishlistCropEditor` (3 slots, three-mode Fill/Fit/Manual model) would balloon a quick-create dialog.
 
 **Provisional recommendation (mockup follows this)**: the accordion contains **description + palette only**. If product later approves image-at-creation, the design extension is a *simple upload-only field* (drop zone → thumbnail preview → remove), all slots defaulting to automatic centered cover framing, with a helper line pointing to settings for fine-tuning crops („Ořezy upravíte později v nastavení seznamu.") — never the full crop editor inside the creation dialog. The brief's layout reserves room for that third item; the mockup does not render it.
 
@@ -245,7 +245,7 @@ From `src/app.css` (canonical source; `designs/tokens.css` is reference only):
     - `designs/control-heights/DESIGN_BRIEF_CONTROL_HEIGHTS.md` — `lg` 38 px form-stack metrics for this dialog.
     - `designs/unified-filters/current-dashboard-my-lists.png` — backdrop chrome to reproduce.
     - `designs/redesign-2026/sky-final/anime-dashboard.html` — anime-sky design language.
-    - `designs/wishlist-visuals/DESIGN_BRIEF_WISHLIST_VISUALS.md` — historical (#36): the "image never in create" prior decision Q1 reopens; its theme-preset system is superseded by the 10-palette system.
+    - `archive/designs/wishlist-visuals/DESIGN_BRIEF_WISHLIST_VISUALS.md` — historical (#36): the "image never in create" prior decision Q1 reopens; its theme-preset system is superseded by the 10-palette system.
 - **External**: none required; the disclosure pattern is standard (shadcn accordion) — visual language stays anime-sky.
 
 ## 12. Not Included (Scope Exclusions)

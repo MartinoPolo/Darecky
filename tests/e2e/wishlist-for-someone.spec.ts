@@ -55,7 +55,20 @@ test.describe('Create a wishlist for someone else', () => {
 		await addGift(page, TEST_GIFT.name);
 		await shareWishlist(page);
 
-		await expect(page.getByTestId('reserve-button')).toBeVisible({ timeout: 10_000 });
+		const reserveButton = page.getByTestId('reserve-button');
+		await expect(reserveButton).toBeVisible({ timeout: 10_000 });
+		await reserveButton.click();
+		const reserveDialog = page.getByRole('dialog');
+		await expect(reserveDialog).toBeVisible();
+		await reserveDialog.getByRole('button', { name: /Rezervovat|Reserve/ }).click();
+		await expect(reserveDialog).toBeHidden();
+		await expect(
+			page.getByRole('button', {
+				name: new RegExp(
+					`Zrušit rezervaci ${TEST_GIFT.name}|Cancel reservation for ${TEST_GIFT.name}`,
+				),
+			}),
+		).toBeVisible();
 
 		await page.context().close();
 	});
