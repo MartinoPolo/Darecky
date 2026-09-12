@@ -37,11 +37,21 @@ export async function openFilterMenu(page: Page, optionName: string) {
 	return { displayMenu: filterMenu, option };
 }
 
+async function closeDisplayMenu(page: Page) {
+	await page.keyboard.press('Escape');
+	await expect(page.locator('[data-slot="dropdown-menu-sub-content"]:visible')).toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await expect(
+		page.getByRole('menu', { name: m.gift_display_options(), exact: true }),
+	).toBeHidden();
+}
+
 export async function toggleFilterCheckbox(page: Page, name: string) {
 	const { displayMenu, option } = await openFilterMenu(page, name);
 	await option.focus();
 	await option.press('Space');
 	await expect(displayMenu).toBeVisible();
+	await closeDisplayMenu(page);
 }
 
 export async function selectPriorityFilter(page: Page, name: string) {
@@ -57,6 +67,7 @@ export async function selectPriorityFilter(page: Page, name: string) {
 	await option.press('Space');
 	await expect(option).toHaveAttribute('aria-checked', 'true');
 	await expect(displayMenu).toBeVisible();
+	await closeDisplayMenu(page);
 }
 
 export async function waitForReceivedState(giftRow: Locator, received: boolean) {

@@ -10,6 +10,8 @@ To run only the server project, use `pnpm exec vitest run --project server`.
 
 The setup project runs the route warmup before Chromium tests; Chromium excludes the setup spec so it cannot rerun alongside interaction tests. Setup allows extra navigation time for cold Vite compilation without relaxing the warmed application's navigation limits. Interaction tests must await actual readiness: opening autofocus before moving keyboard focus, and accordion height animations before filling or scrolling clipped descendants. SSR visibility does not prove event handlers are attached; after a full-page navigation, use `waitForAppHydration(page)` before the first hydration-dependent interaction. Visibility alone does not establish these conditions; use the root mounted signal, focus assertions, and animation completion rather than fixed sleeps.
 
+On Windows, browser automation uses Playwright's bundled Chromium to avoid installed Chrome hanging during temporary-profile cleanup. Install it with `pnpm exec playwright install chromium`. Other platforms retain the Chrome channel provisioned by CI.
+
 Never point either command at production.
 
 The ingestion endpoint depends on the `GIFT_INGESTION_RATE_LIMIT` Workers binding. `pnpm preview`

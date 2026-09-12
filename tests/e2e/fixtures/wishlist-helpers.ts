@@ -149,15 +149,24 @@ export async function openDesktopDisplaySubmenu(
 	page: Page,
 	accessibleName: RegExp,
 ): Promise<Locator> {
-	await page.getByTestId('desktop-display-trigger').filter({ visible: true }).click();
+	// Keep the pointer outside the cascading layers while following the keyboard path.
+	await page.mouse.move(0, 0);
+	const trigger = page.getByTestId('desktop-display-trigger').filter({ visible: true });
+	await trigger.focus();
+	await trigger.press('Enter');
 	const root = page.locator('[data-slot="dropdown-menu-content"]:visible').last();
 	await expect(root).toBeVisible({ timeout: 5_000 });
+	await expect(root.getByRole('menuitem').first()).toBeFocused();
 	const subTrigger = root.getByRole('menuitem', { name: accessibleName });
 	await expect(subTrigger).toBeVisible();
 	await subTrigger.focus();
 	await page.keyboard.press('ArrowRight');
 	const submenu = page.locator('[data-slot="dropdown-menu-sub-content"]:visible').last();
 	await expect(submenu).toBeVisible();
+	// Bits finishes deferred autofocus before callers move focus to their chosen option.
+	await expect(
+		submenu.locator('[role^="menuitem"]:not([aria-disabled="true"])').first(),
+	).toBeFocused();
 	return submenu;
 }
 
