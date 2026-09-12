@@ -22,7 +22,7 @@
 		await expect(items[1]).toHaveAttribute('aria-checked', 'false');
 		await expect(items[2]).toHaveAttribute('aria-checked', 'false');
 
-		items[1].click();
+		await userEvent.click(items[1]);
 		await waitFor(() => {
 			expect(items[0]).toHaveAttribute('aria-checked', 'false');
 			expect(items[1]).toHaveAttribute('aria-checked', 'true');
@@ -35,21 +35,21 @@
 		const groupCanvas = within(group);
 		const items = groupCanvas.getAllByRole('button');
 
-		items[0].click();
+		await userEvent.click(items[0]);
 		await waitFor(() => {
-			expect(items[0]).toHaveAttribute('data-state', 'on');
+			expect(items[0]).toHaveAttribute('aria-pressed', 'true');
 		});
 
-		items[1].click();
+		await userEvent.click(items[1]);
 		await waitFor(() => {
-			expect(items[0]).toHaveAttribute('data-state', 'on');
-			expect(items[1]).toHaveAttribute('data-state', 'on');
+			expect(items[0]).toHaveAttribute('aria-pressed', 'true');
+			expect(items[1]).toHaveAttribute('aria-pressed', 'true');
 		});
 
-		items[0].click();
+		await userEvent.click(items[0]);
 		await waitFor(() => {
-			expect(items[0]).toHaveAttribute('data-state', 'off');
-			expect(items[1]).toHaveAttribute('data-state', 'on');
+			expect(items[0]).toHaveAttribute('aria-pressed', 'false');
+			expect(items[1]).toHaveAttribute('aria-pressed', 'true');
 		});
 	};
 
@@ -58,8 +58,8 @@
 		const items = canvas.getAllByRole('radio');
 
 		const disabledItem = items[2];
-		await expect(disabledItem).toHaveAttribute('data-disabled', '');
-		disabledItem.click();
+		await expect(disabledItem).toBeDisabled();
+		await userEvent.click(disabledItem);
 		await expect(disabledItem).toHaveAttribute('aria-checked', 'false');
 	};
 

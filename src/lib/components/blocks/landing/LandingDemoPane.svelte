@@ -53,6 +53,50 @@
 	);
 
 	const isRecipientPane = $derived(role === WISHLIST_ROLES.recipient);
+
+	function synchronizeLikePopup(wrapper: HTMLElement) {
+		let animationFrame = 0;
+		const measure = () => {
+			animationFrame = 0;
+			const item = wrapper.querySelector<HTMLElement>('[data-testid="gift-list-item"]');
+			const content = wrapper.querySelector<HTMLElement>('[data-testid="gift-list-content"]');
+			const like = wrapper.querySelector<HTMLElement>('button[aria-pressed]');
+			if (item === null || content === null || like === null) {
+				return;
+			}
+
+			const wrapperBox = wrapper.getBoundingClientRect();
+			const itemBox = item.getBoundingClientRect();
+			const contentBox = content.getBoundingClientRect();
+			const likeBox = like.getBoundingClientRect();
+			wrapper.style.setProperty(
+				'--landing-like-popup-left',
+				`${contentBox.left - wrapperBox.left}px`,
+			);
+			wrapper.style.setProperty(
+				'--landing-like-popup-right',
+				`${wrapperBox.right - itemBox.right}px`,
+			);
+			wrapper.style.setProperty(
+				'--landing-like-popup-top',
+				`${likeBox.bottom - wrapperBox.top + 8}px`,
+			);
+		};
+		const schedule = () => {
+			cancelAnimationFrame(animationFrame);
+			animationFrame = requestAnimationFrame(measure);
+		};
+		const observer = new ResizeObserver(schedule);
+		observer.observe(wrapper);
+		schedule();
+
+		return {
+			destroy() {
+				cancelAnimationFrame(animationFrame);
+				observer.disconnect();
+			},
+		};
+	}
 </script>
 
 <div
@@ -76,6 +120,7 @@
 			     row; the desktop split view resets the tint because the recipient pane must stay
 			     pixel-identical while the gifter pane changes (issue #218 REQ-6). -->
 			<div
+				use:synchronizeLikePopup
 				class={cn(
 					'relative -mx-2 rounded-lg px-2 transition-colors duration-300',
 					isNarrated && 'bg-tint lg:bg-transparent',
@@ -83,12 +128,11 @@
 				data-testid="landing-demo-gift-{gift.id}"
 			>
 				{#if gift.id === likePopupGiftId}
-					<!-- Keep the explainer over the content column rather than the thumbnail: the
-					     like control can grow when its live count appears. The 34% boundary mirrors
-					     the list row's largest fluid thumbnail share, while the right inset aligns
-					     the bubble with the card inside this wrapper's negative margin. -->
+					<!-- Measure the real list content edge and place the explainer below Like, so
+					     the full-height square image and the corner action both remain uncovered. -->
 					<p
-						class="absolute -top-2 right-2 z-20 w-[calc(66%-1rem)] max-w-96 rounded-lg border-2 border-ink bg-note px-3 py-2 text-(length:--text-sm) leading-snug text-note-ink shadow-sticker"
+						class="absolute z-20 rounded-lg border-2 border-ink bg-note px-3 py-2 text-(length:--text-sm) leading-snug text-note-ink shadow-sticker"
+						style="left: var(--landing-like-popup-left); right: var(--landing-like-popup-right); top: var(--landing-like-popup-top);"
 						role="status"
 						data-testid="landing-demo-like-popup"
 					>

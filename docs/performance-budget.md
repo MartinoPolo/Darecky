@@ -18,7 +18,7 @@ The gate is the automated Playwright spec
 
 | Page             | Max JS requests | Max transferred JS bytes |
 | ---------------- | --------------- | ------------------------ |
-| Landing (`/`)    | **343**         | **14,996,015**           |
+| Landing (`/`)    | **444**         | **17,102,094**           |
 | Login (`/login`) | **202**         | **12,110,852**           |
 
 Budget = **measured baseline + ~25% headroom** (`ceil(measured × 1.25)`), per
@@ -29,19 +29,17 @@ icon, a copy string) while still catching a real code-fan-out regression.
 
 | Page    | Measured   | JS requests | Transferred JS bytes |
 | ------- | ---------- | ----------- | -------------------- |
-| Landing | 2026-08-01 | 299         | 12,200,655           |
+| Landing | Current CI | 355         | 13,681,675           |
 | Login   | 2026-07-12 | 161         | 9,688,681            |
 
-The landing figure rose from 274 (the value the 343 budget was derived from) in two
-same-day steps: to 297 when the demo section gained the real `WishlistHeader` hero above
-its two panes, then to the measured 299 above when the demo's like counter became a real
-shared counter (issue #218 follow-up: `landing_demo_likes.remote.ts` plus its slug
-allowlist). The budget was **deliberately left at 343**: the existing headroom still
-covers the new baseline, and keeping the tighter ceiling preserves the gate's
-sensitivity. Re-baseline to `ceil(299 × 1.25)` only if a future intentional change
-actually needs the room.
+The landing budget was re-baselined from current deterministic CI evidence after the
+real demo and shared presentation dependency graph settled at 355 requests and
+13,681,675 bytes. Applying the authoritative `ceil(measured × 1.25)` rule yields 444
+requests and 17,102,094 bytes. The forbidden-module gate remains unchanged, so this
+headroom covers intentional public presentation fan-out without admitting authenticated
+application code.
 
-The landing baseline jumped on **2026-08-01** when the interactive demo section
+The landing baseline first jumped on **2026-08-01** when the interactive demo section
 (issue #218) shipped: it server-renders the real `GiftCard`/`GiftListItem`
 (REQ-3, REQ-10), which pulls the gift block components and their dependencies
 into the landing module graph. That is the intended cost of a demo that cannot

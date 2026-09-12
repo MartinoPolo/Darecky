@@ -18,31 +18,43 @@ export const giftActionRowVariants = tv({
 				secondary: "[&>[data-slot='button']]:w-full [&>[data-slot='button']]:grow",
 			},
 			intrinsic: {
-				row: 'ml-auto flex w-fit max-w-full flex-wrap items-start justify-end',
-				primaryGroup: 'flex max-w-full flex-none items-start gap-2 sm:gap-1.5',
+				row: 'ml-auto flex w-full max-w-full flex-wrap items-start justify-end',
+				primaryGroup:
+					'ml-auto flex max-w-full flex-wrap items-start justify-end gap-2 sm:gap-1.5',
 				primary:
-					"max-w-full shrink items-end [&>[data-slot='button']]:max-w-full [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
+					"flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0 [&>[data-slot='button']]:shrink-0",
 				secondary:
 					"max-w-full flex-none items-end [&>[data-slot='button']]:w-auto [&>[data-slot='button']]:grow-0",
 			},
 		},
 		withMore: {
-			true: {
-				row: 'grid-cols-[minmax(0,1fr)_var(--gift-action-control-size)]',
-			},
+			true: {},
 			false: {},
 		},
 		withSecondary: {
-			true: {
-				primary: 'row-start-2 sm:col-start-2 sm:row-start-1',
-				secondary: 'sm:col-span-1 sm:col-start-1 sm:row-start-1',
-				more: 'row-start-2 sm:row-start-1',
-			},
+			true: {},
 			false: {},
 		},
 	},
 	compoundVariants: [
 		{
+			controlSizing: 'fill',
+			withMore: true,
+			class: {
+				row: 'grid-cols-[minmax(0,1fr)_var(--gift-action-control-size)]',
+			},
+		},
+		{
+			controlSizing: 'fill',
+			withSecondary: true,
+			class: {
+				primary: 'row-start-2 sm:col-start-2 sm:row-start-1',
+				secondary: 'sm:col-span-1 sm:col-start-1 sm:row-start-1',
+				more: 'row-start-2 sm:row-start-1',
+			},
+		},
+		{
+			controlSizing: 'fill',
 			withMore: true,
 			withSecondary: true,
 			class: {
@@ -50,6 +62,7 @@ export const giftActionRowVariants = tv({
 			},
 		},
 		{
+			controlSizing: 'fill',
 			withMore: false,
 			withSecondary: true,
 			class: { row: 'sm:grid-cols-2' },

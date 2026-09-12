@@ -1,6 +1,6 @@
 <script module lang="ts">
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { expect, waitFor, within } from 'storybook/test';
+	import { expect, userEvent, waitFor, within } from 'storybook/test';
 	import WishlistCropEditor from './WishlistCropEditor.svelte';
 	import { IMAGE_FIT_MODES } from '$lib/components/derived/image-frame/index.js';
 	import type { WishlistImageSlots } from '$lib/modules/images/index.js';
@@ -63,10 +63,10 @@
 
 		// Selecting another slot tile moves the active selection to it.
 		const thumbnailTile = canvas.getByRole('button', { name: /Miniatura|Thumbnail/ });
-		thumbnailTile.click();
+		await userEvent.click(thumbnailTile);
 		await waitFor(() => {
 			expect(thumbnailTile).toHaveAttribute('aria-pressed', 'true');
-			expect(canvas.getAllByRole('button', { pressed: true })).toHaveLength(1);
+			expect(canvas.getByRole('radio', { name: /Ručně|Manual/ })).toBeChecked();
 		});
 	};
 </script>

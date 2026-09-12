@@ -14,10 +14,6 @@
 		tags: ['autodocs'],
 	});
 
-	// Bits UI Select sets pointer-events:none on internal elements during
-	// open/close transitions, which blocks userEvent.click in headless Chrome.
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 	function getSelectTrigger(canvasElement: HTMLElement): HTMLElement {
 		return canvasElement.querySelector('[data-slot="select-trigger"]') as HTMLElement;
 	}
@@ -34,42 +30,41 @@
 		return listbox;
 	}
 
-	async function waitForStoryReady() {
-		await waitFor(() => {
-			expect(getComputedStyle(document.body).pointerEvents).not.toBe('none');
-		});
-	}
-
-	async function openSelect(trigger: HTMLElement) {
-		await waitForStoryReady();
-		await user.click(trigger);
+	async function openSelect(trigger: HTMLElement, canvasElement: HTMLElement) {
+		trigger.focus();
+		await expect(trigger).toHaveFocus();
+		await userEvent.keyboard('{ArrowDown}');
 		await waitFor(() => {
 			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+			expect(getSelectListbox(canvasElement)).toBeInTheDocument();
 		});
 	}
 
 	const playOpenDropdown = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const trigger = getSelectTrigger(canvasElement);
 		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-		await openSelect(trigger);
+		await openSelect(trigger, canvasElement);
 		const listbox = getSelectListbox(canvasElement);
 		await expect(listbox).toBeInTheDocument();
 	};
 
 	const playSelectOption = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const trigger = getSelectTrigger(canvasElement);
-		await openSelect(trigger);
+		await openSelect(trigger, canvasElement);
 		const listbox = getSelectListbox(canvasElement);
 		const options = within(listbox).getAllByRole('option');
-		await user.click(options[1]);
+		await waitFor(() => {
+			expect(getComputedStyle(options[1]).pointerEvents).not.toBe('none');
+		});
+		await userEvent.click(options[1]);
 		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
 		await expect(trigger).toHaveTextContent('Banana');
 	};
 
 	const playEscapeClosesDropdown = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const trigger = getSelectTrigger(canvasElement);
-		await openSelect(trigger);
-		await user.keyboard('{Escape}');
+		await openSelect(trigger, canvasElement);
+		await userEvent.keyboard('{Escape}');
 		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
 		await expect(trigger).toHaveTextContent('Select produce');
 	};
@@ -87,10 +82,10 @@
 
 	const playKeyboardArrowDown = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const trigger = getSelectTrigger(canvasElement);
-		await openSelect(trigger);
+		await openSelect(trigger, canvasElement);
 		const listbox = getSelectListbox(canvasElement);
 		await expect(listbox).toBeInTheDocument();
-		await user.keyboard('{ArrowDown}');
+		await userEvent.keyboard('{ArrowDown}');
 		await waitFor(() => {
 			const options = within(listbox).getAllByRole('option');
 			const highlighted = options.find(

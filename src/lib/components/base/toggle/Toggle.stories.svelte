@@ -18,11 +18,9 @@
 		const canvas = within(canvasElement);
 		const toggle = canvas.getByRole('button', { name: /toggle bold/i });
 		await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-		await expect(toggle).toHaveAttribute('data-state', 'off');
-		toggle.click();
+		await userEvent.click(toggle);
 		await waitFor(() => {
 			expect(toggle).toHaveAttribute('aria-pressed', 'true');
-			expect(toggle).toHaveAttribute('data-state', 'on');
 		});
 	};
 
@@ -30,10 +28,9 @@
 		const canvas = within(canvasElement);
 		const toggle = canvas.getByRole('button', { name: /toggle bold/i });
 		await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-		toggle.click();
+		await userEvent.click(toggle);
 		await waitFor(() => {
 			expect(toggle).toHaveAttribute('aria-pressed', 'false');
-			expect(toggle).toHaveAttribute('data-state', 'off');
 		});
 	};
 
@@ -41,7 +38,8 @@
 		const canvas = within(canvasElement);
 		const toggle = canvas.getByRole('button', { name: /toggle bold/i });
 		await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-		toggle.click();
+		await expect(toggle).toBeDisabled();
+		await userEvent.click(toggle);
 		await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 	};
 

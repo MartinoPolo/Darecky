@@ -2,7 +2,7 @@
 
 ## Local test environments
 
-`pnpm run test` runs all client, server, and Storybook Vitest project groups serially because concurrent projects race on shared SvelteKit generated state. Tests within each project remain parallel.
+Use `pnpm exec vitest run` for an automated one-shot run of all client, server, and Storybook Vitest project groups. The projects run serially because concurrent projects race on shared SvelteKit generated state; tests within each project remain parallel. `pnpm run test` starts Vitest in watch mode for interactive development.
 
 To run only the server project, use `pnpm exec vitest run --project server`.
 

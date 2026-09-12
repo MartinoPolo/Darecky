@@ -49,6 +49,7 @@
 		await expect(buttons.length).toBeGreaterThan(0);
 		for (const button of buttons) {
 			await expect(button).toBeDisabled();
+			await userEvent.click(button, { pointerEventsCheck: 0 });
 		}
 		await expect(args.onclick).not.toHaveBeenCalled();
 	};

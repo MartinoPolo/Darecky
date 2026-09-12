@@ -120,7 +120,11 @@
 	{/if}
 	<!-- Image area: dotted mat behind the photo; letterboxed photos keep the mat visible -->
 	<div
-		class={cn(styles.imageArea(), explicitImageFrameFill !== null && 'bg-[var(--frame-fill)]')}
+		class={cn(
+			styles.imageArea(),
+			'[container-type:inline-size]',
+			explicitImageFrameFill !== null && 'bg-[var(--frame-fill)]',
+		)}
 		data-testid="gift-card-image-frame"
 		style:--frame-fill={explicitImageFrameFill ?? undefined}
 	>
@@ -149,8 +153,8 @@
 			<div class="max-sm:hidden"><GiftCategoryBadge category={gift.category} /></div>
 		{/if}
 
-		<!-- Keep the centered state labels in their own region below the md Like action band. -->
-		<GiftStateOverlay model={presentation.overlay} class="top-12" />
+		<!-- Center state labels over the complete image; Like occupies its own corner layer. -->
+		<GiftStateOverlay model={presentation.overlay} avoidTopRight />
 	</div>
 
 	<!-- Body -->

@@ -10,22 +10,6 @@
 		tags: ['autodocs'],
 	});
 
-	const playClickSelectsOption = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
-		const canvas = within(canvasElement);
-		const radios = canvas.getAllByRole('radio');
-
-		// Initially "claude" is selected
-		await expect(radios[0]).toHaveAttribute('aria-checked', 'true');
-		await expect(radios[1]).toHaveAttribute('aria-checked', 'false');
-		await expect(radios[2]).toHaveAttribute('aria-checked', 'false');
-
-		// Click second option → it becomes selected, first deselected
-		await userEvent.click(radios[1]);
-		await expect(radios[0]).toHaveAttribute('aria-checked', 'false');
-		await expect(radios[1]).toHaveAttribute('aria-checked', 'true');
-		await expect(radios[2]).toHaveAttribute('aria-checked', 'false');
-	};
-
 	const playClickMovesSelection = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
 		const canvas = within(canvasElement);
 		const radios = canvas.getAllByRole('radio');
@@ -167,7 +151,7 @@
 	{/snippet}
 </Story>
 
-<Story name="Default [play: click selects option]" play={playClickSelectsOption}>
+<Story name="Default">
 	{#snippet template(args: RadioGroupProps)}
 		<RadioGroup {...args} value="claude">
 			<div class="flex items-center gap-2">

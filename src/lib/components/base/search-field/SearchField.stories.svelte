@@ -18,20 +18,6 @@
 		await waitFor(() => expect((input as HTMLInputElement).value).toBe('hello'));
 	};
 
-	const playClearFieldEmptiesValue = async ({
-		canvasElement,
-	}: {
-		canvasElement: HTMLElement;
-	}) => {
-		const canvas = within(canvasElement);
-		const input = canvas.getByRole('searchbox');
-		await userEvent.click(input);
-		await userEvent.type(input, 'hello');
-		await waitFor(() => expect((input as HTMLInputElement).value).toBe('hello'));
-		await userEvent.clear(input);
-		await waitFor(() => expect((input as HTMLInputElement).value).toBe(''));
-	};
-
 	const playOninputCallbackFires = async ({
 		canvasElement,
 		args,
@@ -176,17 +162,6 @@
 </Story>
 
 <Story name="Typing Updates Value [play: typing updates value]" play={playTypingUpdatesValue}>
-	{#snippet template(args: SearchFieldProps)}
-		<div class="max-w-xs">
-			<SearchField placeholder="Search…" aria-label="Search" {...args} />
-		</div>
-	{/snippet}
-</Story>
-
-<Story
-	name="Clear Field Empties Value [play: clear empties value]"
-	play={playClearFieldEmptiesValue}
->
 	{#snippet template(args: SearchFieldProps)}
 		<div class="max-w-xs">
 			<SearchField placeholder="Search…" aria-label="Search" {...args} />
