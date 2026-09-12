@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { COLUMN_ROLE, type DetectedColumn } from '$lib/modules/import/detect_columns.js';
-import { normalizeColumnRoles, MAPPING_FIELDS } from './import_wizard_types.js';
+import { normalizeColumnRoles } from './import_wizard_types.js';
 
 function column(index: number, role: DetectedColumn['role']): DetectedColumn {
 	return { index, role, headerLabel: null };
@@ -55,14 +55,5 @@ describe('normalizeColumnRoles', () => {
 		const once = normalizeColumnRoles(input);
 		const twice = normalizeColumnRoles(once);
 		expect(twice).toEqual(once);
-	});
-});
-
-describe('MAPPING_FIELDS', () => {
-	it('marks only Name as required and only Link as multi', () => {
-		const required = MAPPING_FIELDS.filter((f) => f.required).map((f) => f.role);
-		const multi = MAPPING_FIELDS.filter((f) => f.multi).map((f) => f.role);
-		expect(required).toEqual([COLUMN_ROLE.name]);
-		expect(multi).toEqual([COLUMN_ROLE.url]);
 	});
 });

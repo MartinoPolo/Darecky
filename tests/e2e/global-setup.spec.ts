@@ -22,22 +22,29 @@ test('warmup: compile all route modules', async ({ page, request, browser, baseU
 	}
 
 	await page.goto('/');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	await page.goto('/register');
+	await expect(
+		page.getByRole('heading', { name: /Vytvořte si účet|Create an account/ }),
+	).toBeVisible();
 	await page.goto('/login');
+	await expect(page.getByRole('heading', { name: /Přihlašte se|Log in/ })).toBeVisible();
 
 	const user = createTestUser('warmup');
 	const cookies = await registerViaApi(request, baseURL, user);
 	const ctx = await createAuthenticatedContext(browser, cookies, baseURL);
-	const authPage = await ctx.newPage();
+	try {
+		const authPage = await ctx.newPage();
 
-	await authPage.goto('/my-lists');
-	// Generous timeout: the first cold compile of the authenticated shell (Navbar +
-	// dashboard + gift/bits-ui component trees) can far exceed the default expect
-	// timeout. Locale-agnostic: the app serves cs at `/` and en at `/en` (base locale
-	// en), so a fresh context's default locale can be either – match both.
-	await expect(authPage.getByRole('heading', { name: /Moje seznamy|My lists/ })).toBeVisible({
-		timeout: 45_000,
-	});
-
-	await ctx.close();
+		await authPage.goto('/my-lists');
+		// Generous timeout: the first cold compile of the authenticated shell (Navbar +
+		// dashboard + gift/bits-ui component trees) can far exceed the default expect
+		// timeout. Locale-agnostic: the app serves cs at `/` and en at `/en` (base locale
+		// en), so a fresh context's default locale can be either – match both.
+		await expect(authPage.getByRole('heading', { name: /Moje seznamy|My lists/ })).toBeVisible({
+			timeout: 45_000,
+		});
+	} finally {
+		await ctx.close();
+	}
 });

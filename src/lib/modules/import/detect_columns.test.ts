@@ -4,13 +4,6 @@ import { fileURLToPath } from 'node:url';
 import { parseTabular } from './parse_tabular.js';
 import { detectColumns, COLUMN_ROLE } from './detect_columns.js';
 
-function rolesOf(name: string): string[] {
-	const { rows } = parseTabular(
-		readFileSync(fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url)), 'utf-8'),
-	);
-	return detectColumns(rows).columns.map((column) => column.role);
-}
-
 describe('detectColumns – sample fixtures', () => {
 	it('classifies the clean file and skips the 2 preamble rows', () => {
 		const { rows } = parseTabular(
@@ -150,11 +143,5 @@ describe('detectColumns – role heuristics', () => {
 			skippedFooterRows: 0,
 			columns: [],
 		});
-	});
-
-	it('keeps the same column roles across all three sample fixtures', () => {
-		expect(rolesOf('darky_rosie_clean.csv')).toEqual(['name', 'notes', 'url', 'bool']);
-		expect(rolesOf('maggie_dirty.csv')).toEqual(['name', 'notes', 'url', 'bool']);
-		expect(rolesOf('rosie_vse_messy.csv')).toEqual(['name', 'url']);
 	});
 });

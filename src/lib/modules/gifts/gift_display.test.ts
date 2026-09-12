@@ -24,12 +24,8 @@ describe('formatPrice', () => {
 		expect(formatPrice(null, 'CZK')).toBe('Cena neuvedena');
 	});
 
-	it('formats a single price with currency (no priceMax)', () => {
-		expect(normalizeSpaces(formatPrice(1000, 'CZK'))).toBe('1 000 Kč');
-	});
-
-	it('formats a single price when priceMax is null', () => {
-		expect(normalizeSpaces(formatPrice(1000, 'CZK', null))).toBe('1 000 Kč');
+	it.each([undefined, null])('formats a single price when priceMax is %s', (priceMax) => {
+		expect(normalizeSpaces(formatPrice(1000, 'CZK', priceMax))).toBe('1 000 Kč');
 	});
 
 	it('displays a decimal single price without rounding (issue #250 REQ-4)', () => {
@@ -146,72 +142,38 @@ describe('adjustGiftPriceByMagnitude', () => {
 });
 
 describe('finalizeGiftPrice', () => {
-	it('passes through a finite positive price', () => {
-		expect(finalizeGiftPrice(500)).toBe(500);
-	});
-
-	it('passes through 0', () => {
-		expect(finalizeGiftPrice(0)).toBe(0);
-	});
-
-	it('returns null for null (cleared input)', () => {
-		expect(finalizeGiftPrice(null)).toBeNull();
-	});
-
-	// Regression: clearing a bound <input type="number"> sets Svelte's numeric
-	// $state to NaN, not ''. The old String(price).trim() !== '' check treated
-	// "NaN" as a non-empty value and sent Number("NaN") to the server, which
-	// rejected it (v.number() has no NaN case) with a generic error toast.
-	it('returns null for NaN (cleared numeric input)', () => {
-		expect(finalizeGiftPrice(NaN)).toBeNull();
+	it.each([
+		[500, 500],
+		[0, 0],
+		[null, null],
+		[NaN, null],
+	])('normalizes numeric input %s to %s', (value, expected) => {
+		expect(finalizeGiftPrice(value)).toBe(expected);
 	});
 });
 
 describe('finalizeGiftQuantity', () => {
-	it('passes through a finite quantity', () => {
-		expect(finalizeGiftQuantity(3)).toBe(3);
-	});
-
-	it('defaults to 1 for NaN (cleared input)', () => {
-		expect(finalizeGiftQuantity(NaN)).toBe(1);
-	});
-
-	it('defaults to 1 for 0', () => {
-		expect(finalizeGiftQuantity(0)).toBe(1);
-	});
-
-	it('defaults to 1 for a negative value', () => {
-		expect(finalizeGiftQuantity(-2)).toBe(1);
+	it.each([
+		[3, 3],
+		[NaN, 1],
+		[0, 1],
+		[-2, 1],
+	])('normalizes quantity input %s to %s', (value, expected) => {
+		expect(finalizeGiftQuantity(value)).toBe(expected);
 	});
 });
 
 describe('czechPluralCategory', () => {
-	it('returns "one" for 1', () => {
-		expect(czechPluralCategory(1)).toBe('one');
-	});
-
-	it('returns "few" for 2', () => {
-		expect(czechPluralCategory(2)).toBe('few');
-	});
-
-	it('returns "few" for 3', () => {
-		expect(czechPluralCategory(3)).toBe('few');
-	});
-
-	it('returns "few" for 4', () => {
-		expect(czechPluralCategory(4)).toBe('few');
-	});
-
-	it('returns "other" for 5', () => {
-		expect(czechPluralCategory(5)).toBe('other');
-	});
-
-	it('returns "other" for 0', () => {
-		expect(czechPluralCategory(0)).toBe('other');
-	});
-
-	it('returns "other" for 100', () => {
-		expect(czechPluralCategory(100)).toBe('other');
+	it.each([
+		[1, 'one'],
+		[2, 'few'],
+		[3, 'few'],
+		[4, 'few'],
+		[0, 'other'],
+		[5, 'other'],
+		[100, 'other'],
+	] as const)('maps %s to the %s plural category', (count, expected) => {
+		expect(czechPluralCategory(count)).toBe(expected);
 	});
 });
 

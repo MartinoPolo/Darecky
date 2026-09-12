@@ -12,12 +12,15 @@ import { getNotificationEmailBody, NOTIFICATION_TYPE } from './types.js';
  * revert never names one because it cancels across the whole list.
  */
 describe('getNotificationEmailBody — reservation cancelled (issue #213)', () => {
-	it('names the gift when a single reservation was released', () => {
-		const body = getNotificationEmailBody(NOTIFICATION_TYPE.RESERVATION_CANCELLED, 'cs', {
-			giftName: 'Kávovar',
+	it.each([
+		['cs', 'Kávovar'],
+		['en', 'Coffee maker'],
+	] as const)('names the released gift in %s', (locale, giftName) => {
+		const body = getNotificationEmailBody(NOTIFICATION_TYPE.RESERVATION_CANCELLED, locale, {
+			giftName,
 		});
 
-		expect(body).toContain('Kávovar');
+		expect(body).toContain(giftName);
 	});
 
 	it('keeps the bulk revert-to-draft wording when no gift is named', () => {
@@ -37,13 +40,5 @@ describe('getNotificationEmailBody — reservation cancelled (issue #213)', () =
 		expect(bulkBody).not.toBe(releaseBody);
 		// The bulk copy must not fall back to a placeholder gift name — it cancelled many gifts.
 		expect(bulkBody).not.toContain('Kávovar');
-	});
-
-	it('names the gift in English too', () => {
-		const body = getNotificationEmailBody(NOTIFICATION_TYPE.RESERVATION_CANCELLED, 'en', {
-			giftName: 'Coffee maker',
-		});
-
-		expect(body).toContain('Coffee maker');
 	});
 });

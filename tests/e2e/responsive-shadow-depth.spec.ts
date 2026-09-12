@@ -67,13 +67,14 @@ test('semantic depth stays responsive and color-only across representative wishl
 	const tray = page.getByTestId('gift-view-switcher');
 	const account = page.getByRole('button', { name: new RegExp(user.name) });
 	// Semantic owners are intentionally shadowless and stationary; depth is paint on the surface.
+	// The view tray is deliberately flat because the containing toolbar owns this depth level.
 	const surfaces = [
 		button.locator(':scope > .elevation-surface'),
 		card,
 		toolbar,
-		tray,
 		account.locator(':scope > .elevation-surface'),
 	];
+	await expect.poll(() => shadowState(tray).then(({ shadow }) => shadow)).toBe('none');
 
 	for (const { width, offset } of [
 		{ width: 390, offset: 3 },

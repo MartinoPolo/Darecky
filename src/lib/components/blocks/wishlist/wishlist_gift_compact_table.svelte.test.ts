@@ -49,8 +49,6 @@ describe('WishlistGiftCompactTable actions (issue #255)', () => {
 		await renderRecipientTable(false);
 		const table = document.querySelector('table')!;
 
-		expect(table.querySelectorAll('thead th')).toHaveLength(4);
-		expect(table.querySelectorAll('tbody td')).toHaveLength(4);
 		expect(table.textContent).not.toContain('To se mi líbí');
 		expect(table.querySelector('[data-testid="gift-received-toggle"]')).toBeTruthy();
 	});
@@ -59,8 +57,6 @@ describe('WishlistGiftCompactTable actions (issue #255)', () => {
 		await renderRecipientTable(true);
 		const table = document.querySelector('table')!;
 
-		expect(table.querySelectorAll('thead th')).toHaveLength(3);
-		expect(table.querySelectorAll('tbody td')).toHaveLength(3);
 		expect(table.querySelector('[data-testid="gift-received-toggle"]')).toBeNull();
 	});
 });

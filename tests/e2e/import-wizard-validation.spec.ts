@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { openCreateWishlistDialog, openDialogFromTrigger } from './fixtures/wishlist-helpers.js';
 
 /**
  * Required-title validation UX for the import wizard's Review step (issue #118).
@@ -29,11 +30,12 @@ test.describe('Import wizard required-title validation', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
-		await page.getByRole('main').getByRole('button', { name: 'Importovat dárky' }).click();
-
+		const importButton = page
+			.getByRole('main')
+			.getByRole('button', { name: 'Importovat dárky' });
+		await expect(importButton).toBeVisible();
 		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible({ timeout: 5_000 });
+		await openDialogFromTrigger(importButton, dialog);
 
 		// ── Source step: upload a minimal CSV via the hidden file input ─────────────────
 		const csv = 'Nazev,Odkaz\nMicek,https://example.com/micek\n';
@@ -109,19 +111,15 @@ test('navbar import refreshes the home overview in place', async ({
 	const wishlistTitle = `Import z navigace ${Date.now()}`;
 
 	await page.goto('/home');
-	await page.waitForLoadState('networkidle');
-
-	await page
+	const createButton = page
 		.getByRole('button', { name: 'Vytvořit', exact: true })
-		.filter({ hasText: 'Vytvořit' })
-		.click();
-
-	const createDialog = page.getByRole('dialog');
-	await expect(createDialog).toBeVisible({ timeout: 5_000 });
+		.filter({ hasText: 'Vytvořit' });
+	await expect(createButton).toBeVisible();
+	const createDialog = await openCreateWishlistDialog(page);
 	await createDialog.getByRole('button', { name: 'Importovat dárky' }).click();
 
 	const importDialog = page.getByRole('dialog', { name: 'Importovat dárky' });
-	await expect(importDialog).toBeVisible({ timeout: 5_000 });
+	await expect(importDialog).toBeVisible({ timeout: 20_000 });
 
 	const csv = 'Nazev,Odkaz\nDárek z navigace,https://example.com/navbar-gift\n';
 	await importDialog.locator('input[type="file"]').setInputFiles({

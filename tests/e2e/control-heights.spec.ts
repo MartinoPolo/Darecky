@@ -34,14 +34,16 @@ test.describe('issue #159 control-height geometry', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/my-lists');
-		// Wait for hydration before clicking: the empty-state create button is
-		// SSR-rendered but its onclick attaches only once the client bundle loads,
-		// so an immediate click is dropped. Matches the wishlist-helpers fixture.
-		await page.waitForLoadState('networkidle');
-		await page.getByRole('button', { name: 'Vytvořit seznam' }).first().click();
-
+		const create = page.getByRole('button', { name: 'Vytvořit seznam' }).first();
 		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible();
+		// The button is server-rendered before hydration. Retry the user action until
+		// the observable dialog is open instead of waiting for global network idleness.
+		await expect(async () => {
+			if (!(await dialog.isVisible())) {
+				await create.click();
+			}
+			await expect(dialog).toBeVisible({ timeout: 1_000 });
+		}).toPass({ timeout: 15_000 });
 		const toggleItems = dialog.locator('[data-slot="toggle-group-item"]');
 		await expect(toggleItems).toHaveCount(2);
 

@@ -71,7 +71,6 @@ test.describe('Request budgets (issue #108)', () => {
 		await expect(page.getByRole('heading', { name: 'Rozpočtový dárek', level: 3 })).toBeVisible(
 			{ timeout: 10_000 },
 		);
-		await page.waitForLoadState('networkidle');
 		tracker.stop();
 
 		const names = tracker.names();
@@ -100,7 +99,6 @@ test.describe('Request budgets (issue #108)', () => {
 		await expect(page.getByRole('heading', { name: 'Přehled', level: 1 })).toBeVisible({
 			timeout: 10_000,
 		});
-		await page.waitForLoadState('networkidle');
 		tracker.stop();
 
 		const names = tracker.names();
@@ -136,7 +134,6 @@ test.describe('Request budgets (issue #108)', () => {
 		await expect(
 			page.getByRole('heading', { name: 'Jednorázový dárek', level: 3 }),
 		).toBeVisible({ timeout: 10_000 });
-		await page.waitForLoadState('networkidle');
 		tracker.stop();
 
 		const names = tracker.names();
@@ -174,11 +171,9 @@ test.describe('Request budgets (issue #108)', () => {
 		const gifterPage = await gifterContext.newPage();
 
 		await gifterPage.goto(wishlistPath);
-		await gifterPage.waitForLoadState('networkidle');
-		await gifterPage
-			.getByRole('button', { name: /Rezervovat/ })
-			.first()
-			.click();
+		const reserve = gifterPage.getByRole('button', { name: /Rezervovat/ }).first();
+		await expect(reserve).toBeVisible({ timeout: 10_000 });
+		await reserve.click();
 		const reserveDialog = gifterPage.getByRole('dialog');
 		await expect(reserveDialog).toBeVisible({ timeout: 5_000 });
 
@@ -187,7 +182,6 @@ test.describe('Request budgets (issue #108)', () => {
 		await expect(reserveDialog).not.toBeVisible({ timeout: 10_000 });
 		// Reserved state renders from the single-flight payload, not a follow-up fetch.
 		await expect(gifterPage.getByText(/[Rr]ezervov/).first()).toBeVisible({ timeout: 10_000 });
-		await gifterPage.waitForLoadState('networkidle');
 		tracker.stop();
 
 		const names = tracker.names();

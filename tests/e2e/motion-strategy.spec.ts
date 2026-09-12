@@ -1,7 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
-import { addGift, createWishlistAndNavigate } from './fixtures/wishlist-helpers.js';
+import {
+	addGift,
+	createWishlistAndNavigate,
+	openDesktopDisplaySubmenu,
+	startGiftReorder,
+} from './fixtures/wishlist-helpers.js';
 
 const giftItems = (page: Page) =>
 	page.locator('[data-gift-item][data-gift-id]:not([data-gift-reorder-overlay])');
@@ -178,20 +183,17 @@ test.describe('issue #269 integrated motion strategy', () => {
 		expect(displacedId).not.toBeNull();
 
 		await installAnimationRecorder(page);
-		await page.getByRole('button', { name: 'Filtrovat', exact: true }).click();
-		const withLinkFilter = page.getByRole('menuitemcheckbox', {
+		const filterMenu = await openDesktopDisplaySubmenu(page, /^Filtrovat/);
+		const withLinkFilter = filterMenu.getByRole('menuitemcheckbox', {
 			name: 'S odkazem',
 			exact: true,
 		});
 		await expect(withLinkFilter).toHaveAttribute('aria-checked', 'false');
 		await withLinkFilter.click();
 
-		await expect(
-			page.getByRole('button', {
-				name: 'Filtrovat: Aktivní filtry: 1',
-				exact: true,
-			}),
-		).toBeVisible();
+		await expect(page.getByTestId('desktop-display-trigger')).toHaveAccessibleName(
+			'Možnosti zobrazení: Aktivní filtry: 1',
+		);
 		await expect(page.locator('[data-filter-count]')).toHaveText('1');
 		await expect(withLinkFilter).toHaveAttribute('aria-checked', 'true');
 		const activeFilters = page.getByTestId('wishlist-toolbar-active-filters');
@@ -218,7 +220,7 @@ test.describe('issue #269 integrated motion strategy', () => {
 			.click();
 		await expect(filteredOut).toBeVisible();
 		await expect(activeFilters).toHaveCount(0);
-		await expect(page.getByRole('button', { name: 'Filtrovat', exact: true })).toBeFocused();
+		await expect(page.getByTestId('desktop-display-trigger')).toBeFocused();
 		await expect
 			.poll(async () => translatedAnimations(await recordedAnimations(page), displacedId))
 			.toContainEqual(expect.objectContaining({ duration: 520 }));
@@ -325,9 +327,7 @@ test.describe('issue #269 integrated motion strategy', () => {
 			'wishlist-toolbar-edit-controls',
 		];
 		const before = await Promise.all(regions.map((id) => page.getByTestId(id).boundingBox()));
-		const action = page.getByRole('button', { name: 'Změnit pořadí', exact: true });
-		await action.focus();
-		await action.click();
+		await startGiftReorder(page);
 		const done = page.getByRole('button', { name: 'Hotovo', exact: true });
 		await expect(done).toBeFocused();
 		await expect(

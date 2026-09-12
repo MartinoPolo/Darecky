@@ -52,7 +52,9 @@ test.describe('Reserver names are moderator-only (issue #198)', () => {
 		);
 		const reserverPage = await reserverContext.newPage();
 		await reserverPage.goto(wishlistPath);
-		await reserverPage.waitForLoadState('networkidle');
+		await expect(reserverPage.getByTestId('reserve-button').first()).toBeVisible({
+			timeout: 10_000,
+		});
 		await reserverPage.getByTestId('reserve-button').first().click();
 		const reserveDialog = reserverPage.getByRole('dialog');
 		await expect(reserveDialog).toBeVisible({ timeout: 5_000 });
@@ -64,7 +66,6 @@ test.describe('Reserver names are moderator-only (issue #198)', () => {
 		const visitor = createTestUser('reserver-privacy-visitor');
 		const visitorPage = await registerAndGetPage(browser, request, baseURL!, visitor);
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
 
 		const giftCard = visitorPage
 			.locator('[data-gift-item]')
@@ -107,13 +108,18 @@ test.describe('Reserver names are moderator-only (issue #198)', () => {
 		const moderatorPage = await moderatorContext.newPage();
 		const invitePath = new URL(inviteUrl).pathname;
 		await moderatorPage.goto(invitePath);
-		await moderatorPage.waitForLoadState('networkidle');
 		await expect(moderatorPage.getByRole('button', { name: /Přijmout pozvánku/ })).toBeVisible({
 			timeout: 5_000,
 		});
-		await moderatorPage.getByRole('button', { name: /Přijmout pozvánku/ }).click();
+		const acceptButton = moderatorPage.getByRole('button', { name: /Přijmout pozvánku/ });
+		// The SSR button stays disabled until the invite page mounts, preventing a lost
+		// one-shot acceptance click before hydration wires its handler.
+		await expect(acceptButton).toBeEnabled();
+		await acceptButton.click();
 		await moderatorPage.waitForURL(`**${wishlistPath}`, { timeout: 10_000 });
-		await moderatorPage.waitForLoadState('networkidle');
+		await expect(moderatorPage.getByRole('heading', { level: 1 })).toBeVisible({
+			timeout: 10_000,
+		});
 
 		// A reserver (distinct from both owner and moderator) reserves while authenticated.
 		const reserver = createTestUser('reserver-privacy-mod-reserver');
@@ -126,7 +132,9 @@ test.describe('Reserver names are moderator-only (issue #198)', () => {
 		);
 		const reserverPage = await reserverContext.newPage();
 		await reserverPage.goto(wishlistPath);
-		await reserverPage.waitForLoadState('networkidle');
+		await expect(reserverPage.getByTestId('reserve-button').first()).toBeVisible({
+			timeout: 10_000,
+		});
 		await reserverPage.getByTestId('reserve-button').first().click();
 		const reserveDialog = reserverPage.getByRole('dialog');
 		await expect(reserveDialog).toBeVisible({ timeout: 5_000 });
@@ -136,7 +144,6 @@ test.describe('Reserver names are moderator-only (issue #198)', () => {
 
 		// The moderator reloads and now sees the reserver's display name.
 		await moderatorPage.reload();
-		await moderatorPage.waitForLoadState('networkidle');
 		await expect(moderatorPage.getByText(reserver.name).first()).toBeVisible({
 			timeout: 10_000,
 		});

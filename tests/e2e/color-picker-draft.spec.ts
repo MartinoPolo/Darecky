@@ -89,7 +89,7 @@ test('category color is local to the picker, then staged until global Save', asy
 
 	const persistedPage = await page.context().newPage();
 	await persistedPage.goto(wishlistUrl);
-	await persistedPage.waitForLoadState('networkidle');
+	await expect(persistedPage.getByRole('button', { name: 'Nastavení seznamu' })).toBeVisible();
 	const persistedSettings = await openCategorySettings(persistedPage);
 	await expect(
 		categoryRow(persistedSettings).getByRole('button', { name: CATEGORY_NAME }),
@@ -106,9 +106,15 @@ test('category color is local to the picker, then staged until global Save', asy
 	).toHaveCSS('background-color', 'rgb(185, 28, 28)');
 
 	for (const width of [320, 390, 768, 1440]) {
-		await page.setViewportSize({ width, height: width < 700 ? 844 : 900 });
+		const height = width < 700 ? 844 : 900;
+		await page.setViewportSize({ width, height });
 		const visualPicker = await openColorPicker(settingsDialog);
-		await page.waitForTimeout(250);
+		const pickerBox = await visualPicker.pickerDialog.boundingBox();
+		expect(pickerBox).not.toBeNull();
+		expect(pickerBox!.x).toBeGreaterThanOrEqual(0);
+		expect(pickerBox!.y).toBeGreaterThanOrEqual(0);
+		expect(pickerBox!.x + pickerBox!.width).toBeLessThanOrEqual(width);
+		expect(pickerBox!.y + pickerBox!.height).toBeLessThanOrEqual(height);
 		await page.screenshot({ path: testInfo.outputPath(`color-picker-${width}.png`) });
 		await visualPicker.pickerDialog.getByRole('button', { name: 'Zrušit' }).click();
 	}

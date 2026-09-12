@@ -59,15 +59,12 @@ describe('getPublicUrl', () => {
 		expect(getPublicUrl('gifts/abc123.jpg')).toBe('https://cdn.example.com/gifts/abc123.jpg');
 	});
 
-	it('returns /api/upload/{key} when PUBLIC_R2_URL is not set', () => {
-		// mockEnv has no PUBLIC_R2_URL
+	it.each([undefined, ''])(
+		'returns the same-origin upload URL when PUBLIC_R2_URL is %s',
+		(publicUrl) => {
+			mockEnv['PUBLIC_R2_URL'] = publicUrl;
 
-		expect(getPublicUrl('gifts/abc123.jpg')).toBe('/api/upload/gifts/abc123.jpg');
-	});
-
-	it('returns /api/upload/{key} when PUBLIC_R2_URL is empty string', () => {
-		mockEnv['PUBLIC_R2_URL'] = '';
-
-		expect(getPublicUrl('gifts/abc123.jpg')).toBe('/api/upload/gifts/abc123.jpg');
-	});
+			expect(getPublicUrl('gifts/abc123.jpg')).toBe('/api/upload/gifts/abc123.jpg');
+		},
+	);
 });

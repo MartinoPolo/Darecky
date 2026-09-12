@@ -1,9 +1,12 @@
 import { test, expect, type Page, type Request, type Response } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
 import { registerAndGetPage } from './fixtures/auth-helpers.js';
-import { createWishlistAndNavigate, addGift } from './fixtures/wishlist-helpers.js';
+import {
+	createWishlistAndNavigate,
+	addGift,
+	startGiftReorder,
+} from './fixtures/wishlist-helpers.js';
 
-const REORDER_ACTION = 'Změnit pořadí';
 const REORDER_HANDLE = 'Přesunout dárek';
 
 function isSuccessfulRemoteMutation(response: Response): boolean {
@@ -47,7 +50,7 @@ test('card drag preview stays stable while the pointer rests on a gift boundary'
 	}
 
 	await expect(page.locator('[data-gift-item]')).toHaveCount(names.length, { timeout: 10_000 });
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await startGiftReorder(page);
 
 	const aHandle = giftItem(page, names[0]!).getByRole('button', {
 		name: REORDER_HANDLE,
@@ -105,7 +108,7 @@ test('gift order persists after card drag and rapid list keyboard moves', async 
 	await addGift(page, names.C);
 
 	await expect(page.locator('[data-gift-item]')).toHaveCount(3, { timeout: 10_000 });
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await startGiftReorder(page);
 
 	const aHandle = giftItem(page, names.A).getByRole('button', {
 		name: REORDER_HANDLE,
@@ -148,7 +151,7 @@ test('gift order persists after card drag and rapid list keyboard moves', async 
 		'data-view-mode',
 		'list',
 	);
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await startGiftReorder(page);
 
 	const mutationResponses: Response[] = [];
 	const recordMutation = (response: Response) => {
@@ -198,7 +201,7 @@ test('reorder keeps its order and keyboard controls while switching Grid to List
 		await addGift(page, name);
 	}
 
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await startGiftReorder(page);
 	const listMode = page.getByRole('radio', { name: 'Seznam', exact: true });
 	const gridMode = page.getByRole('radio', { name: 'Karta', exact: true });
 	const giftCollection = page.locator('[data-wishlist-gift-collection]');
@@ -330,7 +333,7 @@ test('latest gift order survives immediate reopen, no-op entry, a second reorder
 	await expect(page.locator('[data-gift-item]')).toHaveCount(3, { timeout: 10_000 });
 	await page.getByRole('radio', { name: 'Seznam', exact: true }).click();
 	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeChecked();
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await startGiftReorder(page);
 
 	const firstMutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
 	const aHandle = giftItem(page, names.A).getByRole('button', {
@@ -347,14 +350,14 @@ test('latest gift order survives immediate reopen, no-op entry, a second reorder
 	await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
 
 	for (let repetition = 0; repetition < 2; repetition += 1) {
-		await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+		await startGiftReorder(page);
 		await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
 		await page.getByRole('button', { name: 'Hotovo', exact: true }).click();
 		await expect.poll(() => visibleGiftNames(page), { timeout: 10_000 }).toEqual(firstOrder);
 	}
 
 	await expect(page.getByRole('radio', { name: 'Seznam', exact: true })).toBeChecked();
-	await page.getByRole('button', { name: REORDER_ACTION, exact: true }).click();
+	await startGiftReorder(page);
 
 	const secondMutation = page.waitForResponse(isSuccessfulRemoteMutation, { timeout: 15_000 });
 	const cHandle = giftItem(page, names.C).getByRole('button', {

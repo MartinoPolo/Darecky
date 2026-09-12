@@ -25,8 +25,8 @@ describe('WishlistCropEditor loaded image', () => {
 		const remove = screen.getByRole('button', { name: m.wishlist_image_remove() });
 		await expect.element(change).toBeVisible();
 		await expect.element(remove).toBeVisible();
-		expect(change.element()).toHaveClass('h-9');
-		expect(remove.element()).toHaveClass('h-9');
+		expect(change.element().getBoundingClientRect().height).toBeGreaterThan(0);
+		expect(remove.element().getBoundingClientRect().height).toBeGreaterThan(0);
 		await expect.element(screen.getByText(m.image_upload_dropzone())).not.toBeInTheDocument();
 		const dragOver = new DragEvent('dragover', { bubbles: true, cancelable: true });
 		change.element().dispatchEvent(dragOver);

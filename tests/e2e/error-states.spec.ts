@@ -28,7 +28,6 @@ test.describe('Error states and edge cases', () => {
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 
 		await page.goto('/settings');
-		await page.waitForLoadState('networkidle');
 
 		// Page heading
 		await expect(page.getByRole('heading', { name: 'Nastavení', exact: true })).toBeVisible({
@@ -52,7 +51,6 @@ test.describe('Error states and edge cases', () => {
 		const updatedName = `${user.name} Updated`;
 
 		await page.goto('/settings');
-		await page.waitForLoadState('networkidle');
 
 		const nameInput = page.getByLabel('Zobrazované jméno');
 		await expect(nameInput).toBeVisible({ timeout: 5_000 });
@@ -66,7 +64,6 @@ test.describe('Error states and edge cases', () => {
 
 		// Reload and verify the name persisted
 		await page.reload();
-		await page.waitForLoadState('networkidle');
 		await expect(page.getByLabel('Zobrazované jméno')).toHaveValue(updatedName, {
 			timeout: 5_000,
 		});

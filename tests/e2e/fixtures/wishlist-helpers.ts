@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Shared wishlist/gift interaction helpers for E2E specs.
@@ -17,53 +17,52 @@ export async function waitForDialogOverlayRemoval(page: Page): Promise<void> {
 	await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCount(0, { timeout: 5_000 });
 }
 
-/**
- * Create a wishlist from /my-lists via the modal and wait until its detail page loads.
- *
- * The create modal now leads with a „Pro mě" / „Pro někoho jiného" segmented control
- * (ToggleGroup) that defaults to „Pro mě" (self). This helper drives the default self
- * path — it never touches the toggle, so the recipient-name input stays hidden and the
- * created list is a for-me (linked-recipient) list. The „Název" textbox and „Vytvořit"
- * submit are addressed by role+name, which the toggle items cannot intercept.
- */
-export async function createWishlistAndNavigate(page: Page, title: string): Promise<string> {
-	await page.goto('/my-lists');
-	await page.waitForLoadState('networkidle');
-	await page.getByRole('button', { name: 'Vytvořit seznam' }).first().click();
+export async function openDialogFromTrigger(trigger: Locator, dialog: Locator): Promise<void> {
+	await expect(async () => {
+		if (!(await dialog.isVisible())) {
+			await trigger.click();
+		}
+		await expect(dialog).toBeVisible({ timeout: 2_000 });
+	}).toPass({ timeout: 20_000 });
+}
+
+export async function openCreateWishlistDialog(page: Page): Promise<Locator> {
+	const createTrigger = page
+		.getByRole('button', { name: /^(Vytvořit seznam|Vytvořit)$/ })
+		.first();
+	await expect(createTrigger).toBeVisible();
+	await expect(createTrigger).toBeEnabled();
 
 	const dialog = page.getByRole('dialog');
-	await expect(dialog).toBeVisible({ timeout: 5_000 });
+	await openDialogFromTrigger(createTrigger, dialog);
+	return dialog;
+}
+
+/** Create a self-recipient wishlist; leaving the recipient toggle untouched selects „Pro mě". */
+export async function createWishlistAndNavigate(page: Page, title: string): Promise<string> {
+	await page.goto('/my-lists');
+	const dialog = await openCreateWishlistDialog(page);
 	await dialog.getByRole('textbox', { name: 'Název' }).fill(title);
 	await dialog.getByRole('button', { name: 'Vytvořit', exact: true }).click();
 
 	await expect(page.getByRole('heading', { level: 1 })).toContainText(title, { timeout: 10_000 });
-	await page.waitForLoadState('networkidle');
+	await waitForDialogOverlayRemoval(page);
+	const addGiftTrigger = page.getByRole('button', { name: /Přidat dárek|Add gift/ }).first();
+	await expect(addGiftTrigger).toBeVisible();
+	await expect(addGiftTrigger).toBeEnabled();
 	return new URL(page.url()).pathname;
 }
 
-/**
- * Create a for-someone-else wishlist (free-text recipient) via the modal and wait until
- * its detail page loads. Selects the „Pro někoho jiného" toggle, fills the revealed
- * „Jméno obdarovaného" input (id `#wishlist-recipient-name`), then title + submit.
- *
- * The creator becomes the first správce (moderator role) — so they see reservation state
- * and can reserve — while the free-text recipient is who the list is "for".
- */
+/** Create a free-text-recipient wishlist whose creator becomes its first správce. */
 export async function createWishlistForSomeoneAndNavigate(
 	page: Page,
 	{ title, recipientName }: { title: string; recipientName: string },
 ): Promise<string> {
 	await page.goto('/my-lists');
-	await page.waitForLoadState('networkidle');
-	await page.getByRole('button', { name: 'Vytvořit seznam' }).first().click();
-
-	const dialog = page.getByRole('dialog');
-	await expect(dialog).toBeVisible({ timeout: 5_000 });
-
-	// Switch to the „Pro někoho jiného" branch; its label is a toggle inside the dialog.
+	const dialog = await openCreateWishlistDialog(page);
 	await dialog.getByText('Pro někoho jiného', { exact: true }).click();
 
-	// The required recipient-name input appears (stable id survives locale changes).
+	// The stable id avoids coupling this revealed field to localized copy.
 	const recipientInput = dialog.locator('#wishlist-recipient-name');
 	await expect(recipientInput).toBeVisible({ timeout: 5_000 });
 	await recipientInput.fill(recipientName);
@@ -72,7 +71,10 @@ export async function createWishlistForSomeoneAndNavigate(
 	await dialog.getByRole('button', { name: 'Vytvořit', exact: true }).click();
 
 	await expect(page.getByRole('heading', { level: 1 })).toContainText(title, { timeout: 10_000 });
-	await page.waitForLoadState('networkidle');
+	await waitForDialogOverlayRemoval(page);
+	const addGiftTrigger = page.getByRole('button', { name: /Přidat dárek|Add gift/ }).first();
+	await expect(addGiftTrigger).toBeVisible();
+	await expect(addGiftTrigger).toBeEnabled();
 	return new URL(page.url()).pathname;
 }
 
@@ -126,20 +128,66 @@ async function clickWishlistHeaderAction(page: Page, accessibleName: RegExp): Pr
 		await sheet.getByRole('button', { name: accessibleName }).click();
 	} else {
 		await page.getByTestId('desktop-header-more-trigger').filter({ visible: true }).click();
-		const menu = page
-			.getByRole('menu', { name: /^(Další akce|More actions)$/ })
-			.filter({ visible: true });
+		// The popup's accessible name is optional in the rendered dropdown primitive. Scope to
+		// the actual visible layer rather than coupling header actions to that implementation detail.
+		const menu = page.locator('[data-slot="dropdown-menu-content"]:visible').last();
 		await expect(menu).toBeVisible({ timeout: 5_000 });
 		await menu.getByRole('menuitem', { name: accessibleName }).click();
 	}
 }
 
+/** Open the share workflow from the responsive hero action surface. */
+export async function openShareWishlistDialog(page: Page): Promise<Locator> {
+	await clickWishlistHeaderAction(page, /^(Sdílet|Share)$/);
+	const dialog = page.getByRole('dialog').filter({ visible: true });
+	await expect(dialog).toBeVisible({ timeout: 5_000 });
+	return dialog;
+}
+
+/** Open a cascading desktop submenu from the consolidated Display command. */
+export async function openDesktopDisplaySubmenu(
+	page: Page,
+	accessibleName: RegExp,
+): Promise<Locator> {
+	await page.getByTestId('desktop-display-trigger').filter({ visible: true }).click();
+	const root = page.locator('[data-slot="dropdown-menu-content"]:visible').last();
+	await expect(root).toBeVisible({ timeout: 5_000 });
+	const subTrigger = root.getByRole('menuitem', { name: accessibleName });
+	await expect(subTrigger).toBeVisible();
+	await subTrigger.focus();
+	await page.keyboard.press('ArrowRight');
+	const submenu = page.locator('[data-slot="dropdown-menu-sub-content"]:visible').last();
+	await expect(submenu).toBeVisible();
+	return submenu;
+}
+
+/** Choose an action from the responsive wishlist toolbar More surface. */
+export async function clickWishlistToolbarMoreAction(
+	page: Page,
+	accessibleName: RegExp,
+): Promise<void> {
+	const mobile = (page.viewportSize()?.width ?? 1280) < 640;
+	if (mobile) {
+		await page.getByTestId('mobile-more-trigger').filter({ visible: true }).click();
+		const sheet = page.getByRole('dialog').filter({ visible: true });
+		await expect(sheet).toBeVisible({ timeout: 5_000 });
+		await sheet.getByRole('button', { name: accessibleName }).click();
+	} else {
+		await page.getByTestId('desktop-more-trigger').filter({ visible: true }).click();
+		const menu = page.locator('[data-slot="dropdown-menu-content"]:visible').last();
+		await expect(menu).toBeVisible({ timeout: 5_000 });
+		await menu.getByRole('menuitem', { name: accessibleName }).click();
+	}
+}
+
+/** Enter manual gift-reordering mode through the toolbar More action. */
+export async function startGiftReorder(page: Page): Promise<void> {
+	await clickWishlistToolbarMoreAction(page, /^(Změnit pořadí|Change order)$/);
+}
+
 /** Run the share wizard to completion, making the wishlist active/shared. */
 export async function shareWishlist(page: Page): Promise<void> {
-	await clickWishlistHeaderAction(page, /^(Sdílet|Share)$/);
-
-	const dialog = page.getByRole('dialog');
-	await expect(dialog).toBeVisible({ timeout: 5_000 });
+	const dialog = await openShareWishlistDialog(page);
 	await dialog.getByRole('button', { name: 'Sdílet seznam' }).click();
 	await expectShareMethodsStep(page);
 	await dialog.getByRole('button', { name: 'Hotovo' }).click();
@@ -158,7 +206,7 @@ export async function shareWishlist(page: Page): Promise<void> {
  * a `page.on('dialog')` handler.
  */
 export async function archiveWishlist(page: Page): Promise<void> {
-	await clickWishlistHeaderAction(page, /^(Archivovat seznam|Archive list)$/);
+	await clickWishlistHeaderAction(page, /^(Archivovat|Archive)$/);
 
 	const dialog = page.getByRole('dialog');
 	await expect(dialog.getByText(/Archivovat tento seznam\?|Archive this list\?/)).toBeVisible({
@@ -180,11 +228,8 @@ export async function archiveWishlist(page: Page): Promise<void> {
  * visible only to managers (linked recipient OR správce).
  */
 export async function openModeratorPanel(page: Page) {
-	await page
-		.getByRole('button', { name: /Správci|Managers/ })
-		.first()
-		.click();
-	const panel = page.getByRole('dialog');
+	await clickWishlistHeaderAction(page, /^(Správci|Managers)$/);
+	const panel = page.getByRole('dialog').filter({ visible: true });
 	await expect(panel).toBeVisible({ timeout: 5_000 });
 	return panel;
 }

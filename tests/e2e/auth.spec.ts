@@ -24,8 +24,9 @@ test.describe('Authentication', () => {
 		const user = createTestUser('register');
 		const page = await registerAndGetPage(browser, request, baseURL!, user);
 		await page.goto('/my-lists');
-		await page.waitForLoadState('networkidle');
-		await expect(page.getByRole('heading', { name: 'Moje seznamy' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Moje seznamy' })).toBeVisible({
+			timeout: 10_000,
+		});
 		await page.context().close();
 	});
 

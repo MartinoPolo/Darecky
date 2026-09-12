@@ -3,39 +3,14 @@ import { bulkGiftUpdateData, isBulkPresentationAction } from './gift_bulk_update
 import { fillImageMeta } from '$lib/modules/images/editor_modes.js';
 
 describe('bulk gift updates', () => {
-	it('distinguishes presentation edits that require post-share transparency and reservation notices', () => {
-		expect(
-			isBulkPresentationAction({
-				action: 'priority',
-				priorityLevelId: null,
-				wishlistId: 'w',
-				giftIds: ['g'],
-			}),
-		).toBe(true);
-		expect(
-			isBulkPresentationAction({
-				action: 'category',
-				categoryId: null,
-				wishlistId: 'w',
-				giftIds: ['g'],
-			}),
-		).toBe(true);
-		expect(
-			isBulkPresentationAction({
-				action: 'imageFit',
-				fit: 'fill',
-				wishlistId: 'w',
-				giftIds: ['g'],
-			}),
-		).toBe(true);
-		expect(
-			isBulkPresentationAction({
-				action: 'received',
-				received: true,
-				wishlistId: 'w',
-				giftIds: ['g'],
-			}),
-		).toBe(false);
+	it.each([
+		[{ action: 'priority', priorityLevelId: null, wishlistId: 'w', giftIds: ['g'] }, true],
+		[{ action: 'category', categoryId: null, wishlistId: 'w', giftIds: ['g'] }, true],
+		[{ action: 'imageFit', fit: 'fill', wishlistId: 'w', giftIds: ['g'] }, true],
+		[{ action: 'imageBackground', background: null, wishlistId: 'w', giftIds: ['g'] }, true],
+		[{ action: 'received', received: true, wishlistId: 'w', giftIds: ['g'] }, false],
+	] as const)('classifies $0.action presentation semantics as $1', (input, expected) => {
+		expect(isBulkPresentationAction(input)).toBe(expected);
 	});
 
 	it('restores each gift from its exact heterogeneous received prior-state map', () => {

@@ -24,7 +24,7 @@ async function addGiftAndShare(page: Page, giftName: string) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 test.describe('Moderator system', () => {
-	test('manager sees správci-management button on wishlist page', async ({
+	test('manager can open správci management from the responsive hero actions', async ({
 		browser,
 		request,
 		baseURL,
@@ -34,9 +34,9 @@ test.describe('Moderator system', () => {
 
 		await createWishlistAndNavigate(page, 'Mod Owner Btn Test');
 
-		// The správci-management button (UsersIcon, aria-label „Správci" / „Managers") is
-		// rendered only for managers — here the creator is the linked recipient of a for-me list.
-		await expect(page.getByRole('button', { name: /Správci|Managers/ })).toBeVisible();
+		// The manager command is capability-gated inside the responsive hero More surface.
+		const panel = await openModeratorPanel(page);
+		await expect(panel).toBeVisible();
 
 		await page.context().close();
 	});
@@ -94,7 +94,6 @@ test.describe('Moderator system', () => {
 		// inviteUrl is a full URL string from the panel; navigate to the path portion
 		const invitePath = new URL(inviteUrl).pathname;
 		await inviteePage.goto(invitePath);
-		await inviteePage.waitForLoadState('networkidle');
 
 		// Invite acceptance page shows the pending state
 		await expect(inviteePage.getByRole('button', { name: /Přijmout pozvánku/ })).toBeVisible({
@@ -104,7 +103,6 @@ test.describe('Moderator system', () => {
 
 		// After acceptance the page redirects to the wishlist
 		await inviteePage.waitForURL(`**${wishlistPath}`, { timeout: 10_000 });
-		await inviteePage.waitForLoadState('networkidle');
 
 		// Správce sees gift reservation status (same as visitor, with full detail). The gift is
 		// visible; the správci-management button IS available (any správce can invite/revoke
@@ -115,11 +113,12 @@ test.describe('Moderator system', () => {
 		const anonymousContext = await browser.newContext();
 		const anonymousPage = await anonymousContext.newPage();
 		await anonymousPage.goto(wishlistPath);
-		await anonymousPage.waitForLoadState('networkidle');
 
 		// Locale-agnostic: ReserveButton's label is i18n'd (issue #154), select the
 		// card-level trigger via its stable data-testid.
-		await anonymousPage.getByTestId('reserve-button').first().click();
+		const anonymousReserve = anonymousPage.getByTestId('reserve-button').first();
+		await expect(anonymousReserve).toBeVisible();
+		await anonymousReserve.click();
 		const reserveDialog = anonymousPage.getByRole('dialog');
 		await expect(reserveDialog).toBeVisible({ timeout: 5_000 });
 		await reserveDialog.getByRole('textbox', { name: /Vaše jméno/i }).fill('Anon Reserver');
@@ -131,7 +130,6 @@ test.describe('Moderator system', () => {
 
 		// ── Step 4: moderator can see the reservation status ──────────────────
 		await inviteePage.reload();
-		await inviteePage.waitForLoadState('networkidle');
 		// As a moderator, gift shows as reserved
 		await expect(inviteePage.getByText(/Rezervov[aá]no/).first()).toBeVisible({
 			timeout: 5_000,
@@ -191,7 +189,6 @@ test.describe('Moderator system', () => {
 		const visitorPage = await visitorContext.newPage();
 
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
 		await expect(
 			visitorPage.getByText(
 				new RegExp(`${recipient.name}.*(zároveň správcem|is also a manager)`),

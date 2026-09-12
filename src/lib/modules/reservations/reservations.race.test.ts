@@ -8,9 +8,21 @@ import type { User, Session } from 'better-auth';
 // model genuine competing reservations and prove the FOR UPDATE lock prevents
 // overbooking. It deliberately does NOT mock the DB layer or drizzle-orm.
 //
-// The whole suite is gated on DATABASE_URL so it auto-skips in CI (no DB there).
+// The suite runs only against an explicitly local DATABASE_URL; remote and production
+// databases are never valid race-test targets.
 
-const HAS_DB = process.env.DATABASE_URL !== undefined && process.env.DATABASE_URL !== '';
+const databaseUrl = process.env.DATABASE_URL ?? '';
+
+function isLocalDatabaseUrl(value: string): boolean {
+	try {
+		const hostname = new URL(value).hostname.toLowerCase();
+		return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+	} catch {
+		return false;
+	}
+}
+
+const HAS_DB = isLocalDatabaseUrl(databaseUrl);
 
 // getRequestEvent throws (no request context in tests) so getDb() falls back to
 // env.DATABASE_URL.
@@ -126,9 +138,8 @@ async function activeReservedSum(giftId: string): Promise<number> {
 }
 
 /**
- * DATABASE_URL alone is not enough: the connection must point at a database
- * whose schema matches the current code. Probe it once up front so an
- * unreachable or unmigrated DB skips the suite gracefully instead of hard-failing
+ * A local DATABASE_URL alone is not enough: its schema must match the current code.
+ * Probe it once up front so an unreachable or unmigrated DB skips gracefully instead of hard-failing
  * in beforeAll. Only skips on schema/connection problems – genuine logic failures
  * inside the tests still surface.
  */

@@ -31,6 +31,17 @@ async function pinTrigger(trigger: Locator, top: number, left: number) {
 	);
 }
 
+async function pinNestedTrigger(trigger: Locator, top: number, left: number) {
+	await trigger.evaluate(
+		(element, position) => {
+			element.style.removeProperty('translate');
+			const rect = element.getBoundingClientRect();
+			element.style.translate = `${position.left - rect.left}px ${position.top - rect.top}px`;
+		},
+		{ top, left },
+	);
+}
+
 async function unpinTrigger(trigger: Locator) {
 	await trigger.evaluate((element) => {
 		for (const property of ['position', 'top', 'left', 'width', 'z-index']) {
@@ -63,17 +74,10 @@ async function openDesktopDisplayRoot(page: Page) {
 	return { trigger, root };
 }
 
-async function openDisplaySubmenu(
-	page: Page,
-	name: RegExp,
-	position?: { top: number; left: number },
-) {
+async function openDisplaySubmenu(page: Page, name: RegExp) {
 	const { trigger, root } = await openDesktopDisplayRoot(page);
 	const subTrigger = root.getByRole('menuitem', { name });
 	await expect(subTrigger).toBeVisible();
-	if (position) {
-		await pinTrigger(subTrigger, position.top, position.left);
-	}
 	await subTrigger.focus();
 	await page.keyboard.press('ArrowRight');
 	const submenu = page.locator('[data-slot="dropdown-menu-sub-content"]:visible');
@@ -85,8 +89,13 @@ async function closeDropdownHierarchy(page: Page) {
 	const visibleLayers = page.locator(
 		'[data-slot="dropdown-menu-sub-content"]:visible, [data-slot="dropdown-menu-content"]:visible',
 	);
-	for (let layer = 0; layer < 2 && (await visibleLayers.count()) > 0; layer += 1) {
+	for (let layer = 0; layer < 2; layer += 1) {
+		const layerCount = await visibleLayers.count();
+		if (layerCount === 0) {
+			break;
+		}
 		await page.keyboard.press('Escape');
+		await expect(visibleLayers).toHaveCount(layerCount - 1);
 	}
 	await expect(visibleLayers).toHaveCount(0);
 }
@@ -116,10 +125,7 @@ test.describe('issue #364 dropdown viewport placement', () => {
 			.getByTestId('desktop-display-trigger')
 			.filter({ visible: true });
 		await pinTrigger(displayTrigger, 280, 300);
-		const { submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/, {
-			top: 280,
-			left: 300,
-		});
+		const { submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/);
 		await expectDropdownViewportCap(menu, 600);
 		await page.mouse.move(10, 580);
 
@@ -181,27 +187,21 @@ test.describe('issue #364 dropdown viewport placement', () => {
 
 		await closeDropdownHierarchy(page);
 		await pinTrigger(trigger, 12, 12);
-		({ submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/, {
-			top: 12,
-			left: 12,
-		}));
+		({ submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/));
 		await expectDropdownViewportCap(menu, 700);
 		await expectInsideViewport(menu, 1000, 700);
 		expect(await menu.getAttribute('data-side')).toBe('right');
 
 		await closeDropdownHierarchy(page);
 		await pinTrigger(trigger, 640, 720);
-		const edgeAnchoredFilter = await openDisplaySubmenu(page, /Filtrovat/, {
-			top: 640,
-			left: 720,
-		});
+		const edgeAnchoredFilter = await openDisplaySubmenu(page, /Filtrovat/);
 		const filterSubTrigger = edgeAnchoredFilter.subTrigger;
 		menu = edgeAnchoredFilter.submenu;
 		await expectDropdownViewportCap(menu, 700);
 		await expectInsideViewport(menu, 1000, 700);
 
 		await pinTrigger(trigger, 460, 500);
-		await pinTrigger(filterSubTrigger, 460, 500);
+		await pinNestedTrigger(filterSubTrigger, 460, 500);
 		await page.setViewportSize({ width: 760, height: 520 });
 		await expectDropdownViewportCap(menu, 520);
 		await expectInsideViewport(menu, 760, 520);
@@ -220,11 +220,7 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		});
 		const trigger = page.getByTestId('desktop-display-trigger').filter({ visible: true });
 		await pinTrigger(trigger, 190, 400);
-		const {
-			root,
-			subTrigger,
-			submenu: menu,
-		} = await openDisplaySubmenu(page, /Filtrovat/, { top: 190, left: 400 });
+		const { root, subTrigger, submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/);
 		await expectDropdownViewportCap(menu, 420);
 		const endpoints = menu.locator('[data-filter-option]');
 		const first = endpoints.first();
@@ -266,7 +262,7 @@ test.describe('issue #364 dropdown viewport placement', () => {
 			root: displayRoot,
 			subTrigger: sortSubTrigger,
 			submenu: sortMenu,
-		} = await openDisplaySubmenu(page, /Řadit podle/, { top: 548, left: 720 });
+		} = await openDisplaySubmenu(page, /Řadit podle/);
 		await expectDropdownViewportCap(sortMenu, 600);
 		await expectInsideViewport(sortMenu, 1000, 600);
 		const selectedSort = sortMenu.locator('[role="menuitemradio"][aria-checked="true"]');

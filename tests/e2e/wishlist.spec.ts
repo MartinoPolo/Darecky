@@ -5,6 +5,7 @@ import {
 	addGift,
 	createWishlistAndNavigate,
 	expectShareMethodsStep,
+	openShareWishlistDialog,
 	waitForDialogOverlayRemoval,
 } from './fixtures/wishlist-helpers.js';
 
@@ -31,9 +32,10 @@ test.describe('Wishlist page', () => {
 		).toBeVisible();
 		await expect(page.getByText(/Tento seznam (je.t.|jeste) nebyl sd.len/i)).toHaveCount(0);
 
-		// A single „Sdílet" action opens the share wizard (replacing the removed strips).
+		// The consolidated responsive hero action still opens the share wizard.
+		const shareDialog = await openShareWishlistDialog(page);
 		await expect(
-			page.getByRole('button', { name: /Sd.let seznam|Sdilet seznam/ }).first(),
+			shareDialog.getByRole('button', { name: /Sd.let seznam|Sdilet seznam/ }),
 		).toBeVisible();
 
 		await page.context().close();
@@ -60,7 +62,7 @@ test.describe('Wishlist page', () => {
 		await page.context().close();
 	});
 
-	test('stationary pointer below settings does not hover or move toolbar selects', async ({
+	test('stationary pointer below hero settings does not hover or move Display', async ({
 		browser,
 		request,
 		baseURL,
@@ -70,13 +72,10 @@ test.describe('Wishlist page', () => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await createWishlistAndNavigate(page, 'Toolbar hover boundary');
 
-		const toolbar = page.getByTestId('wishlist-toolbar');
 		const settings = page.getByRole('button', { name: 'Nastavení seznamu' });
-		const sort = toolbar.getByRole('button', { name: /Řadit podle/ });
-		const grouping = toolbar.getByRole('button', { name: /Seskupení/ });
+		const display = page.getByTestId('desktop-display-trigger');
 		await expect(settings).toBeVisible();
-		await expect(sort).toBeVisible();
-		await expect(grouping).toBeVisible();
+		await expect(display).toBeVisible();
 
 		const settingsBox = await settings.boundingBox();
 		expect(settingsBox).not.toBeNull();
@@ -85,36 +84,22 @@ test.describe('Wishlist page', () => {
 			settingsBox!.y + settingsBox!.height + 10,
 		);
 
-		const groupingElement = await grouping.elementHandle();
-		expect(groupingElement).not.toBeNull();
-		const samples = await sort.evaluate(async (sortElement, groupingHandle) => {
-			const groupingElement = groupingHandle as HTMLElement;
-			const frames: Array<{
-				sortY: number;
-				groupingY: number;
-				sortHovered: boolean;
-				groupingHovered: boolean;
-			}> = [];
+		const samples = await display.evaluate(async (element) => {
+			const frames: Array<{ y: number; hovered: boolean }> = [];
 			const startedAt = performance.now();
-
 			do {
 				await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 				frames.push({
-					sortY: sortElement.getBoundingClientRect().y,
-					groupingY: groupingElement.getBoundingClientRect().y,
-					sortHovered: sortElement.matches(':hover'),
-					groupingHovered: groupingElement.matches(':hover'),
+					y: element.getBoundingClientRect().y,
+					hovered: element.matches(':hover'),
 				});
 			} while (performance.now() - startedAt < 350);
-
 			return frames;
-		}, groupingElement!);
+		});
 
-		const travel = (positions: number[]) => Math.max(...positions) - Math.min(...positions);
-		expect(samples.every((sample) => !sample.sortHovered)).toBe(true);
-		expect(samples.every((sample) => !sample.groupingHovered)).toBe(true);
-		expect(travel(samples.map((sample) => sample.sortY))).toBeLessThanOrEqual(0.1);
-		expect(travel(samples.map((sample) => sample.groupingY))).toBeLessThanOrEqual(0.1);
+		const positions = samples.map((sample) => sample.y);
+		expect(samples.every((sample) => !sample.hovered)).toBe(true);
+		expect(Math.max(...positions) - Math.min(...positions)).toBeLessThanOrEqual(0.1);
 
 		await page.context().close();
 	});
@@ -130,12 +115,7 @@ test.describe('Wishlist page', () => {
 		await createWishlistAndNavigate(page, 'Test Share');
 		await addGift(page, 'Share Test Gift');
 
-		await page
-			.getByRole('button', { name: /Sd.let seznam|Sdilet seznam/ })
-			.first()
-			.click();
-		const dialog = page.getByRole('dialog');
-		await expect(dialog).toBeVisible({ timeout: 5_000 });
+		const dialog = await openShareWishlistDialog(page);
 		await expect(
 			dialog.getByRole('button', { name: /Sd.let seznam|Sdilet seznam/ }),
 		).toBeVisible();
@@ -159,10 +139,7 @@ test.describe('Wishlist page', () => {
 				.getByText(/Sd.leno|Sdileno/),
 		).toBeVisible({ timeout: 5_000 });
 
-		await page
-			.getByRole('button', { name: /Sd.let seznam|Sdilet seznam/ })
-			.first()
-			.click();
+		await openShareWishlistDialog(page);
 		await expectShareMethodsStep(page);
 		await expect(
 			dialog.getByRole('button', { name: /Sd.let seznam|Sdilet seznam/ }),

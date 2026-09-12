@@ -2,19 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { ROW_STATUS, deriveRowStatus, headerSelectionState } from './draft_grid.js';
 
 describe('deriveRowStatus', () => {
-	it('blank name on a touched row is an error', () => {
-		expect(deriveRowStatus({ name: '', isDuplicate: false, pristine: false })).toBe(
+	it.each(['', '   '])('treats touched blank name %j as an error', (name) => {
+		expect(deriveRowStatus({ name, isDuplicate: false, pristine: false })).toBe(
 			ROW_STATUS.error,
 		);
 	});
 
-	it('whitespace-only name is an error', () => {
-		expect(deriveRowStatus({ name: '   ', isDuplicate: false, pristine: false })).toBe(
-			ROW_STATUS.error,
-		);
-	});
-
-	it('blank name on a pristine (untouched) row stays neutral', () => {
+	it('keeps a blank pristine row neutral', () => {
 		expect(deriveRowStatus({ name: '', isDuplicate: false, pristine: true })).toBe(
 			ROW_STATUS.neutral,
 		);
@@ -54,19 +48,12 @@ describe('deriveRowStatus', () => {
 });
 
 describe('headerSelectionState', () => {
-	it('is none when no rows are selected', () => {
-		expect(headerSelectionState([{ selected: false }, { selected: false }])).toBe('none');
-	});
-
-	it('is all when every row is selected', () => {
-		expect(headerSelectionState([{ selected: true }, { selected: true }])).toBe('all');
-	});
-
-	it('is some when selection is partial', () => {
-		expect(headerSelectionState([{ selected: true }, { selected: false }])).toBe('some');
-	});
-
-	it('is none for an empty grid', () => {
-		expect(headerSelectionState([])).toBe('none');
+	it.each([
+		[[], 'none'],
+		[[{ selected: false }, { selected: false }], 'none'],
+		[[{ selected: true }, { selected: false }], 'some'],
+		[[{ selected: true }, { selected: true }], 'all'],
+	] as const)('derives %s selection as %s', (rows, expected) => {
+		expect(headerSelectionState(rows)).toBe(expected);
 	});
 });

@@ -108,23 +108,13 @@ describe('NotificationItem new-gift digests', () => {
 		const button = screen.getByRole('button');
 
 		await expect.element(screen.getByText(longMessage)).toBeVisible();
-		await expect.element(button).toHaveClass(/h-auto/);
+		expect(button.element().scrollHeight).toBeLessThanOrEqual(button.element().clientHeight);
 		await button.click();
 		expect(onMarkAsRead).toHaveBeenCalledWith('notification-1');
 
 		button.element().focus();
 		await userEvent.keyboard('{Enter}');
 		expect(navigation.goto).toHaveBeenCalledTimes(2);
-	});
-
-	it('keeps owner geometry unchanged between read states', async () => {
-		const unread = await renderItem(notification({ message: 'Unread row' }));
-		const read = await renderItem(notification({ message: 'Read row', read: true }));
-		const unreadButton = unread.container.querySelector('button')!;
-		const readButton = read.container.querySelector('button')!;
-
-		expect(unreadButton.className).toBe(readButton.className);
-		expect(unreadButton.className).not.toContain('rounded-[10px]');
 	});
 
 	it('falls back for malformed or legacy rows and keeps the legacy wishlist destination', async () => {

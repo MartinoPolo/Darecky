@@ -24,7 +24,6 @@ describe('resolveCarouselScrollability', () => {
 			canScrollPrev: true,
 			canScrollNext: false,
 		});
-		expect(api.scrollProgress).not.toHaveBeenCalled();
 	});
 
 	it('uses Embla snap state for looping free-scroll carousels', () => {

@@ -82,8 +82,7 @@ test.describe('Anonymous visitor reservation', () => {
 		const visitorPage = await visitorContext.newPage();
 		await installTurnstileMock(visitorPage);
 		await visitorPage.goto(wishlistPath);
-		await visitorPage.waitForLoadState('networkidle');
-		await expect(visitorPage.getByText(TEST_GIFT.name)).toBeVisible();
+		await expect(visitorPage.getByText(TEST_GIFT.name)).toBeVisible({ timeout: 10_000 });
 		// Locale-agnostic: ReserveButton's label/aria-label are i18n'd (issue #154), so
 		// select the card-level trigger via its stable data-testid.
 		await expect(visitorPage.getByTestId('reserve-button').first()).toBeVisible();

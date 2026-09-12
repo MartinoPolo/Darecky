@@ -20,7 +20,7 @@ function baseProps() {
 }
 
 describe('FilterMenu facets', () => {
-	it('visually distinguishes non-clickable headings from clickable filter options', async () => {
+	it('exposes headings separately from selectable filter options', async () => {
 		const definitions: FilterDefinition[] = [
 			{ id: 'available', menuLabel: 'Dostupné', checked: false, onchange: () => {} },
 		];
@@ -46,17 +46,19 @@ describe('FilterMenu facets', () => {
 
 		const headings = document.querySelectorAll<HTMLElement>('[data-filter-group-heading]');
 		expect(headings).toHaveLength(2);
-		expect(getComputedStyle(headings[0]).textTransform).toBe('uppercase');
-		expect(getComputedStyle(headings[0]).pointerEvents).toBe('none');
+		expect([...headings].map((heading) => heading.textContent?.trim())).toEqual([
+			'Filtr',
+			'Kategorie',
+		]);
 		const options = document.querySelectorAll<HTMLElement>('[data-filter-option]');
 		expect(options).toHaveLength(3);
-		expect(options[0].getAttribute('role')).toBe('menuitemcheckbox');
-		expect(getComputedStyle(options[0]).cursor).toBe('pointer');
-		const uncheckedIndicator = options[0].querySelector<HTMLElement>(
-			'[data-slot="dropdown-menu-checkbox-item-indicator"]',
-		);
-		expect(uncheckedIndicator).not.toBeNull();
-		expect(getComputedStyle(uncheckedIndicator!).borderStyle).toBe('solid');
+		expect([...options].map((option) => option.getAttribute('role'))).toEqual([
+			'menuitemcheckbox',
+			'menuitemcheckbox',
+			'menuitemcheckbox',
+		]);
+		expect(options[1]).toHaveAttribute('aria-checked', 'false');
+		expect(options[2]).toHaveAttribute('aria-checked', 'true');
 	});
 
 	it('inherits viewport-only containment from shared dropdown content', async () => {
