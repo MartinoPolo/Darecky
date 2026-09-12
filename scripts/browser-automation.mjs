@@ -1,4 +1,4 @@
-export const sharedChromeLaunchOptions = Object.freeze({ channel: 'chrome' });
+export const sharedChromeLaunchOptions = Object.freeze({});
 
 export const automatedServerEnvironment = Object.freeze({
 	BROWSER: 'none',

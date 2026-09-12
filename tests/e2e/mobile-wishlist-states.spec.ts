@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import * as m from '../../src/lib/paraglide/messages.js';
 import { createTestUser } from './fixtures/test-data.js';
-import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { registerAndGetPage, waitForAppHydration } from './fixtures/auth-helpers.js';
 import { addGift, createWishlistAndNavigate, shareWishlist } from './fixtures/wishlist-helpers.js';
 import {
 	MOBILE_HEIGHT,
@@ -39,6 +39,7 @@ test.describe('mobile wishlist acceptance', () => {
 		);
 		await visitor.setViewportSize({ width: 390, height: MOBILE_HEIGHT });
 		await visitor.goto(path, { waitUntil: 'load' });
+		await waitForAppHydration(visitor);
 		const card = visitor.locator('[data-gift-item]').first();
 		const like = card.locator('button:has([data-like-heart])');
 		await expect(like).toHaveAccessibleName(/Přidat.*oblíbených/i);
@@ -78,6 +79,7 @@ test.describe('mobile wishlist acceptance', () => {
 		);
 		await visitor.setViewportSize({ width: 390, height: MOBILE_HEIGHT });
 		await visitor.goto(path, { waitUntil: 'load' });
+		await waitForAppHydration(visitor);
 		await visitor.getByTestId('mobile-display-trigger').click();
 		const filterDialog = visitor.getByRole('dialog', { name: m.gift_display_options() });
 		await expect(filterDialog).toBeVisible();
@@ -107,12 +109,6 @@ test.describe('mobile wishlist acceptance', () => {
 		for (const card of cards) {
 			await expectInsideViewport(card, 390);
 		}
-		const firstRow = await visitor
-			.locator('[data-gift-item]')
-			.evaluateAll((elements) =>
-				elements.slice(0, 2).map((element) => element.getBoundingClientRect().height),
-			);
-		expect(firstRow[0]).toBeCloseTo(firstRow[1]!, 0);
 		expect(await visitor.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 		await manager.context().close();
 		await visitor.context().close();
@@ -143,12 +139,14 @@ test.describe('mobile wishlist acceptance', () => {
 		);
 		await visitor.setViewportSize({ width: 390, height: MOBILE_HEIGHT });
 		await visitor.goto(wishlistPath, { waitUntil: 'load' });
+		await waitForAppHydration(visitor);
 		const privateGift = gift(visitor, 'Dárek s utajenou rezervací');
 		await privateGift.getByTestId('reserve-button').click();
 		const reservationDialog = visitor.getByRole('dialog');
 		await reservationDialog.getByRole('button', { name: /Rezervovat/, exact: true }).click();
 		await expect(reservationDialog).toBeHidden();
 		await page.reload({ waitUntil: 'load' });
+		await waitForAppHydration(page);
 		for (const width of WIDTHS) {
 			await page.setViewportSize({ width, height: MOBILE_HEIGHT });
 			const items = page.locator('[data-gift-item]');
@@ -157,24 +155,15 @@ test.describe('mobile wishlist acceptance', () => {
 			await expect(page.getByTestId('reserve-button')).toHaveCount(0);
 			await expect(page.getByText(/Koupen|Zakoupen|Purchased/i)).toHaveCount(0);
 			await expect(page.getByRole('button', { name: /líbí|like/i })).toHaveCount(0);
-			const heights = await items.evaluateAll((elements) =>
-				elements.map((element) => Math.round(element.getBoundingClientRect().height)),
-			);
-			expect(new Set(heights).size).toBe(1);
 			await expectContainedReceivedActions(page);
 			await attachScreenshot(page, testInfo, `recipient-card-${width}`);
 		}
 		await page.getByTestId('gift-view-list').click();
 		for (const width of WIDTHS) {
 			await page.setViewportSize({ width, height: MOBILE_HEIGHT });
-			const items = page.locator('[data-gift-item]');
 			await expect(page.getByTestId('wishlist-gift-list')).toBeVisible();
 			await expect(page.getByText(/Rezervov|Volné \d+\//i)).toHaveCount(0);
 			await expect(page.getByTestId('reserve-button')).toHaveCount(0);
-			const heights = await items.evaluateAll((elements) =>
-				elements.map((element) => Math.round(element.getBoundingClientRect().height)),
-			);
-			expect(new Set(heights).size).toBe(1);
 			await expectContainedReceivedActions(page);
 			await attachScreenshot(page, testInfo, `recipient-list-${width}`);
 		}

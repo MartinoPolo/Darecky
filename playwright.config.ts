@@ -57,6 +57,7 @@ export default defineConfig({
 		},
 		{
 			name: 'chromium',
+			testIgnore: /global-setup\.spec\.ts/,
 			use: { ...devices['Desktop Chrome'] },
 			dependencies: ['setup'],
 		},

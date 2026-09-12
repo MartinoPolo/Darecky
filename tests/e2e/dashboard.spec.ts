@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
-import { registerAndGetPage } from './fixtures/auth-helpers.js';
+import { registerAndGetPage, waitForAppHydration } from './fixtures/auth-helpers.js';
 import { openCreateWishlistDialog } from './fixtures/wishlist-helpers.js';
 
 test.describe('Dashboard', () => {
@@ -43,6 +43,7 @@ test.describe('Dashboard', () => {
 
 		await page.goto('/my-lists');
 		await expect(page.getByRole('heading', { name: 'Moje seznamy' })).toBeVisible();
+		await waitForAppHydration(page);
 		const gridButton = page.getByRole('radio', { name: 'Mřížka karet' });
 		const listButton = page.getByRole('radio', { name: 'Seznam', exact: true });
 

@@ -222,6 +222,8 @@
 	type OpenDisplayControl = 'sort' | 'grouping' | 'filter';
 
 	let desktopDisplayTrigger = $state<HTMLButtonElement | null>(null);
+	let desktopMoreTrigger = $state<HTMLButtonElement | null>(null);
+	let desktopReorderDoneButton = $state<HTMLButtonElement | null>(null);
 	let desktopSortTrigger = $state<HTMLElement | null>(null);
 	let desktopGroupingTrigger = $state<HTMLElement | null>(null);
 	let desktopFilterTrigger = $state<HTMLElement | null>(null);
@@ -401,6 +403,15 @@
 		if (!open) {
 			closeMobileDisplaySheet();
 		}
+	}
+
+	async function changeDesktopReorderMode(active: boolean) {
+		const scrollPosition = { x: window.scrollX, y: window.scrollY };
+		onreordermodechange(active);
+		await tick();
+		const focusTarget = active ? desktopReorderDoneButton : desktopMoreTrigger;
+		focusTarget?.focus({ preventScroll: true });
+		window.scrollTo(scrollPosition.x, scrollPosition.y);
 	}
 
 	async function changeMobileReorderMode(active: boolean) {
@@ -687,6 +698,7 @@
 			{#snippet child({ props })}
 				<Button
 					{...props}
+					bind:ref={desktopMoreTrigger}
 					size="icon"
 					intent="outline"
 					data-testid="desktop-more-trigger"
@@ -700,6 +712,11 @@
 			align="end"
 			aria-label={m.wishlist_more_actions()}
 			preventScroll={false}
+			onCloseAutoFocus={(event) => {
+				if (reorderMode) {
+					event.preventDefault();
+				}
+			}}
 		>
 			{#if showReset}
 				<DropdownMenu.Item onclick={resetDisplayControls}
@@ -726,7 +743,7 @@
 					><ListChecksIcon />{m.gift_selection_toolbar()}</DropdownMenu.Item
 				>
 				{#if canReorder}
-					<DropdownMenu.Item onclick={() => onreordermodechange(true)}
+					<DropdownMenu.Item onclick={() => changeDesktopReorderMode(true)}
 						><HandIcon />{m.gift_reorder_action()}</DropdownMenu.Item
 					>
 				{/if}
@@ -1040,9 +1057,10 @@
 							>
 								{#if reorderMode}
 									<Button
+										bind:ref={desktopReorderDoneButton}
 										size="md"
 										intent="primary"
-										onclick={() => onreordermodechange(false)}
+										onclick={() => changeDesktopReorderMode(false)}
 									>
 										<CheckIcon data-icon="inline-start" />
 										<span>{m.gift_reorder_done()}</span>

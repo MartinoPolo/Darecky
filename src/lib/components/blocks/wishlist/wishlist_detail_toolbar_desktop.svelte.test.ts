@@ -223,6 +223,36 @@ describe('WishlistDetailToolbar consolidated desktop display (#359)', () => {
 		await screen.unmount();
 	});
 
+	it('hands focus between desktop More and Done while preserving scroll', async () => {
+		const props = {
+			canManage: true,
+			role: WISHLIST_ROLES.moderator,
+		};
+		const onreordermodechange = vi.fn((reorderMode: boolean) => {
+			void screen.rerender({
+				...defaultProps,
+				...props,
+				reorderMode,
+				onreordermodechange,
+			});
+		});
+		const screen = await renderToolbar({ ...props, onreordermodechange }, 1280);
+		await frames(1);
+		const initialScroll = { x: window.scrollX, y: window.scrollY };
+
+		await screen.getByTestId('desktop-more-trigger').click();
+		await page.getByRole('menuitem', { name: m.gift_reorder_action(), exact: true }).click();
+		const done = screen.getByRole('button', { name: m.gift_reorder_done(), exact: true });
+		await expect.element(done).toHaveFocus();
+		expect({ x: window.scrollX, y: window.scrollY }).toEqual(initialScroll);
+
+		await done.click();
+		await expect.element(screen.getByTestId('desktop-more-trigger')).toHaveFocus();
+		expect({ x: window.scrollX, y: window.scrollY }).toEqual(initialScroll);
+		expect(onreordermodechange.mock.calls).toEqual([[true], [false]]);
+		await screen.unmount();
+	});
+
 	it('keeps eligible actions in toolbar More without Settings or a separator before full reorder text', async () => {
 		const screen = await renderToolbar(
 			{ canManage: true, role: WISHLIST_ROLES.moderator },

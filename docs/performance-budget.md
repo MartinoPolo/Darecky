@@ -45,16 +45,13 @@ The landing baseline first jumped on **2026-08-01** when the interactive demo se
 into the landing module graph. That is the intended cost of a demo that cannot
 drift from the shipped product.
 
-> Measure on a **warm** dev server. The 2.5 s post-hydration settle window is a
-> fixed budget, so a cold server that is still transforming modules when it
-> expires reports a lower count (CI has been seen at 245–265 for the same tree
-> that measures a stable 274 warm). Truncation only ever _under_-counts, so it
-> cannot cause a false failure — but always baseline from the warm, higher
-> number.
+> Measure on a **warm** dev server. The collector waits for the root hydration
+> signal before its bounded post-hydration settle window. An SSR-visible heading
+> alone does not establish JavaScript readiness and can undercount the module graph.
 
 > **These are Vite _dev-mode_ module counts and bytes, not production chunk
-> sizes.** The e2e suite is local-only and runs against the dev server
-> (`pnpm run dev`), where modules arrive unbundled and untransformed — so a
+> sizes.** Locally and in CI, this E2E suite targets a localhost Vite dev server,
+> never production, where modules arrive unbundled — so a
 > "request" is one source module and "bytes" is uncompressed dev output. The
 > numbers are large and would look alarming as production figures; they are not.
 > What makes them useful is that they are **deterministic for a given source

@@ -185,8 +185,32 @@ test.describe('mobile wishlist acceptance', () => {
 			await expectInsideViewport(list, width);
 			const items = await page.getByTestId('gift-list-item').all();
 			expect(items).toHaveLength(3);
+			await expect
+				.poll(async () =>
+					Promise.all(
+						items.map(async (item) => {
+							const imageBox = await box(item.getByTestId('gift-list-image'));
+							const itemBox = await box(item);
+							const border = await item.evaluate((element) =>
+								Number.parseFloat(getComputedStyle(element).borderTopWidth),
+							);
+							return {
+								horizontal:
+									(await item.getAttribute('data-list-image-stacked')) === null,
+								square: Math.abs(imageBox.width - imageBox.height) < 0.5,
+								fullHeight:
+									Math.abs(imageBox.y - (itemBox.y + border)) < 0.5 &&
+									Math.abs(
+										imageBox.y +
+											imageBox.height -
+											(itemBox.y + itemBox.height - border),
+									) < 0.5,
+							};
+						}),
+					),
+				)
+				.toEqual(items.map(() => ({ horizontal: true, square: true, fullHeight: true })));
 			const itemBoxes = await Promise.all(items.map(box));
-			expect(new Set(itemBoxes.map((item) => Math.round(item.height))).size).toBe(1);
 			for (let index = 1; index < itemBoxes.length; index += 1) {
 				expect(
 					itemBoxes[index]!.y - (itemBoxes[index - 1]!.y + itemBoxes[index - 1]!.height),

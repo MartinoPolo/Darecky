@@ -6,6 +6,7 @@
 	import dynapuffLatinUrl from '@fontsource-variable/dynapuff/files/dynapuff-latin-wght-normal.woff2?url';
 	import geistLatinUrl from '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url';
 	import { afterNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { browser, dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { getLocaleForUrl, getTextDirection } from '$lib/paraglide/runtime.js';
@@ -28,6 +29,13 @@
 			document.documentElement.lang = currentLocale;
 			document.documentElement.dir = currentTextDirection;
 		}
+	});
+
+	onMount(() => {
+		document.documentElement.dataset.appHydrated = 'true';
+		return () => {
+			delete document.documentElement.dataset.appHydrated;
+		};
 	});
 
 	// afterNavigate fires after SvelteKit applies <svelte:head><title> from the page,

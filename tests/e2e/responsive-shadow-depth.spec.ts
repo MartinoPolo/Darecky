@@ -9,8 +9,18 @@ async function shadowState(locator: Locator) {
 	return locator.evaluate((element) => {
 		const style = getComputedStyle(element);
 		const layers = style.boxShadow.match(/(?:[^,(]|\([^)]*\))+/g) ?? [];
+		const isVisibleLayer = (layer: string) => {
+			if (layer.trim() === 'none' || /\btransparent\b/.test(layer)) {
+				return false;
+			}
+			const alpha =
+				layer.match(/rgba\([^)]*,\s*([\d.]+)%?\s*\)/)?.[1] ??
+				layer.match(/\([^)]*\/\s*([\d.]+)%?\s*\)/)?.[1];
+			return alpha === undefined || Number.parseFloat(alpha) !== 0;
+		};
+		const visibleLayers = layers.filter(isVisibleLayer);
 		const raisedLayer =
-			layers.find((layer) => {
+			visibleLayers.find((layer) => {
 				if (/\binset\b/.test(layer)) {
 					return false;
 				}
@@ -23,6 +33,7 @@ async function shadowState(locator: Locator) {
 		const lengths = raisedLayer.match(/-?\d+(?:\.\d+)?px/g) ?? [];
 		return {
 			shadow: style.boxShadow,
+			hasVisibleShadow: visibleLayers.length > 0,
 			x: Number.parseFloat(lengths[0] ?? '0'),
 			y: Number.parseFloat(lengths[1] ?? '0'),
 			blur: Number.parseFloat(lengths[2] ?? '0'),
@@ -74,7 +85,9 @@ test('semantic depth stays responsive and color-only across representative wishl
 		toolbar,
 		account.locator(':scope > .elevation-surface'),
 	];
-	await expect.poll(() => shadowState(tray).then(({ shadow }) => shadow)).toBe('none');
+	await expect
+		.poll(() => shadowState(tray).then(({ hasVisibleShadow }) => hasVisibleShadow))
+		.toBe(false);
 
 	for (const { width, offset } of [
 		{ width: 390, offset: 3 },
@@ -155,9 +168,11 @@ test('semantic depth stays responsive and color-only across representative wishl
 	await button.evaluate((element) => element.setAttribute('disabled', ''));
 	await expect
 		.poll(() =>
-			shadowState(button.locator(':scope > .elevation-surface')).then(({ shadow }) => shadow),
+			shadowState(button.locator(':scope > .elevation-surface')).then(
+				({ hasVisibleShadow }) => hasVisibleShadow,
+			),
 		)
-		.toBe('none');
+		.toBe(false);
 	await button.evaluate((element) => element.removeAttribute('disabled'));
 
 	const restingBox = await account.boundingBox();
@@ -176,16 +191,26 @@ test('semantic depth stays responsive and color-only across representative wishl
 		};
 
 		function shadowStateValue(style: CSSStyleDeclaration) {
+			const layers = style.boxShadow.match(/(?:[^,(]|\([^)]*\))+/g) ?? [];
+			const hasVisibleShadow = layers.some((layer) => {
+				if (layer.trim() === 'none' || /\btransparent\b/.test(layer)) {
+					return false;
+				}
+				const alpha =
+					layer.match(/rgba\([^)]*,\s*([\d.]+)%?\s*\)/)?.[1] ??
+					layer.match(/\([^)]*\/\s*([\d.]+)%?\s*\)/)?.[1];
+				return alpha === undefined || Number.parseFloat(alpha) !== 0;
+			});
 			return {
-				shadow: style.boxShadow,
+				hasVisibleShadow,
 				borderWidth: Number.parseFloat(style.borderTopWidth),
 			};
 		}
 	});
-	expect(accountLayers.owner).toEqual({ shadow: 'none', borderWidth: 0 });
-	expect(accountLayers.surface?.shadow).not.toBe('none');
+	expect(accountLayers.owner).toEqual({ hasVisibleShadow: false, borderWidth: 0 });
+	expect(accountLayers.surface?.hasVisibleShadow).toBe(true);
 	expect(accountLayers.surface!.borderWidth).toBeGreaterThan(0);
-	expect(accountLayers.avatar).toEqual({ shadow: 'none', borderWidth: 0 });
+	expect(accountLayers.avatar).toEqual({ hasVisibleShadow: false, borderWidth: 0 });
 
 	await page.keyboard.press('Escape');
 	await page.locator('html').evaluate((element) => element.classList.add('dark'));

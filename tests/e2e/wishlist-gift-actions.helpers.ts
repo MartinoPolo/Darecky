@@ -39,7 +39,8 @@ export async function openFilterMenu(page: Page, optionName: string) {
 
 export async function toggleFilterCheckbox(page: Page, name: string) {
 	const { displayMenu, option } = await openFilterMenu(page, name);
-	await option.click();
+	await option.focus();
+	await option.press('Space');
 	await expect(displayMenu).toBeVisible();
 }
 
@@ -52,7 +53,8 @@ export async function selectPriorityFilter(page: Page, name: string) {
 		({ option } = await openFilterMenu(page, name));
 	}
 	await expect(option).toHaveCount(1);
-	await option.click();
+	await option.focus();
+	await option.press('Space');
 	await expect(option).toHaveAttribute('aria-checked', 'true');
 	await expect(displayMenu).toBeVisible();
 }

@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from './fixtures/test-data.js';
-import { registerViaApi, registerAndGetPage } from './fixtures/auth-helpers.js';
+import {
+	registerViaApi,
+	registerAndGetPage,
+	waitForAppHydration,
+} from './fixtures/auth-helpers.js';
 
 test.describe('Error states and edge cases', () => {
 	test('registering with existing email shows error', async ({ request, baseURL, page }) => {
@@ -51,6 +55,7 @@ test.describe('Error states and edge cases', () => {
 		const updatedName = `${user.name} Updated`;
 
 		await page.goto('/settings');
+		await waitForAppHydration(page);
 
 		const nameInput = page.getByLabel('Zobrazované jméno');
 		await expect(nameInput).toBeVisible({ timeout: 5_000 });

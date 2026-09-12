@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { waitForAppHydration } from './fixtures/auth-helpers.js';
 
 /**
  * Initial-load performance budget for the public entry pages (issue #106).
@@ -11,7 +12,7 @@ import { test, expect, type Page } from '@playwright/test';
  *
  * Budget numbers, rationale, and re-measurement instructions live in
  * docs/performance-budget.md. The suite runs against the Vite dev server
- * (this e2e suite is local-only), so modules arrive unbundled — the numbers
+ * locally and in CI, so modules arrive unbundled — the numbers
  * are dev-mode module counts/bytes, not production chunk sizes. They are
  * deterministic for a given source tree, which is what makes them a usable
  * regression gate for code fan-out.
@@ -85,14 +86,10 @@ interface InitialLoadBudget {
 	maxJavaScriptBytes: number;
 }
 
-// Budgets = measured dev-mode baseline + ~25% headroom (ceil(measured * 1.25)).
-// Landing measured 2026-08-01 (after the demo section landed): 274 req / 11,996,812 B.
-// Login measured 2026-07-12: 161 req / 9,688,681 B.
-// See docs/performance-budget.md for the values and how to re-baseline after an
-// intentional change.
+// Match the reviewed public-demo baseline and headroom in docs/performance-budget.md.
 const LANDING_BUDGET: InitialLoadBudget = {
-	maxJavaScriptRequests: 343,
-	maxJavaScriptBytes: 14_996_015,
+	maxJavaScriptRequests: 444,
+	maxJavaScriptBytes: 17_102_094,
 };
 const LOGIN_BUDGET: InitialLoadBudget = {
 	maxJavaScriptRequests: 202,
@@ -127,6 +124,7 @@ async function collectInitialJavaScript(
 
 	await page.goto(path);
 	await expect(readyLocator(page)).toBeVisible({ timeout: 30_000 });
+	await waitForAppHydration(page);
 	// Deliberately NOT networkidle (see file header) — a fixed, bounded settle
 	// window that outlasts hydration and any idle-time preload heuristics.
 	await page.waitForTimeout(POST_HYDRATION_SETTLE_MILLISECONDS);

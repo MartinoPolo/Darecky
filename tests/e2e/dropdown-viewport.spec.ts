@@ -1,5 +1,9 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
-import { loginViaApi, parseCookiesForContext } from './fixtures/auth-helpers.js';
+import {
+	loginViaApi,
+	parseCookiesForContext,
+	waitForAppHydration,
+} from './fixtures/auth-helpers.js';
 
 const VIEWPORT_PADDING = 8;
 
@@ -16,6 +20,7 @@ async function openSeedWishlist(
 	await page.goto('/w/xmas2026', { waitUntil: 'domcontentloaded' });
 	await expect(page.getByTestId('wishlist-toolbar')).toBeVisible();
 	await expect(page.locator('[data-gift-item]').first()).toBeVisible();
+	await waitForAppHydration(page);
 }
 
 async function pinTrigger(trigger: Locator, top: number, left: number) {
@@ -128,6 +133,16 @@ test.describe('issue #364 dropdown viewport placement', () => {
 		const { submenu: menu } = await openDisplaySubmenu(page, /Filtrovat/);
 		await expectDropdownViewportCap(menu, 600);
 		await page.mouse.move(10, 580);
+		// Entrance scaling moves bounds by design; this check guards drift after opening settles.
+		await expect
+			.poll(() =>
+				menu.evaluate((element) =>
+					element
+						.getAnimations()
+						.every((animation) => animation.playState === 'finished'),
+				),
+			)
+			.toBe(true);
 
 		const evidence = await menu.evaluate(async (element) => {
 			const samples: Array<{ y: number; side: string | null }> = [];

@@ -111,6 +111,8 @@
 		const measure = () => {
 			animationFrame = 0;
 			reset();
+			// Start at the content minimum so a wider initial image cannot force avoidable wrapping.
+			item.style.setProperty('--gift-list-image-size', '0px');
 
 			const itemStyle = getComputedStyle(item);
 			const rootFontSize = Number.parseFloat(
@@ -249,7 +251,7 @@
 				{/if}
 			</div>
 
-			<div>
+			<div class="flex min-w-0">
 				{#if domain}
 					<a
 						href={safeGiftUrl ?? '#'}
